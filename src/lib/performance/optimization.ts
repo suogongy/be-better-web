@@ -1,0 +1,315 @@
+import { useState, useEffect, useCallback, useMemo } from 'react'
+
+// Cache implementation for client-side caching
+class SimpleCache {
+  private cache = new Map<string, { data: any; timestamp: number; ttl: number }>()
+
+  set(key: string, data: any, ttlMinutes: number = 5): void {
+    const ttl = ttlMinutes * 60 * 1000 // Convert to milliseconds
+    this.cache.set(key, {
+      data,
+      timestamp: Date.now(),
+      ttl
+    })
+  }
+
+  get(key: string): any | null {
+    const item = this.cache.get(key)
+    if (!item) return null
+
+    const isExpired = Date.now() - item.timestamp > item.ttl
+    if (isExpired) {
+      this.cache.delete(key)
+      return null
+    }
+
+    return item.data
+  }
+
+  delete(key: string): void {
+    this.cache.delete(key)
+  }
+
+  clear(): void {
+    this.cache.clear()
+  }
+
+  size(): number {
+    return this.cache.size
+  }
+}
+
+export const clientCache = new SimpleCache()
+
+// Debounced value hook
+export function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value)
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value)
+    }, delay)
+
+    return () => {
+      clearTimeout(handler)
+    }
+  }, [value, delay])
+
+  return debouncedValue
+}
+
+// Throttled callback hook
+export function useThrottle<T extends (...args: any[]) => any>(
+  callback: T,
+  delay: number
+): T {
+  const [lastCall, setLastCall] = useState(0)
+
+  return useCallback((...args: Parameters<T>) => {
+    const now = Date.now()
+    if (now - lastCall >= delay) {
+      setLastCall(now)
+      return callback(...args)
+    }
+  }, [callback, delay, lastCall]) as T
+}
+
+// Local storage hook with caching
+export function useLocalStorage<T>(
+  key: string,
+  initialValue: T
+): [T, (value: T | ((val: T) => T)) => void] {
+  const [storedValue, setStoredValue] = useState<T>(() => {
+    try {
+      if (typeof window === 'undefined') return initialValue
+      const item = window.localStorage.getItem(key)
+      return item ? JSON.parse(item) : initialValue
+    } catch (error) {
+      console.warn(`Error reading localStorage key "${key}":`, error)
+      return initialValue
+    }
+  })
+
+  const setValue = useCallback((value: T | ((val: T) => T)) => {
+    try {
+      const valueToStore = value instanceof Function ? value(storedValue) : value
+      setStoredValue(valueToStore)
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(key, JSON.stringify(valueToStore))
+      }
+    } catch (error) {
+      console.warn(`Error setting localStorage key "${key}":`, error)
+    }
+  }, [key, storedValue])
+
+  return [storedValue, setValue]
+}
+
+// Optimized async data fetching hook
+export function useOptimizedFetch<T>(
+  key: string,
+  fetchFn: () => Promise<T>,
+  options: {
+    cacheMinutes?: number
+    refetchOnWindowFocus?: boolean
+    retryCount?: number
+    enabled?: boolean
+  } = {}
+) {
+  const {
+    cacheMinutes = 5,
+    refetchOnWindowFocus = false,
+    retryCount = 1,
+    enabled = true
+  } = options
+
+  const [data, setData] = useState<T | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<Error | null>(null)
+
+  const fetchData = useCallback(async (force: boolean = false) => {
+    if (!enabled) return
+
+    // Check cache first
+    if (!force) {
+      const cached = clientCache.get(key)
+      if (cached) {
+        setData(cached)
+        return
+      }
+    }
+
+    setLoading(true)
+    setError(null)
+
+    let attempt = 0
+    while (attempt <= retryCount) {
+      try {
+        const result = await fetchFn()
+        setData(result)
+        clientCache.set(key, result, cacheMinutes)
+        break
+      } catch (err) {
+        attempt++
+        if (attempt > retryCount) {
+          setError(err instanceof Error ? err : new Error('Unknown error'))
+        } else {
+          // Wait before retry (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000))
+        }
+      }
+    }
+
+    setLoading(false)
+  }, [key, fetchFn, cacheMinutes, retryCount, enabled])
+
+  const refetch = useCallback(() => fetchData(true), [fetchData])
+
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
+
+  useEffect(() => {
+    if (!refetchOnWindowFocus) return
+
+    const handleFocus = () => fetchData()
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
+  }, [fetchData, refetchOnWindowFocus])
+
+  return { data, loading, error, refetch }
+}
+
+// Image optimization utilities
+export const imageUtils = {
+  // Generate responsive image srcSet
+  generateSrcSet: (baseUrl: string, sizes: number[]): string => {
+    return sizes
+      .map(size => `${baseUrl}?w=${size}&q=80 ${size}w`)
+      .join(', ')
+  },
+
+  // Generate sizes attribute for responsive images
+  generateSizes: (breakpoints: { size: string; width: string }[]): string => {
+    return breakpoints
+      .map(bp => `(${bp.size}) ${bp.width}`)
+      .join(', ')
+  },
+
+  // Optimize image URL with quality and format
+  optimizeUrl: (url: string, options: {
+    width?: number
+    height?: number
+    quality?: number
+    format?: 'webp' | 'jpg' | 'png'
+  } = {}): string => {
+    const { width, height, quality = 80, format } = options
+    const params = new URLSearchParams()
+    
+    if (width) params.set('w', width.toString())
+    if (height) params.set('h', height.toString())
+    params.set('q', quality.toString())
+    if (format) params.set('f', format)
+
+    return `${url}?${params.toString()}`
+  }
+}
+
+// Bundle size analysis utilities
+export const bundleUtils = {
+  // Lazy load component with loading state
+  lazyWithLoading: <T extends React.ComponentType<any>>(
+    importFn: () => Promise<{ default: T }>,
+    fallback?: React.ReactNode
+  ) => {
+    const LazyComponent = React.lazy(importFn)
+    
+    return (props: React.ComponentProps<T>) => (
+      <React.Suspense fallback={fallback || <div>Loading...</div>}>
+        <LazyComponent {...props} />
+      </React.Suspense>
+    )
+  },
+
+  // Dynamic import with error handling
+  dynamicImport: async <T>(importFn: () => Promise<T>): Promise<T | null> => {
+    try {
+      return await importFn()
+    } catch (error) {
+      console.error('Dynamic import failed:', error)
+      return null
+    }
+  }
+}
+
+// Performance monitoring
+export const performanceUtils = {
+  // Measure component render time
+  measureRender: (componentName: string) => {
+    return <T extends React.ComponentType<any>>(Component: T) => {
+      return (props: React.ComponentProps<T>) => {
+        useEffect(() => {
+          const start = performance.now()
+          return () => {
+            const end = performance.now()
+            console.log(`${componentName} render time: ${end - start}ms`)
+          }
+        })
+
+        return <Component {...props} />
+      }
+    }
+  },
+
+  // Log performance metrics
+  logMetrics: () => {
+    if (typeof window !== 'undefined' && 'performance' in window) {
+      const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming
+      
+      console.group('Performance Metrics')
+      console.log('DOM Content Loaded:', navigation.domContentLoadedEventEnd - navigation.navigationStart, 'ms')
+      console.log('Load Complete:', navigation.loadEventEnd - navigation.navigationStart, 'ms')
+      console.log('First Paint:', performance.getEntriesByName('first-paint')[0]?.startTime || 'N/A', 'ms')
+      console.log('First Contentful Paint:', performance.getEntriesByName('first-contentful-paint')[0]?.startTime || 'N/A', 'ms')
+      console.groupEnd()
+    }
+  },
+
+  // Web Vitals monitoring
+  observeWebVitals: (callback: (metric: any) => void) => {
+    if (typeof window !== 'undefined') {
+      import('web-vitals').then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {
+        getCLS(callback)
+        getFID(callback)
+        getFCP(callback)
+        getLCP(callback)
+        getTTFB(callback)
+      })
+    }
+  }
+}
+
+// Memory optimization
+export const memoryUtils = {
+  // Clean up function references
+  useStableCallback: <T extends (...args: any[]) => any>(callback: T): T => {
+    const callbackRef = useRef(callback)
+    callbackRef.current = callback
+    
+    return useCallback((...args: Parameters<T>) => {
+      return callbackRef.current(...args)
+    }, []) as T
+  },
+
+  // Memoize expensive calculations
+  useMemoizedValue: <T>(factory: () => T, deps: React.DependencyList): T => {
+    return useMemo(factory, deps)
+  },
+
+  // Clean up event listeners and timers
+  useCleanup: (cleanup: () => void, deps: React.DependencyList = []) => {
+    useEffect(() => {
+      return cleanup
+    }, deps)
+  }
+}
