@@ -644,7 +644,7 @@ export const summaryService = {
       
       return post
     } catch (error) {
-      throw new DatabaseError('Failed to create blog post from summary', error)
+      throw new DatabaseError('Failed to create blog post from summary', undefined, error)
     }
   },
 
@@ -688,7 +688,7 @@ export const summaryService = {
       
       return post;
     } catch (error) {
-      throw new DatabaseError('Failed to create blog post from summary', error);
+      throw new DatabaseError('Failed to create blog post from summary', undefined, error);
     }
   },
 

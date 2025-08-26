@@ -118,9 +118,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const sessionPromise = supabase.auth.getSession()
         const timeoutPromise = new Promise<never>((_, reject) => 
           setTimeout(() => {
-            console.warn('⏰ Supabase 认证检查超时 (5秒)')
+            console.warn('Supabase 认证检查超时 (10秒)')
             reject(new Error('Session check timeout'))
-          }, 5000)
+          }, 10000)
         )
         
         const { data: { session }, error } = await Promise.race([

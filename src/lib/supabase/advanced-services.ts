@@ -1,5 +1,5 @@
 import { supabase } from './client'
-import { DatabaseError } from './database'
+import { DatabaseError } from './services'
 import type { 
   Habit, 
   HabitLog, 
@@ -198,7 +198,7 @@ export const habitService = {
     }
 
     const totalHabits = habits?.length || 0
-    const activeHabits = habits?.filter(h => h.is_active).length || 0
+    const activeHabits = habits?.filter((h: Habit) => h.is_active).length || 0
 
     // Get today's completed habits
     const today = new Date().toISOString().split('T')[0]
@@ -211,7 +211,7 @@ export const habitService = {
     const completedToday = todayLogs?.length || 0
 
     // Get longest streak
-    const longestStreak = habits?.reduce((max, habit) => 
+    const longestStreak = habits?.reduce((max: number, habit: Habit) => 
       Math.max(max, habit.best_streak || 0), 0) || 0
 
     // Calculate overall completion rate (last 30 days)
@@ -221,7 +221,7 @@ export const habitService = {
     let totalExpected = 0
     let totalCompleted = 0
 
-    for (const habit of habits?.filter(h => h.is_active) || []) {
+    for (const habit of habits?.filter((h: Habit) => h.is_active) || []) {
       const expectedCount = this.calculateExpectedLogs(habit, thirtyDaysAgo, new Date())
       const { data: logs } = await supabase
         .from('habit_logs')
@@ -230,7 +230,7 @@ export const habitService = {
         .gte('log_date', thirtyDaysAgo.toISOString().split('T')[0])
 
       totalExpected += expectedCount
-      totalCompleted += logs?.reduce((sum, log) => sum + log.completed_count, 0) || 0
+      totalCompleted += logs?.reduce((sum: number, log: any) => sum + log.completed_count, 0) || 0
     }
 
     const completionRate = totalExpected > 0 ? (totalCompleted / totalExpected) * 100 : 0
@@ -263,12 +263,12 @@ export const habitService = {
       .gte('log_date', startDate.toISOString().split('T')[0])
 
     const expectedCount = this.calculateExpectedLogs(habit, startDate, new Date())
-    const actualCount = logs?.reduce((sum, log) => sum + log.completed_count, 0) || 0
+    const actualCount = logs?.reduce((sum: number, log: any) => sum + log.completed_count, 0) || 0
 
     return expectedCount > 0 ? (actualCount / expectedCount) * 100 : 0
   },
 
-  private calculateExpectedLogs(habit: any, startDate: Date, endDate: Date): number {
+  calculateExpectedLogs(habit: Habit, startDate: Date, endDate: Date): number {
     const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
     
     switch (habit.frequency) {
@@ -305,7 +305,7 @@ export const habitService = {
       throw new DatabaseError('Failed to fetch habit categories', error)
     }
 
-    const categories = [...new Set(data?.map(h => h.category).filter(Boolean))]
+    const categories = [...new Set(data?.map((h: any) => h.category).filter(Boolean))] as string[]
     return categories
   }
 }
@@ -400,23 +400,23 @@ export const moodService = {
       }
     }
 
-    const avgMood = logs.reduce((sum, log) => sum + log.mood_rating, 0) / logs.length
-    const avgEnergy = logs.reduce((sum, log) => sum + (log.energy_level || 0), 0) / logs.length
-    const avgStress = logs.reduce((sum, log) => sum + (log.stress_level || 0), 0) / logs.length
+    const avgMood = logs.reduce((sum: number, log: MoodLog) => sum + log.mood_rating, 0) / logs.length
+    const avgEnergy = logs.reduce((sum: number, log: MoodLog) => sum + (log.energy_level || 0), 0) / logs.length
+    const avgStress = logs.reduce((sum: number, log: MoodLog) => sum + (log.stress_level || 0), 0) / logs.length
 
     // Calculate trend
     const firstHalf = logs.slice(0, Math.floor(logs.length / 2))
     const secondHalf = logs.slice(Math.floor(logs.length / 2))
     
-    const firstAvg = firstHalf.reduce((sum, log) => sum + log.mood_rating, 0) / firstHalf.length
-    const secondAvg = secondHalf.reduce((sum, log) => sum + log.mood_rating, 0) / secondHalf.length
+    const firstAvg = firstHalf.reduce((sum: number, log: MoodLog) => sum + log.mood_rating, 0) / firstHalf.length
+    const secondAvg = secondHalf.reduce((sum: number, log: MoodLog) => sum + log.mood_rating, 0) / secondHalf.length
     
     let moodTrend: 'up' | 'down' | 'stable' = 'stable'
     if (secondAvg > firstAvg + 0.5) moodTrend = 'up'
     else if (secondAvg < firstAvg - 0.5) moodTrend = 'down'
 
     // Find best and worst days
-    const sortedByMood = [...logs].sort((a, b) => b.mood_rating - a.mood_rating)
+    const sortedByMood = [...logs].sort((a: MoodLog, b: MoodLog) => b.mood_rating - a.mood_rating)
     const bestDay = sortedByMood[0]?.log_date || ''
     const worstDay = sortedByMood[sortedByMood.length - 1]?.log_date || ''
 

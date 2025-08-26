@@ -5,10 +5,23 @@ import Link from 'next/link'
 import { postService,categoryService,tagService } from '@/lib/supabase/services/index'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { isSupabaseConfigured } from '@/lib/supabase/client'
 import { Post } from '@/types/database'
 import { Badge } from '@/components/ui/badge'
-import {AlertCircle} from 'lucide-react'
+import { 
+  AlertCircle, 
+  Filter, 
+  Search, 
+  FolderOpen, 
+  Tag as TagIcon, 
+  Calendar, 
+  Clock, 
+  Eye, 
+  MessageCircle, 
+  ChevronLeft, 
+  ChevronRight 
+} from 'lucide-react'
 
 interface Category {
   id: string
@@ -28,10 +41,17 @@ interface TagItem {
   post_count?: number
 }
 
+// 扩展Post类型以包含关联数据
+interface PostWithRelations extends Post {
+  categories?: Category[]
+  tags?: TagItem[]
+  comment_count?: number
+}
+
 const POSTS_PER_PAGE = 6
 
 export default function BlogPage() {
-  const [posts, setPosts] = useState<Post[]>([])
+  const [posts, setPosts] = useState<PostWithRelations[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [tags, setTags] = useState<TagItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -119,6 +139,19 @@ export default function BlogPage() {
     return Math.ceil(words / wordsPerMinute)
   }
 
+  // 计算总页数
+  const totalPages = Math.ceil(total / POSTS_PER_PAGE)
+  
+  // 格式化日期函数
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    })
+  }
+
   if (!isConfigured) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -147,7 +180,7 @@ export default function BlogPage() {
         </div>
 
         {/* 搜索和过滤 */}
-        <Card className="mb-8">
+        <Card className="mb-8" key="search-filter-card">
           <CardHeader>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <CardTitle>文章搜索</CardTitle>
@@ -190,6 +223,7 @@ export default function BlogPage() {
                         variant={selectedCategory ? 'outline' : 'default'}
                         size="sm"
                         onClick={() => setSelectedCategory(null)}
+                        key="all-categories"
                       >
                         全部
                       </Button>
@@ -221,6 +255,7 @@ export default function BlogPage() {
                         variant={selectedTag ? 'outline' : 'default'}
                         size="sm"
                         onClick={() => setSelectedTag(null)}
+                        key="all-tags"
                       >
                         全部
                       </Button>
@@ -300,7 +335,7 @@ export default function BlogPage() {
                     </CardHeader>
                     <CardContent>
                       <div className="flex flex-wrap gap-2 mb-4">
-                        {post.categories?.slice(0, 2).map(category => (
+                        {post.categories?.slice(0, 2).map((category: Category) => (
                           <Badge 
                             key={category.id} 
                             variant="secondary" 
@@ -313,7 +348,7 @@ export default function BlogPage() {
                             {category.name}
                           </Badge>
                         ))}
-                        {post.tags?.slice(0, 2).map(tag => (
+                        {post.tags?.slice(0, 2).map((tag: TagItem) => (
                           <Badge 
                             key={tag.id} 
                             variant="outline" 
