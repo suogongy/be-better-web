@@ -30,8 +30,8 @@ export default function HabitsPage() {
       })
       
       addToast({
-        title: 'Success',
-        description: 'Habit created successfully!',
+        title: '成功',
+        description: '习惯创建成功！',
         variant: 'success',
       })
       
@@ -39,8 +39,8 @@ export default function HabitsPage() {
       setRefreshKey(prev => prev + 1)
     } catch (error) {
       addToast({
-        title: 'Error',
-        description: 'Failed to create habit. Please try again.',
+        title: '错误',
+        description: '创建习惯失败，请重试。',
         variant: 'destructive',
       })
     }
@@ -53,8 +53,8 @@ export default function HabitsPage() {
       await habitService.updateHabit(editingHabit.id, habitData)
       
       addToast({
-        title: 'Success',
-        description: 'Habit updated successfully!',
+        title: '成功',
+        description: '习惯更新成功！',
         variant: 'success',
       })
       
@@ -62,8 +62,8 @@ export default function HabitsPage() {
       setRefreshKey(prev => prev + 1)
     } catch (error) {
       addToast({
-        title: 'Error',
-        description: 'Failed to update habit. Please try again.',
+        title: '错误',
+        description: '更新习惯失败，请重试。',
         variant: 'destructive',
       })
     }
@@ -72,7 +72,7 @@ export default function HabitsPage() {
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loading text="Loading..." />
+        <Loading text="加载中..." />
       </div>
     )
   }
@@ -82,12 +82,12 @@ export default function HabitsPage() {
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md">
           <CardContent className="text-center py-8">
-            <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
+            <h1 className="text-2xl font-bold mb-4">访问被拒绝</h1>
             <p className="text-muted-foreground mb-4">
-              You need to be logged in to track your habits.
+              您需要登录才能跟踪您的习惯。
             </p>
             <Button onClick={() => window.location.href = '/auth/login'}>
-              Sign In
+              登录
             </Button>
           </CardContent>
         </Card>
@@ -100,9 +100,9 @@ export default function HabitsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Habit Tracker</h1>
+          <h1 className="text-3xl font-bold">习惯跟踪</h1>
           <p className="text-muted-foreground mt-1">
-            Build positive habits and track your progress
+            培养积极习惯，跟踪您的进展
           </p>
         </div>
       </div>

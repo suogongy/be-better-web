@@ -38,23 +38,23 @@ export function TaskFilters({
   const [showAdvanced, setShowAdvanced] = useState(false)
 
   const statusOptions = [
-    { value: 'pending', label: 'To Do', count: 0 },
-    { value: 'in_progress', label: 'In Progress', count: 0 },
-    { value: 'completed', label: 'Completed', count: 0 },
-    { value: 'cancelled', label: 'Cancelled', count: 0 },
+    { value: 'pending', label: '待办', count: 0 },
+    { value: 'in_progress', label: '进行中', count: 0 },
+    { value: 'completed', label: '已完成', count: 0 },
+    { value: 'cancelled', label: '已取消', count: 0 },
   ]
 
   const priorityOptions = [
-    { value: 'high', label: 'High', color: 'bg-red-100 text-red-800' },
-    { value: 'medium', label: 'Medium', color: 'bg-yellow-100 text-yellow-800' },
-    { value: 'low', label: 'Low', color: 'bg-green-100 text-green-800' },
+    { value: 'high', label: '高', color: 'bg-red-100 text-red-800' },
+    { value: 'medium', label: '中', color: 'bg-yellow-100 text-yellow-800' },
+    { value: 'low', label: '低', color: 'bg-green-100 text-green-800' },
   ]
 
   const sortOptions = [
-    { value: 'due_date', label: 'Due Date' },
-    { value: 'priority', label: 'Priority' },
-    { value: 'created_at', label: 'Created' },
-    { value: 'title', label: 'Title' },
+    { value: 'due_date', label: '截止日期' },
+    { value: 'priority', label: '优先级' },
+    { value: 'created_at', label: '创建时间' },
+    { value: 'title', label: '标题' },
   ]
 
   const updateFilter = (key: string, value: any) => {
@@ -64,9 +64,9 @@ export function TaskFilters({
     })
   }
 
-  const clearFilter = (key: string) => {
+  const clearFilter = (key: keyof typeof filters) => {
     const newFilters = { ...filters }
-    delete newFilters[key]
+    delete (newFilters as any)[key]
     onFiltersChange(newFilters)
   }
 
@@ -81,7 +81,7 @@ export function TaskFilters({
     updateFilter('sortOrder', filters.sortOrder === 'asc' ? 'desc' : 'asc')
   }
 
-  const activeFiltersCount = Object.keys(filters).filter(key => 
+  const activeFiltersCount = (Object.keys(filters) as Array<keyof typeof filters>).filter(key => 
     key !== 'sortBy' && key !== 'sortOrder' && filters[key]
   ).length
 
@@ -95,7 +95,7 @@ export function TaskFilters({
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
-                placeholder="Search tasks..."
+                placeholder="搜索任务..."
                 value={filters.search || ''}
                 onChange={(e) => updateFilter('search', e.target.value)}
                 className="pl-10"
@@ -119,7 +119,7 @@ export function TaskFilters({
               >
                 {sortOptions.map(option => (
                   <option key={option.value} value={option.value}>
-                    Sort by {option.label}
+                    按 {option.label} 排序
                   </option>
                 ))}
               </select>
@@ -145,7 +145,7 @@ export function TaskFilters({
               className="flex items-center gap-2"
             >
               <Filter className="h-4 w-4" />
-              Filters
+              筛选器
               {activeFiltersCount > 0 && (
                 <Badge variant="secondary" className="ml-1">
                   {activeFiltersCount}
@@ -163,7 +163,7 @@ export function TaskFilters({
             <div className="space-y-4 pt-4 border-t">
               {/* Status Filter */}
               <div>
-                <label className="block text-sm font-medium mb-2">Status</label>
+                <label className="block text-sm font-medium mb-2">状态</label>
                 <div className="flex flex-wrap gap-2">
                   {statusOptions.map(option => (
                     <button
@@ -188,7 +188,7 @@ export function TaskFilters({
 
               {/* Priority Filter */}
               <div>
-                <label className="block text-sm font-medium mb-2">Priority</label>
+                <label className="block text-sm font-medium mb-2">优先级</label>
                 <div className="flex flex-wrap gap-2">
                   {priorityOptions.map(option => (
                     <button
@@ -215,7 +215,7 @@ export function TaskFilters({
               {/* Category Filter */}
               {categories.length > 0 && (
                 <div>
-                  <label className="block text-sm font-medium mb-2">Category</label>
+                  <label className="block text-sm font-medium mb-2">分类</label>
                   <div className="flex flex-wrap gap-2">
                     {categories.map(category => (
                       <button
@@ -248,7 +248,7 @@ export function TaskFilters({
                     onClick={clearAllFilters}
                     className="text-muted-foreground hover:text-foreground"
                   >
-                    Clear all filters
+                    清除所有筛选
                   </Button>
                 </div>
               )}
@@ -260,7 +260,7 @@ export function TaskFilters({
             <div className="flex flex-wrap gap-2">
               {filters.status && (
                 <Badge variant="secondary" className="flex items-center gap-1">
-                  Status: {filters.status.replace('_', ' ')}
+                  状态： {filters.status.replace('_', ' ')}
                   <button
                     onClick={() => clearFilter('status')}
                     className="ml-1 hover:text-foreground"
@@ -271,7 +271,7 @@ export function TaskFilters({
               )}
               {filters.priority && (
                 <Badge variant="secondary" className="flex items-center gap-1">
-                  Priority: {filters.priority}
+                  优先级： {filters.priority}
                   <button
                     onClick={() => clearFilter('priority')}
                     className="ml-1 hover:text-foreground"
@@ -282,7 +282,7 @@ export function TaskFilters({
               )}
               {filters.category && (
                 <Badge variant="secondary" className="flex items-center gap-1">
-                  Category: {filters.category}
+                  分类： {filters.category}
                   <button
                     onClick={() => clearFilter('category')}
                     className="ml-1 hover:text-foreground"

@@ -9,12 +9,12 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { RecurringTaskForm } from './recurring-task-form'
-import { X, Plus, Repeat } from 'lucide-react'
+import { X, Plus, Repeat, ChevronDown, ChevronUp } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import type { Task } from '@/types/database'
 
 const taskSchema = z.object({
-  title: z.string().min(1, 'Title is required').max(255, 'Title too long'),
+  title: z.string().min(1, '标题是必填的').max(255, '标题过长'),
   description: z.string().optional(),
   category: z.string().optional(),
   priority: z.enum(['low', 'medium', 'high']),
@@ -47,7 +47,7 @@ type RecurrencePattern = {
 export function TaskForm({ task, categories, onSubmit, onCancel }: TaskFormProps) {
   const [newCategory, setNewCategory] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [showRecurringForm, setShowRecurringForm] = useState(false)
+  const [showRecurringOptions, setShowRecurringOptions] = useState(false)
   const [recurrencePattern, setRecurrencePattern] = useState<RecurrencePattern | null>(
     task?.recurrence_pattern ? task.recurrence_pattern as RecurrencePattern : null
   )
@@ -106,41 +106,104 @@ export function TaskForm({ task, categories, onSubmit, onCancel }: TaskFormProps
     }
   }
 
+  // 重复任务相关函数
+  const updateRecurrencePattern = (updates: Partial<RecurrencePattern>) => {
+    setRecurrencePattern(prev => prev ? { ...prev, ...updates } : null)
+  }
+
+  const handleRecurrenceTypeChange = (type: RecurrencePattern['type']) => {
+    const newPattern: RecurrencePattern = {
+      type,
+      interval: 1,
+    }
+
+    switch (type) {
+      case 'weekly':
+        newPattern.daysOfWeek = [1] // 默认周一
+        break
+      case 'monthly':
+        newPattern.dayOfMonth = 1
+        break
+    }
+
+    setRecurrencePattern(newPattern)
+  }
+
+  const toggleDayOfWeek = (dayIndex: number) => {
+    if (!recurrencePattern || recurrencePattern.type !== 'weekly') return
+
+    const daysOfWeek = recurrencePattern.daysOfWeek || []
+    const newDays = daysOfWeek.includes(dayIndex)
+      ? daysOfWeek.filter(d => d !== dayIndex)
+      : [...daysOfWeek, dayIndex].sort()
+
+    updateRecurrencePattern({ daysOfWeek: newDays })
+  }
+
+  const dayNames = ['日', '一', '二', '三', '四', '五', '六']
+
+  const generateRecurrencePreview = () => {
+    if (!recurrencePattern) return ''
+    
+    const { type, interval, daysOfWeek, dayOfMonth } = recurrencePattern
+
+    switch (type) {
+      case 'daily':
+        return interval === 1 ? '每天' : `每 ${interval} 天`
+      
+      case 'weekly':
+        const days = daysOfWeek?.map(d => `周${dayNames[d]}`).join('、') || '未选择日期'
+        const weekText = interval === 1 ? '周' : `${interval} 周`
+        return `每 ${weekText} 的 ${days}`
+      
+      case 'monthly':
+        const monthText = interval === 1 ? '月' : `${interval} 个月`
+        return `每 ${monthText} 的第 ${dayOfMonth || 1} 天`
+      
+      case 'yearly':
+        const yearText = interval === 1 ? '年' : `${interval} 年`
+        return `每 ${yearText}`
+      
+      default:
+        return '无效模式'
+    }
+  }
+
   const priorityOptions = [
-    { value: 'low', label: 'Low', color: 'bg-green-100 text-green-800' },
-    { value: 'medium', label: 'Medium', color: 'bg-yellow-100 text-yellow-800' },
-    { value: 'high', label: 'High', color: 'bg-red-100 text-red-800' },
+    { value: 'low', label: '低', color: 'bg-green-100 text-green-800' },
+    { value: 'medium', label: '中', color: 'bg-yellow-100 text-yellow-800' },
+    { value: 'high', label: '高', color: 'bg-red-100 text-red-800' },
   ]
 
   const statusOptions = [
-    { value: 'pending', label: 'To Do', color: 'bg-orange-100 text-orange-800' },
-    { value: 'in_progress', label: 'In Progress', color: 'bg-blue-100 text-blue-800' },
-    { value: 'completed', label: 'Completed', color: 'bg-green-100 text-green-800' },
-    { value: 'cancelled', label: 'Cancelled', color: 'bg-gray-100 text-gray-800' },
+    { value: 'pending', label: '待办', color: 'bg-orange-100 text-orange-800' },
+    { value: 'in_progress', label: '进行中', color: 'bg-blue-100 text-blue-800' },
+    { value: 'completed', label: '已完成', color: 'bg-green-100 text-green-800' },
+    { value: 'cancelled', label: '已取消', color: 'bg-gray-100 text-gray-800' },
   ]
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>
-            {task ? 'Edit Task' : 'Create New Task'}
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 shadow-2xl border-0">
+        <CardHeader className="flex flex-row items-center justify-between border-b bg-gray-50 dark:bg-gray-800">
+          <CardTitle className="text-lg font-semibold">
+            {task ? '编辑任务' : '创建新任务'}
           </CardTitle>
-          <Button variant="ghost" size="sm" onClick={onCancel}>
+          <Button variant="ghost" size="sm" onClick={onCancel} className="hover:bg-gray-200 dark:hover:bg-gray-700">
             <X className="h-4 w-4" />
           </Button>
         </CardHeader>
         
-        <CardContent>
+        <CardContent className="p-6 bg-white dark:bg-gray-900">
           <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
             {/* Title */}
             <div>
               <label className="block text-sm font-medium mb-2">
-                Title *
+                标题 *
               </label>
               <Input
                 {...register('title')}
-                placeholder="Enter task title..."
+                placeholder="输入任务标题..."
               />
               {errors.title && (
                 <p className="text-sm text-red-600 mt-1">{errors.title.message}</p>
@@ -150,11 +213,11 @@ export function TaskForm({ task, categories, onSubmit, onCancel }: TaskFormProps
             {/* Description */}
             <div>
               <label className="block text-sm font-medium mb-2">
-                Description
+                描述
               </label>
               <Textarea
                 {...register('description')}
-                placeholder="Add a description..."
+                placeholder="添加任务描述..."
                 rows={3}
               />
             </div>
@@ -164,7 +227,7 @@ export function TaskForm({ task, categories, onSubmit, onCancel }: TaskFormProps
               {/* Priority */}
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Priority
+                  优先级
                 </label>
                 <div className="space-y-2">
                   {priorityOptions.map(option => (
@@ -186,7 +249,7 @@ export function TaskForm({ task, categories, onSubmit, onCancel }: TaskFormProps
               {/* Status */}
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Status
+                  状态
                 </label>
                 <div className="space-y-2">
                   {statusOptions.map(option => (
@@ -209,13 +272,13 @@ export function TaskForm({ task, categories, onSubmit, onCancel }: TaskFormProps
             {/* Category */}
             <div>
               <label className="block text-sm font-medium mb-2">
-                Category
+                分类
               </label>
               <div className="space-y-3">
                 {/* Existing Categories */}
                 {categories.length > 0 && (
                   <div>
-                    <div className="text-xs text-muted-foreground mb-2">Select existing:</div>
+                    <div className="text-xs text-muted-foreground mb-2">选择现有分类：</div>
                     <div className="flex flex-wrap gap-2">
                       {categories.map(category => (
                         <button
@@ -237,12 +300,12 @@ export function TaskForm({ task, categories, onSubmit, onCancel }: TaskFormProps
                 
                 {/* Custom Category */}
                 <div>
-                  <div className="text-xs text-muted-foreground mb-2">Or create new:</div>
+                  <div className="text-xs text-muted-foreground mb-2">或创建新分类：</div>
                   <div className="flex gap-2">
                     <Input
                       value={newCategory}
                       onChange={(e) => setNewCategory(e.target.value)}
-                      placeholder="Enter new category..."
+                      placeholder="输入新分类..."
                       className="flex-1"
                     />
                     <Button
@@ -259,7 +322,7 @@ export function TaskForm({ task, categories, onSubmit, onCancel }: TaskFormProps
                 {/* Manual category input */}
                 <Input
                   {...register('category')}
-                  placeholder="Or type category directly..."
+                  placeholder="或直接输入分类..."
                   value={watchedCategory}
                 />
               </div>
@@ -270,7 +333,7 @@ export function TaskForm({ task, categories, onSubmit, onCancel }: TaskFormProps
               {/* Estimated Time */}
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Estimated Time (minutes)
+                  预计时间（分钟）
                 </label>
                 <Input
                   type="number"
@@ -283,7 +346,7 @@ export function TaskForm({ task, categories, onSubmit, onCancel }: TaskFormProps
               {/* Due Date */}
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Due Date
+                  截止日期
                 </label>
                 <Input
                   type="date"
@@ -294,7 +357,7 @@ export function TaskForm({ task, categories, onSubmit, onCancel }: TaskFormProps
               {/* Due Time */}
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Due Time
+                  截止时间
                 </label>
                 <Input
                   type="time"
@@ -305,64 +368,230 @@ export function TaskForm({ task, categories, onSubmit, onCancel }: TaskFormProps
 
             {/* Recurring Task */}
             <div>
-              <label className="block text-sm font-medium mb-2">
-                Recurring Task
-              </label>
+              <div className="flex items-center justify-between mb-3">
+                <label className="block text-sm font-medium">
+                  重复任务
+                </label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowRecurringOptions(!showRecurringOptions)}
+                  className="flex items-center gap-2"
+                >
+                  <Repeat className="h-4 w-4" />
+                  {showRecurringOptions ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  {showRecurringOptions ? '收起设置' : '展开设置'}
+                </Button>
+              </div>
+              
               <div className="space-y-3">
                 <div className="flex items-center space-x-2">
                   <input
                     type="checkbox"
                     {...register('is_recurring')}
                     className="rounded"
+                    onChange={(e) => {
+                      if (!e.target.checked) {
+                        setRecurrencePattern(null)
+                        setShowRecurringOptions(false)
+                      } else {
+                        setShowRecurringOptions(true)
+                        if (!recurrencePattern) {
+                          handleRecurrenceTypeChange('weekly')
+                        }
+                      }
+                    }}
                   />
                   <label className="text-sm font-medium">
-                    Make this a recurring task
+                    设置为重复任务
                   </label>
                 </div>
                 
-                {watch('is_recurring') && (
-                  <div className="space-y-3">
-                    {recurrencePattern ? (
-                      <div className="p-3 bg-muted rounded-lg">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="text-sm font-medium">Recurrence Pattern</div>
-                            <div className="text-xs text-muted-foreground">
-                              {/* Display pattern summary */}
-                              {recurrencePattern.type} pattern configured
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setShowRecurringForm(true)}
-                            >
-                              <Repeat className="h-4 w-4 mr-1" />
-                              Edit
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setRecurrencePattern(null)}
-                            >
-                              Remove
-                            </Button>
-                          </div>
+                {/* 重复设置选项 */}
+                {(watch('is_recurring') && showRecurringOptions) && (
+                  <div className="space-y-4 p-4 border rounded-lg bg-gray-50 dark:bg-gray-800">
+                    {/* 重复类型 */}
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        重复类型
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {(['daily', 'weekly', 'monthly', 'yearly'] as const).map(type => (
+                          <button
+                            key={type}
+                            type="button"
+                            onClick={() => handleRecurrenceTypeChange(type)}
+                            className={cn(
+                              "px-3 py-2 rounded-md text-sm border transition-colors",
+                              recurrencePattern?.type === type
+                                ? "bg-primary text-primary-foreground border-primary"
+                                : "bg-background hover:bg-muted border-border"
+                            )}
+                          >
+                            {{
+                              daily: '每日',
+                              weekly: '每周',
+                              monthly: '每月',
+                              yearly: '每年'
+                            }[type]}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 间隔 */}
+                    {recurrencePattern && (
+                      <div>
+                        <label className="block text-sm font-medium mb-2">
+                          每
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="number"
+                            min="1"
+                            max="100"
+                            value={recurrencePattern.interval}
+                            onChange={(e) => updateRecurrencePattern({ interval: parseInt(e.target.value) || 1 })}
+                            className="w-20"
+                          />
+                          <span className="text-sm text-muted-foreground">
+                            {{
+                              daily: recurrencePattern.interval === 1 ? '天' : '天',
+                              weekly: recurrencePattern.interval === 1 ? '周' : '周',
+                              monthly: recurrencePattern.interval === 1 ? '个月' : '个月',
+                              yearly: recurrencePattern.interval === 1 ? '年' : '年'
+                            }[recurrencePattern.type]}
+                          </span>
                         </div>
                       </div>
-                    ) : (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setShowRecurringForm(true)}
-                        className="w-full"
-                      >
-                        <Repeat className="h-4 w-4 mr-2" />
-                        Set Recurrence Pattern
-                      </Button>
+                    )}
+
+                    {/* 周天选择 */}
+                    {recurrencePattern?.type === 'weekly' && (
+                      <div>
+                        <label className="block text-sm font-medium mb-2">
+                          选择天数
+                        </label>
+                        <div className="flex gap-1">
+                          {dayNames.map((day, index) => (
+                            <button
+                              key={index}
+                              type="button"
+                              onClick={() => toggleDayOfWeek(index)}
+                              className={cn(
+                                "px-3 py-2 rounded text-sm border transition-colors",
+                                recurrencePattern.daysOfWeek?.includes(index)
+                                  ? "bg-primary text-primary-foreground border-primary"
+                                  : "bg-background hover:bg-muted border-border"
+                              )}
+                            >
+                              周{day}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 月日选择 */}
+                    {recurrencePattern?.type === 'monthly' && (
+                      <div>
+                        <label className="block text-sm font-medium mb-2">
+                          每月第几天
+                        </label>
+                        <Input
+                          type="number"
+                          min="1"
+                          max="31"
+                          value={recurrencePattern.dayOfMonth || 1}
+                          onChange={(e) => updateRecurrencePattern({ dayOfMonth: parseInt(e.target.value) || 1 })}
+                          className="w-20"
+                        />
+                      </div>
+                    )}
+
+                    {/* 结束条件 */}
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        结束条件
+                      </label>
+                      <div className="space-y-2">
+                        <label className="flex items-center space-x-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="endCondition"
+                            checked={!recurrencePattern?.endDate && !recurrencePattern?.maxOccurrences}
+                            onChange={() => updateRecurrencePattern({ endDate: undefined, maxOccurrences: undefined })}
+                            className="text-primary"
+                          />
+                          <span className="text-sm">永不结束</span>
+                        </label>
+
+                        <label className="flex items-center space-x-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="endCondition"
+                            checked={!!recurrencePattern?.endDate}
+                            onChange={() => updateRecurrencePattern({ 
+                              endDate: new Date().toISOString().split('T')[0], 
+                              maxOccurrences: undefined 
+                            })}
+                            className="text-primary"
+                          />
+                          <span className="text-sm">结束日期</span>
+                          {recurrencePattern?.endDate && (
+                            <Input
+                              type="date"
+                              value={recurrencePattern.endDate}
+                              onChange={(e) => updateRecurrencePattern({ endDate: e.target.value })}
+                              className="ml-2 w-auto"
+                            />
+                          )}
+                        </label>
+
+                        <label className="flex items-center space-x-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="endCondition"
+                            checked={!!recurrencePattern?.maxOccurrences}
+                            onChange={() => updateRecurrencePattern({ 
+                              maxOccurrences: 10, 
+                              endDate: undefined 
+                            })}
+                            className="text-primary"
+                          />
+                          <span className="text-sm">执行</span>
+                          {recurrencePattern?.maxOccurrences && (
+                            <>
+                              <Input
+                                type="number"
+                                min="1"
+                                max="1000"
+                                value={recurrencePattern.maxOccurrences}
+                                onChange={(e) => updateRecurrencePattern({ maxOccurrences: parseInt(e.target.value) || 1 })}
+                                className="w-16"
+                              />
+                              <span className="text-sm">次</span>
+                            </>
+                          )}
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* 预览 */}
+                    {recurrencePattern && (
+                      <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                        <div className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-1">预览</div>
+                        <div className="text-sm text-blue-700 dark:text-blue-300">
+                          {generateRecurrencePreview()}
+                          {recurrencePattern.endDate && (
+                            <span> ，直到 {recurrencePattern.endDate}</span>
+                          )}
+                          {recurrencePattern.maxOccurrences && (
+                            <span> ，共 {recurrencePattern.maxOccurrences} 次</span>
+                          )}
+                        </div>
+                      </div>
                     )}
                   </div>
                 )}
@@ -373,7 +602,7 @@ export function TaskForm({ task, categories, onSubmit, onCancel }: TaskFormProps
             {task && watchedStatus !== 'pending' && (
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Progress ({watch('progress')}%)
+                  进度 ({watch('progress')}%)
                 </label>
                 <input
                   type="range"
@@ -389,26 +618,16 @@ export function TaskForm({ task, categories, onSubmit, onCancel }: TaskFormProps
             {/* Form Actions */}
             <div className="flex justify-end gap-3 pt-4 border-t">
               <Button variant="outline" onClick={onCancel} type="button">
-                Cancel
+                取消
               </Button>
               <Button type="submit" loading={isSubmitting}>
-                {task ? 'Update Task' : 'Create Task'}
+                {task ? '更新任务' : '创建任务'}
               </Button>
             </div>
           </form>
         </CardContent>
       </Card>
-      
-      {/* Recurring Task Form Modal */}
-      <RecurringTaskForm
-        isOpen={showRecurringForm}
-        initialPattern={recurrencePattern || undefined}
-        onSave={(pattern) => {
-          setRecurrencePattern(pattern)
-          setShowRecurringForm(false)
-        }}
-        onCancel={() => setShowRecurringForm(false)}
-      />
+
     </div>
   )
 }

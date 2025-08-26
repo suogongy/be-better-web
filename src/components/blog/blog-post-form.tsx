@@ -17,10 +17,19 @@ import { X, Plus } from 'lucide-react'
 
 // 表单验证规则
 const postSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  slug: z.string().min(1, 'Slug is required'),
-  excerpt: z.string().optional(),
-  content: z.string().min(1, 'Content is required'),
+  title: z.string().min(1, '标题是必填项').max(200, '标题不能超过200个字符'),
+  slug: z.string()
+    .min(1, 'URL链接是必填项')
+    .max(50, 'URL链接不能超过50个字符')
+    .regex(/^[a-z0-9-]+$/, 'URL链接只能包含小写字母、数字和连字符')
+    .refine((val) => !val.startsWith('-') && !val.endsWith('-'), {
+      message: 'URL链接不能以连字符开头或结尾'
+    })
+    .refine((val) => !val.includes('--'), {
+      message: 'URL链接不能包含连续的连字符'
+    }),
+  excerpt: z.string().max(300, '摘要不能超过300个字符').optional(),
+  content: z.string().min(1, '文章内容是必填项'),
   status: z.enum(['draft', 'published']),
   category_ids: z.array(z.string()).optional(),
   tag_ids: z.array(z.string()).optional(),
@@ -109,8 +118,21 @@ export function BlogPostForm({
   // 处理标题变化，自动生成slug
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTitle = e.target.value
-    const newSlug = createSlug(newTitle)
-    setValue('slug', newSlug)
+    
+    // 只有在slug为空或者是基于之前标题生成的时候才自动更新
+    const currentSlug = watch('slug')
+    const currentTitle = watch('title')
+    const shouldUpdateSlug = !currentSlug || currentSlug === createSlug(currentTitle || '')
+    
+    if (shouldUpdateSlug && newTitle) {
+      const newSlug = createSlug(newTitle)
+      setValue('slug', newSlug)
+      
+      // 如果生成的slug为空，给出提示
+      if (!newSlug) {
+        setValue('slug', 'post-' + Date.now().toString(36).slice(-6))
+      }
+    }
   }
 
   // 提交表单
@@ -169,10 +191,11 @@ export function BlogPostForm({
         </CardHeader>
         <CardContent className="space-y-6">
           {/* 基本信息 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-6">
+            {/* 标题输入 */}
             <div>
               <label className="block text-sm font-medium mb-2">
-                标题 <span className="text-red-500">*</span>
+                文章标题 <span className="text-red-500">*</span>
               </label>
               <Input
                 {...register('title')}
@@ -180,38 +203,71 @@ export function BlogPostForm({
                   register('title').onChange(e)
                   handleTitleChange(e)
                 }}
-                placeholder="输入文章标题"
+                placeholder="输入吸引人的文章标题"
                 className={errors.title ? 'border-red-500' : ''}
               />
               {errors.title && (
                 <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>
               )}
+              <p className="mt-1 text-xs text-gray-500">
+                💡 标题会自动生成URL链接，建议使用简洁明了的标题
+              </p>
             </div>
 
+            {/* URL Slug输入 */}
             <div>
               <label className="block text-sm font-medium mb-2">
-                URL Slug <span className="text-red-500">*</span>
+                URL链接 (Slug) <span className="text-red-500">*</span>
               </label>
-              <Input
-                {...register('slug')}
-                placeholder="url-slug"
-                className={errors.slug ? 'border-red-500' : ''}
-              />
-              {errors.slug && (
-                <p className="mt-1 text-sm text-red-600">{errors.slug.message}</p>
-              )}
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-500">网址预览:</span>
+                  <code className="px-2 py-1 bg-gray-100 rounded text-sm">
+                    /blog/<span className="text-blue-600">{watch('slug') || 'your-post-url'}</span>
+                  </code>
+                </div>
+                <Input
+                  {...register('slug')}
+                  placeholder="post-url-slug"
+                  className={errors.slug ? 'border-red-500' : ''}
+                />
+                {errors.slug && (
+                  <p className="mt-1 text-sm text-red-600">{errors.slug.message}</p>
+                )}
+                <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <h4 className="text-sm font-medium text-blue-800 mb-1">什么是URL链接(Slug)？</h4>
+                  <p className="text-xs text-blue-700 mb-2">
+                    URL链接是文章网址的最后部分，用于唯一标识这篇文章。例如文章"我的第一篇博客"的链接可能是"my-first-blog"
+                  </p>
+                  <div className="text-xs text-blue-600">
+                    <strong>规则：</strong>
+                    <ul className="list-disc list-inside mt-1 space-y-1">
+                      <li>只能包含小写字母、数字和连字符(-)</li>
+                      <li>不能包含空格、特殊字符或中文</li>
+                      <li>建议简短且有意义，便于SEO和分享</li>
+                      <li>一旦发布后不建议修改，以免影响链接访问</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
           {/* 摘要和状态 */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium mb-2">摘要</label>
+              <label className="block text-sm font-medium mb-2">
+                文章摘要
+                <span className="text-gray-400 font-normal">（可选）</span>
+              </label>
               <Textarea
                 {...register('excerpt')}
-                placeholder="简要描述文章内容"
+                placeholder="简要描述文章内容，帮助读者快速了解文章主题（建议150字以内）"
                 rows={3}
               />
+              <p className="mt-1 text-xs text-gray-500">
+                💡 摘要会显示在博客列表中，好的摘要能吸引更多读者点击
+              </p>
             </div>
 
             <div>

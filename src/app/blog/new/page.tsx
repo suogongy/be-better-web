@@ -19,7 +19,7 @@ export default function NewBlogPostPage() {
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loading text="Loading..." />
+        <Loading text="加载中..." />
       </div>
     )
   }
@@ -28,10 +28,10 @@ export default function NewBlogPostPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
-          <p className="text-gray-600 mb-4">You need to be logged in to create posts.</p>
+          <h1 className="text-2xl font-bold mb-4">访问被拒绝</h1>
+          <p className="text-gray-600 mb-4">您需要登录才能创建文章。</p>
           <Link href="/auth/login">
-            <Button>Sign In</Button>
+            <Button>登录</Button>
           </Link>
         </div>
       </div>
@@ -56,16 +56,16 @@ export default function NewBlogPostPage() {
       await postService.createPost(postData)
 
       addToast({
-        title: 'Success!',
-        description: `Post ${data.status === 'published' ? 'published' : 'saved as draft'} successfully.`,
+        title: '成功！',
+        description: `文章${data.status === 'published' ? '已发布' : '已保存为草稿'}成功。`,
         variant: 'success',
       })
 
       router.push('/blog')
     } catch (error) {
       addToast({
-        title: 'Error',
-        description: 'Failed to create post. Please try again.',
+        title: '错误',
+        description: '创建文章失败，请重试。',
         variant: 'destructive',
       })
     } finally {
@@ -81,9 +81,9 @@ export default function NewBlogPostPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
         <Link href="/blog" className="text-sm text-muted-foreground hover:text-primary">
-          ← Back to Blog
+          ← 返回博客
         </Link>
-        <h1 className="text-3xl font-bold mt-2">Create New Post</h1>
+        <h1 className="text-3xl font-bold mt-2">创建新文章</h1>
       </div>
 
       <BlogPostForm

@@ -13,7 +13,7 @@ export default function CommentModerationPage() {
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loading text="Loading..." />
+        <Loading text="加载中..." />
       </div>
     )
   }
@@ -22,10 +22,10 @@ export default function CommentModerationPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
-          <p className="text-gray-600 mb-4">You need to be logged in to access comment moderation.</p>
+          <h1 className="text-2xl font-bold mb-4">访问被拒绝</h1>
+          <p className="text-gray-600 mb-4">您需要登录才能访问评论管理。</p>
           <Link href="/auth/login">
-            <Button>Sign In</Button>
+            <Button>登录</Button>
           </Link>
         </div>
       </div>
@@ -38,7 +38,7 @@ export default function CommentModerationPage() {
       <div className="mb-6">
         <Link href="/blog/admin" className="text-sm text-muted-foreground hover:text-primary flex items-center gap-2">
           <ArrowLeft className="h-4 w-4" />
-          Back to Blog Admin
+          返回博客管理
         </Link>
       </div>
 

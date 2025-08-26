@@ -16,12 +16,12 @@ import { Loading } from '@/components/ui/loading'
 import { Eye, EyeOff, AlertCircle } from 'lucide-react'
 
 const registerSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  name: z.string().min(2, '姓名至少需見2个字符'),
+  email: z.string().email('请输入正确的邮箱地址'),
+  password: z.string().min(6, '密码至少需見6个字符'),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
+  message: "密码不匹配",
   path: ["confirmPassword"],
 })
 
@@ -51,22 +51,22 @@ export default function RegisterPage() {
       
       if (error) {
         addToast({
-          title: 'Registration failed',
+          title: '注册失败',
           description: error.message,
           variant: 'destructive',
         })
       } else {
         addToast({
-          title: 'Account created!',
-          description: 'Please check your email to verify your account.',
+          title: '账户创建成功！',
+          description: '请检查您的邮箱以验证您的账户。',
           variant: 'success',
         })
         router.push('/auth/login')
       }
     } catch (error) {
       addToast({
-        title: 'An error occurred',
-        description: 'Please try again later.',
+        title: '发生错误',
+        description: '请稍后再试。',
         variant: 'destructive',
       })
     } finally {
@@ -79,12 +79,12 @@ export default function RegisterPage() {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <h2 className="mt-6 text-3xl font-bold text-gray-900 dark:text-white">
-            Create your account
+            创建您的账户
           </h2>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            Or{' '}
+            或{' '}
             <Link href="/auth/login" className="font-medium text-primary hover:text-primary/80">
-              sign in to your existing account
+              登录已有账户
             </Link>
           </p>
         </div>
@@ -94,9 +94,9 @@ export default function RegisterPage() {
             <div className="flex items-start">
               <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5 mr-3 flex-shrink-0" />
               <div className="text-sm">
-                <h3 className="font-medium text-yellow-800 dark:text-yellow-200">Demo Mode</h3>
+                <h3 className="font-medium text-yellow-800 dark:text-yellow-200">演示模式</h3>
                 <p className="mt-1 text-yellow-700 dark:text-yellow-300">
-                  Authentication is not configured. To enable user registration, please set up Supabase credentials in your environment file.
+                  身份验证未配置。要启用用户注册，请在环境文件中设置 Supabase 凭据。
                 </p>
               </div>
             </div>
@@ -105,16 +105,16 @@ export default function RegisterPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Get started</CardTitle>
+            <CardTitle>开始使用</CardTitle>
             <CardDescription>
-              Create your account to start your productivity journey
+              创建您的账户开始您的生产力之旅
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Full name
+                  姓名
                 </label>
                 <div className="mt-1">
                   <Input
@@ -123,7 +123,7 @@ export default function RegisterPage() {
                     autoComplete="name"
                     {...register('name')}
                     className={errors.name ? 'border-red-500' : ''}
-                    placeholder="Enter your full name"
+                    placeholder="输入您的姓名"
                   />
                   {errors.name && (
                     <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
@@ -133,7 +133,7 @@ export default function RegisterPage() {
 
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Email address
+                  邮箱地址
                 </label>
                 <div className="mt-1">
                   <Input
@@ -142,7 +142,7 @@ export default function RegisterPage() {
                     autoComplete="email"
                     {...register('email')}
                     className={errors.email ? 'border-red-500' : ''}
-                    placeholder="Enter your email"
+                    placeholder="输入您的邮箱"
                   />
                   {errors.email && (
                     <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
@@ -152,7 +152,7 @@ export default function RegisterPage() {
 
               <div>
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Password
+                  密码
                 </label>
                 <div className="mt-1 relative">
                   <Input
@@ -161,7 +161,7 @@ export default function RegisterPage() {
                     autoComplete="new-password"
                     {...register('password')}
                     className={errors.password ? 'border-red-500 pr-10' : 'pr-10'}
-                    placeholder="Create a password"
+                    placeholder="创建密码"
                   />
                   <button
                     type="button"
@@ -182,7 +182,7 @@ export default function RegisterPage() {
 
               <div>
                 <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Confirm password
+                  确认密码
                 </label>
                 <div className="mt-1 relative">
                   <Input
@@ -191,7 +191,7 @@ export default function RegisterPage() {
                     autoComplete="new-password"
                     {...register('confirmPassword')}
                     className={errors.confirmPassword ? 'border-red-500 pr-10' : 'pr-10'}
-                    placeholder="Confirm your password"
+                    placeholder="确认您的密码"
                   />
                   <button
                     type="button"
@@ -211,15 +211,15 @@ export default function RegisterPage() {
               </div>
 
               <div className="text-sm text-gray-600 dark:text-gray-400">
-                By creating an account, you agree to our{' '}
+                通过创建账户，您同意我们的{' '}
                 <Link href="/terms" className="font-medium text-primary hover:text-primary/80">
-                  Terms of Service
+                  服务条款
                 </Link>{' '}
-                and{' '}
+                和{' '}
                 <Link href="/privacy" className="font-medium text-primary hover:text-primary/80">
-                  Privacy Policy
+                  隐私政策
                 </Link>
-                .
+                。
               </div>
 
               <Button
@@ -228,7 +228,7 @@ export default function RegisterPage() {
                 disabled={isLoading}
                 loading={isLoading}
               >
-                {isLoading ? 'Creating account...' : 'Create account'}
+                {isLoading ? '创建账户中...' : '创建账户'}
               </Button>
             </form>
 
@@ -238,14 +238,14 @@ export default function RegisterPage() {
                   <div className="w-full border-t border-gray-300" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-background text-gray-500">Already have an account?</span>
+                  <span className="px-2 bg-background text-gray-500">已有账户？</span>
                 </div>
               </div>
 
               <div className="mt-6">
                 <Link href="/auth/login">
                   <Button variant="outline" className="w-full">
-                    Sign in instead
+                    登录
                   </Button>
                 </Link>
               </div>

@@ -13,7 +13,7 @@ export default function InsightsPage() {
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loading text="Loading..." />
+        <Loading text="加载中..." />
       </div>
     )
   }
@@ -23,12 +23,12 @@ export default function InsightsPage() {
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md">
           <CardContent className="text-center py-8">
-            <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
+            <h1 className="text-2xl font-bold mb-4">访问被拒绝</h1>
             <p className="text-muted-foreground mb-4">
-              You need to be logged in to view your productivity insights.
+              您需要登录才能查看您的生产力洞察。
             </p>
             <Button onClick={() => window.location.href = '/auth/login'}>
-              Sign In
+              登录
             </Button>
           </CardContent>
         </Card>
@@ -43,10 +43,10 @@ export default function InsightsPage() {
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <Brain className="h-8 w-8 text-purple-600" />
-            Productivity Insights
+            生产力洞察
           </h1>
           <p className="text-muted-foreground mt-1">
-            Discover patterns and correlations in your productivity data
+            发现您的生产力数据中的模式和关联
           </p>
         </div>
       </div>

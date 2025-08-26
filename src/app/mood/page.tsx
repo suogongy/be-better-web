@@ -19,7 +19,7 @@ export default function MoodPage() {
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loading text="Loading..." />
+        <Loading text="加载中..." />
       </div>
     )
   }
@@ -29,12 +29,12 @@ export default function MoodPage() {
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md">
           <CardContent className="text-center py-8">
-            <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
+            <h1 className="text-2xl font-bold mb-4">访问被拒绝</h1>
             <p className="text-muted-foreground mb-4">
-              You need to be logged in to track your mood.
+              您需要登录才能跟踪您的心情。
             </p>
             <Button onClick={() => window.location.href = '/auth/login'}>
-              Sign In
+              登录
             </Button>
           </CardContent>
         </Card>
@@ -49,10 +49,10 @@ export default function MoodPage() {
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <Heart className="h-8 w-8 text-red-500" />
-            Mood Tracker
+            心情跟踪
           </h1>
           <p className="text-muted-foreground mt-1">
-            Track your daily mood, energy, and wellbeing
+            跟踪您的每日心情、精力和健康状态
           </p>
         </div>
       </div>

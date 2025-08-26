@@ -73,18 +73,18 @@ export function RecurringTaskForm({
     updatePattern({ daysOfWeek: newDays })
   }
 
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  const dayNames = ['日', '一', '二', '三', '四', '五', '六']
 
   const getIntervalLabel = () => {
     switch (pattern.type) {
       case 'daily':
-        return pattern.interval === 1 ? 'day' : 'days'
+        return pattern.interval === 1 ? '天' : '天'
       case 'weekly':
-        return pattern.interval === 1 ? 'week' : 'weeks'
+        return pattern.interval === 1 ? '周' : '周'
       case 'monthly':
-        return pattern.interval === 1 ? 'month' : 'months'
+        return pattern.interval === 1 ? '个月' : '个月'
       case 'yearly':
-        return pattern.interval === 1 ? 'year' : 'years'
+        return pattern.interval === 1 ? '年' : '年'
     }
   }
 
@@ -93,23 +93,23 @@ export function RecurringTaskForm({
 
     switch (type) {
       case 'daily':
-        return interval === 1 ? 'Every day' : `Every ${interval} days`
+        return interval === 1 ? '每天' : `每 ${interval} 天`
       
       case 'weekly':
-        const days = daysOfWeek?.map(d => dayNames[d]).join(', ') || 'No days selected'
-        const weekText = interval === 1 ? 'week' : `${interval} weeks`
-        return `Every ${weekText} on ${days}`
+        const days = daysOfWeek?.map(d => `周${dayNames[d]}`).join('、') || '未选择日期'
+        const weekText = interval === 1 ? '周' : `${interval} 周`
+        return `每 ${weekText} 的 ${days}`
       
       case 'monthly':
-        const monthText = interval === 1 ? 'month' : `${interval} months`
-        return `Every ${monthText} on day ${dayOfMonth || 1}`
+        const monthText = interval === 1 ? '月' : `${interval} 个月`
+        return `每 ${monthText} 的第 ${dayOfMonth || 1} 天`
       
       case 'yearly':
-        const yearText = interval === 1 ? 'year' : `${interval} years`
-        return `Every ${yearText}`
+        const yearText = interval === 1 ? '年' : `${interval} 年`
+        return `每 ${yearText}`
       
       default:
-        return 'Invalid pattern'
+        return '无效模式'
     }
   }
 
@@ -128,23 +128,23 @@ export function RecurringTaskForm({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <Card className="w-full max-w-md">
-        <CardHeader className="flex flex-row items-center justify-between">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
+      <Card className="w-full max-w-md bg-white dark:bg-gray-900 shadow-2xl border-0">
+        <CardHeader className="flex flex-row items-center justify-between border-b bg-gray-50 dark:bg-gray-800">
           <CardTitle className="flex items-center gap-2">
             <Repeat className="h-5 w-5" />
-            Recurring Task
+            重复任务设置
           </CardTitle>
-          <Button variant="ghost" size="sm" onClick={onCancel}>
+          <Button variant="ghost" size="sm" onClick={onCancel} className="hover:bg-gray-200 dark:hover:bg-gray-700">
             <X className="h-4 w-4" />
           </Button>
         </CardHeader>
         
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 p-6 bg-white dark:bg-gray-900">
           {/* Recurrence Type */}
           <div>
             <label className="block text-sm font-medium mb-2">
-              Repeat Type
+              重复类型
             </label>
             <div className="grid grid-cols-2 gap-2">
               {(['daily', 'weekly', 'monthly', 'yearly'] as const).map(type => (
@@ -158,7 +158,7 @@ export function RecurringTaskForm({
                       : "bg-background hover:bg-muted border-border"
                   )}
                 >
-                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                  {type === 'daily' ? '每日' : type === 'weekly' ? '每周' : type === 'monthly' ? '每月' : '每年'}
                 </button>
               ))}
             </div>
@@ -167,7 +167,7 @@ export function RecurringTaskForm({
           {/* Interval */}
           <div>
             <label className="block text-sm font-medium mb-2">
-              Every
+              每
             </label>
             <div className="flex items-center gap-2">
               <Input
@@ -188,7 +188,7 @@ export function RecurringTaskForm({
           {pattern.type === 'weekly' && (
             <div>
               <label className="block text-sm font-medium mb-2">
-                On days
+                选择天数
               </label>
               <div className="flex gap-1">
                 {dayNames.map((day, index) => (
@@ -202,7 +202,7 @@ export function RecurringTaskForm({
                         : "bg-background hover:bg-muted border-border"
                     )}
                   >
-                    {day}
+                    周{day}
                   </button>
                 ))}
               </div>
@@ -213,7 +213,7 @@ export function RecurringTaskForm({
           {pattern.type === 'monthly' && (
             <div>
               <label className="block text-sm font-medium mb-2">
-                On day of month
+                每月第几天
               </label>
               <Input
                 type="number"
@@ -229,7 +229,7 @@ export function RecurringTaskForm({
           {/* End Conditions */}
           <div>
             <label className="block text-sm font-medium mb-2">
-              End Condition
+              结束条件
             </label>
             <div className="space-y-3">
               {/* Never End */}
@@ -241,7 +241,7 @@ export function RecurringTaskForm({
                   onChange={() => updatePattern({ endDate: undefined, maxOccurrences: undefined })}
                   className="text-primary"
                 />
-                <span className="text-sm">Never end</span>
+                <span className="text-sm">永不结束</span>
               </label>
 
               {/* End Date */}
@@ -256,7 +256,7 @@ export function RecurringTaskForm({
                   })}
                   className="text-primary"
                 />
-                <span className="text-sm">End by date</span>
+                <span className="text-sm">结束日期</span>
                 {pattern.endDate && (
                   <Input
                     type="date"
@@ -279,7 +279,7 @@ export function RecurringTaskForm({
                   })}
                   className="text-primary"
                 />
-                <span className="text-sm">After</span>
+                <span className="text-sm">执行</span>
                 {pattern.maxOccurrences && (
                   <>
                     <Input
@@ -290,7 +290,7 @@ export function RecurringTaskForm({
                       onChange={(e) => updatePattern({ maxOccurrences: parseInt(e.target.value) || 1 })}
                       className="w-16"
                     />
-                    <span className="text-sm">occurrences</span>
+                    <span className="text-sm">次</span>
                   </>
                 )}
               </label>
@@ -299,14 +299,14 @@ export function RecurringTaskForm({
 
           {/* Preview */}
           <div className="p-3 bg-muted rounded-lg">
-            <div className="text-sm font-medium mb-1">Preview</div>
+            <div className="text-sm font-medium mb-1">预览</div>
             <div className="text-sm text-muted-foreground">
               {generatePreview()}
               {pattern.endDate && (
-                <span> until {pattern.endDate}</span>
+                <span> ，直到 {pattern.endDate}</span>
               )}
               {pattern.maxOccurrences && (
-                <span> for {pattern.maxOccurrences} times</span>
+                <span> ，共 {pattern.maxOccurrences} 次</span>
               )}
             </div>
           </div>
@@ -314,13 +314,13 @@ export function RecurringTaskForm({
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4 border-t">
             <Button variant="outline" onClick={onCancel}>
-              Cancel
+              取消
             </Button>
             <Button 
               onClick={() => onSave(pattern)}
               disabled={!isValidPattern()}
             >
-              Save Pattern
+              保存设置
             </Button>
           </div>
         </CardContent>

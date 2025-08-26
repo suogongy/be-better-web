@@ -58,8 +58,8 @@ export default function SchedulePage() {
       setCategories(categoriesData)
     } catch (error) {
       addToast({
-        title: 'Error',
-        description: 'Failed to load tasks. Please try again.',
+        title: '错误',
+        description: '加载任务失败，请重试。',
         variant: 'destructive',
       })
     } finally {
@@ -83,8 +83,8 @@ export default function SchedulePage() {
       })
       
       addToast({
-        title: 'Success',
-        description: 'Task created successfully.',
+        title: '成功',
+        description: '任务创建成功。',
         variant: 'success',
       })
       
@@ -92,8 +92,8 @@ export default function SchedulePage() {
       loadData()
     } catch (error) {
       addToast({
-        title: 'Error',
-        description: 'Failed to create task. Please try again.',
+        title: '错误',
+        description: '创建任务失败，请重试。',
         variant: 'destructive',
       })
     }
@@ -104,8 +104,8 @@ export default function SchedulePage() {
       await taskService.updateTask(taskId, updates)
       
       addToast({
-        title: 'Success',
-        description: 'Task updated successfully.',
+        title: '成功',
+        description: '任务更新成功。',
         variant: 'success',
       })
       
@@ -113,8 +113,8 @@ export default function SchedulePage() {
       loadData()
     } catch (error) {
       addToast({
-        title: 'Error',
-        description: 'Failed to update task. Please try again.',
+        title: '错误',
+        description: '更新任务失败，请重试。',
         variant: 'destructive',
       })
     }
@@ -125,16 +125,16 @@ export default function SchedulePage() {
       await taskService.deleteTask(taskId)
       
       addToast({
-        title: 'Success',
-        description: 'Task deleted successfully.',
+        title: '成功',
+        description: '任务删除成功。',
         variant: 'success',
       })
       
       loadData()
     } catch (error) {
       addToast({
-        title: 'Error',
-        description: 'Failed to delete task. Please try again.',
+        title: '错误',
+        description: '删除任务失败，请重试。',
         variant: 'destructive',
       })
     }
@@ -145,16 +145,16 @@ export default function SchedulePage() {
       await taskService.completeTask(taskId, completionData)
       
       addToast({
-        title: 'Success',
-        description: 'Task completed successfully.',
+        title: '成功',
+        description: '任务完成成功。',
         variant: 'success',
       })
       
       loadData()
     } catch (error) {
       addToast({
-        title: 'Error',
-        description: 'Failed to complete task. Please try again.',
+        title: '错误',
+        description: '完成任务失败，请重试。',
         variant: 'destructive',
       })
     }
@@ -167,16 +167,16 @@ export default function SchedulePage() {
       })
       
       addToast({
-        title: 'Success',
-        description: 'Task rescheduled successfully.',
+        title: '成功',
+        description: '任务重新安排成功。',
         variant: 'success',
       })
       
       loadData()
     } catch (error) {
       addToast({
-        title: 'Error',
-        description: 'Failed to reschedule task. Please try again.',
+        title: '错误',
+        description: '重新安排任务失败，请重试。',
         variant: 'destructive',
       })
     }
@@ -200,7 +200,7 @@ export default function SchedulePage() {
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loading text="Loading..." />
+        <Loading text="加载中..." />
       </div>
     )
   }
@@ -210,12 +210,12 @@ export default function SchedulePage() {
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md">
           <CardContent className="text-center py-8">
-            <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
+            <h1 className="text-2xl font-bold mb-4">访问被拒绝</h1>
             <p className="text-muted-foreground mb-4">
-              You need to be logged in to access your schedule.
+              您需要登录才能访问您的日程安排。
             </p>
             <Button onClick={() => window.location.href = '/auth/login'}>
-              Sign In
+              登录
             </Button>
           </CardContent>
         </Card>
@@ -228,9 +228,9 @@ export default function SchedulePage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold">My Schedule</h1>
+          <h1 className="text-3xl font-bold">我的日程安排</h1>
           <p className="text-muted-foreground mt-1">
-            Manage your tasks and stay productive
+            管理您的任务，保持高效
           </p>
         </div>
         
@@ -243,7 +243,7 @@ export default function SchedulePage() {
               onClick={() => setCurrentView('list')}
               className="rounded-r-none"
             >
-              List
+              列表
             </Button>
             <Button
               variant={currentView === 'calendar' ? 'default' : 'ghost'}
@@ -252,7 +252,7 @@ export default function SchedulePage() {
               className="rounded-none border-x-0"
             >
               <Calendar className="h-4 w-4 mr-2" />
-              Calendar
+              日历
             </Button>
             <Button
               variant={currentView === 'stats' ? 'default' : 'ghost'}
@@ -261,13 +261,13 @@ export default function SchedulePage() {
               className="rounded-l-none"
             >
               <BarChart3 className="h-4 w-4 mr-2" />
-              Stats
+              统计
             </Button>
           </div>
           
           <Button onClick={() => setShowTaskForm(true)}>
             <Plus className="h-4 w-4 mr-2" />
-            New Task
+            新任务
           </Button>
         </div>
       </div>
@@ -291,7 +291,7 @@ export default function SchedulePage() {
           {/* Task Content */}
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <Loading text="Loading tasks..." />
+              <Loading text="加载任务..." />
             </div>
           ) : currentView === 'list' ? (
             <TaskList

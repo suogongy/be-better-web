@@ -10,20 +10,20 @@ import { ThemeToggleButton } from '@/components/ui/theme-toggle'
 import { cn } from '@/lib/utils'
 
 const publicNavItems = [
-  { href: '/', label: 'Home', icon: Home },
-  { href: '/blog', label: 'Blog', icon: BookOpen },
+  { href: '/', label: '首页', icon: Home },
+  { href: '/blog', label: '博客', icon: BookOpen },
 ]
 
 const authNavItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: Home },
-  { href: '/blog', label: 'Blog', icon: BookOpen },
-  { href: '/blog/admin', label: 'Blog Admin', icon: Settings },
-  { href: '/schedule', label: 'Schedule', icon: Calendar },
-  { href: '/summary', label: 'Summary', icon: BarChart3 },
-  { href: '/habits', label: 'Habits', icon: Target },
-  { href: '/mood', label: 'Mood', icon: Heart },
-  { href: '/insights', label: 'Insights', icon: Brain },
-  { href: '/export', label: 'Export', icon: Download },
+  { href: '/dashboard', label: '控制台', icon: Home },
+  { href: '/blog', label: '博客', icon: BookOpen },
+  { href: '/blog/admin', label: '博客管理', icon: Settings },
+  { href: '/schedule', label: '日程安排', icon: Calendar },
+  { href: '/summary', label: '总结报告', icon: BarChart3 },
+  { href: '/habits', label: '习惯跟踪', icon: Target },
+  { href: '/mood', label: '心情记录', icon: Heart },
+  { href: '/insights', label: '数据洞察', icon: Brain },
+  { href: '/export', label: '数据导出', icon: Download },
 ]
 
 export function Header() {
@@ -92,18 +92,18 @@ export function Header() {
                 </span>
                 <Button variant="ghost" size="sm" onClick={handleSignOut}>
                   <LogOut className="h-4 w-4 mr-2" />
-                  Sign Out
+                  退出登录
                 </Button>
               </div>
             ) : (
               <div className="flex items-center space-x-2">
                 <Link href="/auth/login">
                   <Button variant="ghost" size="sm">
-                    Sign In
+                    登录
                   </Button>
                 </Link>
                 <Link href="/auth/register">
-                  <Button size="sm">Get Started</Button>
+                  <Button size="sm">开始使用</Button>
                 </Link>
               </div>
             )}
@@ -150,7 +150,7 @@ export function Header() {
               
               <div className="pt-3 border-t">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Theme</span>
+                  <span className="text-sm font-medium">主题</span>
                   <ThemeToggleButton />
                 </div>
               </div>
@@ -163,7 +163,7 @@ export function Header() {
                     </span>
                     <Button variant="ghost" size="sm" onClick={handleSignOut}>
                       <LogOut className="h-4 w-4 mr-2" />
-                      Sign Out
+                      退出登录
                     </Button>
                   </div>
                 </div>
@@ -171,12 +171,12 @@ export function Header() {
                 <div className="pt-3 border-t space-y-2">
                   <Link href="/auth/login" onClick={() => setMobileMenuOpen(false)}>
                     <Button variant="ghost" size="sm" className="w-full justify-start">
-                      Sign In
+                      登录
                     </Button>
                   </Link>
                   <Link href="/auth/register" onClick={() => setMobileMenuOpen(false)}>
                     <Button size="sm" className="w-full">
-                      Get Started
+                      开始使用
                     </Button>
                   </Link>
                 </div>

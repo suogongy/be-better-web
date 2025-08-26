@@ -67,11 +67,30 @@ export function formatRelativeTime(date: string | Date): string {
 }
 
 export function createSlug(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, '') // Remove special characters
-    .replace(/[\s_-]+/g, '-') // Replace spaces and underscores with hyphens
-    .replace(/^-+|-+$/g, '') // Remove leading/trailing hyphens
+  // 简单的中文到拼音的映射（基础版）
+  const chineseToPinyin: { [key: string]: string } = {
+    '中': 'zhong', '文': 'wen', '博': 'bo', '客': 'ke', '文': 'wen', '章': 'zhang',
+    '技': 'ji', '术': 'shu', '学': 'xue', '习': 'xi', '分': 'fen', '享': 'xiang',
+    '经': 'jing', '验': 'yan', '教': 'jiao', '程': 'cheng', '教': 'jiao', '学': 'xue',
+    '开': 'kai', '发': 'fa', '编': 'bian', '程': 'cheng', '设': 'she', '计': 'ji',
+    '产': 'chan', '品': 'pin', '管': 'guan', '理': 'li', '项': 'xiang', '目': 'mu'
+  }
+  
+  let result = text.toLowerCase()
+  
+  // 将中文字符转换为拼音
+  for (const [chinese, pinyin] of Object.entries(chineseToPinyin)) {
+    result = result.replace(new RegExp(chinese, 'g'), pinyin)
+  }
+  
+  // 处理其他中文字符（如果没有在映射表中）
+  result = result.replace(/[\u4e00-\u9fff]/g, '') // 移除剩余的中文字符
+  
+  return result
+    .replace(/[^\w\s-]/g, '') // 移除特殊字符
+    .replace(/[\s_-]+/g, '-') // 用连字符替换空格和下划线
+    .replace(/^-+|-+$/g, '') // 移除开头和结尾的连字符
+    .slice(0, 50) // 限制长度
 }
 
 export function truncateText(text: string, length: number = 150): string {

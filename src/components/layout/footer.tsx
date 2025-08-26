@@ -12,20 +12,20 @@ const socialLinks = [
 ]
 
 const footerLinks = {
-  Product: [
-    { href: '/blog', label: 'Blog' },
-    { href: '/schedule', label: 'Schedule' },
-    { href: '/features', label: 'Features' },
+  '产品': [
+    { href: '/blog', label: '博客' },
+    { href: '/schedule', label: '日程安排' },
+    { href: '/features', label: '功能特色' },
   ],
-  Company: [
-    { href: '/about', label: 'About' },
-    { href: '/contact', label: 'Contact' },
-    { href: '/privacy', label: 'Privacy' },
-    { href: '/terms', label: 'Terms' },
+  '公司': [
+    { href: '/about', label: '关于我们' },
+    { href: '/contact', label: '联系我们' },
+    { href: '/privacy', label: '隐私政策' },
+    { href: '/terms', label: '服务条款' },
   ],
-  Resources: [
-    { href: '/docs', label: 'Documentation' },
-    { href: '/help', label: 'Help Center' },
+  '资源': [
+    { href: '/docs', label: '文档' },
+    { href: '/help', label: '帮助中心' },
     { href: '/api', label: 'API' },
   ],
 }
@@ -44,8 +44,8 @@ export function Footer() {
               <span className="font-bold text-xl">Be Better Web</span>
             </Link>
             <p className="mt-4 text-sm text-muted-foreground max-w-xs">
-              Your personal blog and productivity management platform. 
-              Track your progress, share your journey, and be better every day.
+              您的个人博客和生产力管理平台。
+              跟踪您的进步，分享您的旅程，每天都变得更好。
             </p>
             <div className="flex space-x-2 mt-6">
               {socialLinks.map((link) => {
@@ -89,10 +89,7 @@ export function Footer() {
         <div className="border-t pt-8 mt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-sm text-muted-foreground">
-              © 2024 Be Better Web. All rights reserved.
-            </p>
-            <p className="text-sm text-muted-foreground mt-2 md:mt-0">
-              Built with Next.js, Supabase, and Tailwind CSS.
+              © 2025 Be Better Web. 保留所有权利。
             </p>
           </div>
         </div>

@@ -18,13 +18,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Be Better Web - Personal Blog & Productivity",
-  description: "A modern personal website combining blog management and daily schedule planning features.",
-  keywords: ["blog", "productivity", "schedule", "planning", "personal website"],
+  title: "Be Better Web - 个人博客与生产力管理",
+  description: "一个现代化的个人网站，结合了博客管理和日常日程规划功能。",
+  keywords: ["博客", "生产力", "日程安排", "规划", "个人网站"],
   authors: [{ name: "Be Better Web" }],
   openGraph: {
     title: "Be Better Web",
-    description: "Personal blog and productivity management platform",
+    description: "个人博客和生产力管理平台",
     type: "website",
   },
 };
@@ -35,7 +35,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="zh-CN" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

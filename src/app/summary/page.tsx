@@ -59,8 +59,8 @@ export default function SummaryPage() {
       setWeeklyInsights(weeklyData)
     } catch (error) {
       addToast({
-        title: 'Error',
-        description: 'Failed to load summary data. Please try again.',
+        title: '错误',
+        description: '加载总结数据失败，请重试。',
         variant: 'destructive',
       })
     } finally {
@@ -83,14 +83,14 @@ export default function SummaryPage() {
       
       setCurrentSummary(summary)
       addToast({
-        title: 'Success',
-        description: 'Daily summary generated successfully.',
+        title: '成功',
+        description: '每日总结生成成功。',
         variant: 'success',
       })
     } catch (error) {
       addToast({
-        title: 'Error',
-        description: 'Failed to generate summary. Please try again.',
+        title: '错误',
+        description: '生成总结失败，请重试。',
         variant: 'destructive',
       })
     }
@@ -106,14 +106,14 @@ export default function SummaryPage() {
       setCurrentSummary(summary)
       setShowSummaryForm(false)
       addToast({
-        title: 'Success',
-        description: 'Summary updated successfully.',
+        title: '成功',
+        description: '总结更新成功。',
         variant: 'success',
       })
     } catch (error) {
       addToast({
-        title: 'Error',
-        description: 'Failed to update summary. Please try again.',
+        title: '错误',
+        description: '更新总结失败，请重试。',
         variant: 'destructive',
       })
     }
@@ -140,8 +140,8 @@ export default function SummaryPage() {
       )
       
       addToast({
-        title: 'Success',
-        description: `Blog post "${result.title}" ${blogData.publishImmediately ? 'published' : 'saved as draft'} successfully.`,
+        title: '成功',
+        description: `博客文章“${result.title}”${blogData.publishImmediately ? '已发布' : '已保存为草稿'}成功。`,
         variant: 'success',
       })
       
@@ -151,8 +151,8 @@ export default function SummaryPage() {
       loadSummaryData()
     } catch (error) {
       addToast({
-        title: 'Error',
-        description: 'Failed to generate blog post. Please try again.',
+        title: '错误',
+        description: '生成博客文章失败，请重试。',
         variant: 'destructive',
       })
     }
@@ -161,7 +161,7 @@ export default function SummaryPage() {
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loading text="Loading..." />
+        <Loading text="加载中..." />
       </div>
     )
   }
@@ -171,12 +171,12 @@ export default function SummaryPage() {
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md">
           <CardContent className="text-center py-8">
-            <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
+            <h1 className="text-2xl font-bold mb-4">访问被拒绝</h1>
             <p className="text-muted-foreground mb-4">
-              You need to be logged in to access daily summaries.
+              您需要登录才能访问每日总结。
             </p>
             <Button onClick={() => window.location.href = '/auth/login'}>
-              Sign In
+              登录
             </Button>
           </CardContent>
         </Card>
@@ -189,9 +189,9 @@ export default function SummaryPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Daily Summary</h1>
+          <h1 className="text-3xl font-bold">每日总结</h1>
           <p className="text-muted-foreground mt-1">
-            Track your daily productivity and insights
+            跟踪您的每日生产力和洞察
           </p>
         </div>
         
@@ -205,7 +205,7 @@ export default function SummaryPage() {
               className="rounded-r-none"
             >
               <Calendar className="h-4 w-4 mr-2" />
-              Daily
+              每日
             </Button>
             <Button
               variant={currentView === 'trends' ? 'default' : 'ghost'}
@@ -214,7 +214,7 @@ export default function SummaryPage() {
               className="rounded-none border-x-0"
             >
               <TrendingUp className="h-4 w-4 mr-2" />
-              Trends
+              趋势
             </Button>
             <Button
               variant={currentView === 'weekly' ? 'default' : 'ghost'}
@@ -223,7 +223,7 @@ export default function SummaryPage() {
               className="rounded-l-none"
             >
               <BarChart3 className="h-4 w-4 mr-2" />
-              Weekly
+              周报
             </Button>
           </div>
         </div>
@@ -242,7 +242,7 @@ export default function SummaryPage() {
                   onClick={() => navigateDate('prev')}
                 >
                   <ChevronLeft className="h-4 w-4" />
-                  Previous Day
+                  上一天
                 </Button>
                 
                 <div className="text-center">
@@ -251,7 +251,7 @@ export default function SummaryPage() {
                   </div>
                   <div className="text-sm text-muted-foreground">
                     {format(selectedDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd') 
-                      ? 'Today' 
+                      ? '今天' 
                       : format(selectedDate, 'EEEE')
                     }
                   </div>
@@ -262,18 +262,18 @@ export default function SummaryPage() {
                   size="sm" 
                   onClick={() => navigateDate('next')}
                 >
-                  Next Day
+                  下一天
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
               
               <div className="flex justify-center gap-2 mt-4">
                 <Button variant="outline" size="sm" onClick={goToToday}>
-                  Today
+                  今天
                 </Button>
                 <Button variant="outline" size="sm" onClick={loadSummaryData}>
                   <RefreshCw className="h-4 w-4 mr-2" />
-                  Refresh
+                  刷新
                 </Button>
               </div>
             </CardContent>
@@ -282,7 +282,7 @@ export default function SummaryPage() {
           {/* Main Content */}
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <Loading text="Loading summary..." />
+              <Loading text="加载总结..." />
             </div>
           ) : currentSummary ? (
             <DailySummaryCard
@@ -295,17 +295,17 @@ export default function SummaryPage() {
             <Card>
               <CardContent className="text-center py-12">
                 <Calendar className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-semibold mb-2">No Summary Yet</h3>
+                <h3 className="text-lg font-semibold mb-2">暂无总结</h3>
                 <p className="text-muted-foreground mb-4">
-                  Generate a summary for {format(selectedDate, 'MMMM d, yyyy')} to track your productivity.
+                  为 {format(selectedDate, 'MMMM d, yyyy')} 生成总结来跟踪您的生产力。
                 </p>
                 <div className="flex justify-center gap-2">
                   <Button onClick={handleGenerateSummary}>
                     <Plus className="h-4 w-4 mr-2" />
-                    Generate Summary
+                    生成总结
                   </Button>
                   <Button variant="outline" onClick={() => setShowSummaryForm(true)}>
-                    Manual Entry
+                    手动输入
                   </Button>
                 </div>
               </CardContent>
@@ -316,7 +316,7 @@ export default function SummaryPage() {
           {recentSummaries.length > 0 && (
             <Card className="mt-6">
               <CardHeader>
-                <CardTitle>Recent Summaries</CardTitle>
+                <CardTitle>最近的总结</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid gap-4">
@@ -329,14 +329,14 @@ export default function SummaryPage() {
                       <div>
                         <div className="font-medium">{format(parseISO(summary.summary_date), 'EEEE, MMM d')}</div>
                         <div className="text-sm text-muted-foreground">
-                          {summary.completed_tasks}/{summary.total_tasks} tasks • {Math.round(summary.completion_rate || 0)}% completion
+                          {summary.completed_tasks}/{summary.total_tasks} 任务 • {Math.round(summary.completion_rate || 0)}% 完成率
                         </div>
                       </div>
                       <div className="text-right">
                         <div className="text-sm font-medium">
                           {Math.round(summary.productivity_score || 0)}%
                         </div>
-                        <div className="text-xs text-muted-foreground">Score</div>
+                        <div className="text-xs text-muted-foreground">评分</div>
                       </div>
                     </div>
                   ))}\n                </div>

@@ -97,8 +97,8 @@ export function TaskList({ tasks, onEdit, onDelete, onComplete, onUpdate }: Task
         <CardContent className="text-center py-12">
           <div className="text-muted-foreground">
             <Calendar className="h-12 w-12 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No tasks found</h3>
-            <p>Create your first task to get started with productivity tracking.</p>
+            <h3 className="text-lg font-semibold mb-2">暂无任务</h3>
+            <p>创建您的第一个任务，开始跟踪您的生产力。</p>
           </div>
         </CardContent>
       </Card>
@@ -117,10 +117,10 @@ export function TaskList({ tasks, onEdit, onDelete, onComplete, onUpdate }: Task
 
   const statusOrder: Task['status'][] = ['pending', 'in_progress', 'completed', 'cancelled']
   const statusLabels = {
-    pending: 'To Do',
-    in_progress: 'In Progress', 
-    completed: 'Completed',
-    cancelled: 'Cancelled'
+    pending: '待办',
+    in_progress: '进行中', 
+    completed: '已完成',
+    cancelled: '已取消'
   }
 
   return (
@@ -192,7 +192,7 @@ export function TaskList({ tasks, onEdit, onDelete, onComplete, onUpdate }: Task
                                   task,
                                   task.status === 'in_progress' ? 'pending' : 'in_progress'
                                 )}
-                                title={task.status === 'in_progress' ? 'Pause' : 'Start'}
+                                title={task.status === 'in_progress' ? '暂停' : '开始'}
                               >
                                 {task.status === 'in_progress' ? (
                                   <Pause className="h-4 w-4" />
@@ -271,7 +271,7 @@ export function TaskList({ tasks, onEdit, onDelete, onComplete, onUpdate }: Task
                         {task.progress > 0 && task.status !== 'completed' && (
                           <div className="mt-3">
                             <div className="flex items-center justify-between text-xs mb-1">
-                              <span className="text-muted-foreground">Progress</span>
+                              <span className="text-muted-foreground">进度</span>
                               <span className="text-muted-foreground">{task.progress}%</span>
                             </div>
                             <div className="w-full bg-gray-200 rounded-full h-2">
@@ -286,10 +286,10 @@ export function TaskList({ tasks, onEdit, onDelete, onComplete, onUpdate }: Task
                         {/* Completion Info */}
                         {task.status === 'completed' && task.completed_at && (
                           <div className="mt-3 text-sm text-muted-foreground">
-                            Completed {format(parseISO(task.completed_at), 'MMM d, yyyy \'at\' h:mm a')}
+                            已完成 {format(parseISO(task.completed_at), 'MMM d, yyyy \'\u4e8e\' h:mm a')}
                             {task.actual_minutes && (
                               <span className="ml-2">
-                                • Took {task.actual_minutes} minutes
+                                • 耗时 {task.actual_minutes} 分钟
                               </span>
                             )}
                           </div>
