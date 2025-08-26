@@ -133,7 +133,9 @@ export function performanceMiddleware(request: NextRequest): NextResponse {
   const route = request.nextUrl.pathname
   const method = request.method
   const userAgent = request.headers.get('user-agent') || undefined
-  const ip = request.ip || request.headers.get('x-forwarded-for') || undefined
+  const ip = request.headers.get('x-forwarded-for') 
+           ? request.headers.get('x-forwarded-for')?.split(',')[0].trim() 
+           : request.headers.get('x-real-ip') ?? undefined
 
   // Start tracking
   performanceTracker.startTracking(requestId, route, method, userAgent, ip)
@@ -146,6 +148,43 @@ export function performanceMiddleware(request: NextRequest): NextResponse {
   response.headers.set('X-Performance-Start', Date.now().toString())
 
   return response
+}
+
+export interface PerformanceMiddlewareOptions {
+  includeHeaders?: boolean
+}
+
+export function createPerformanceMiddleware(options: PerformanceMiddlewareOptions = {}) {
+  return async function middleware(request: NextRequest): Promise<NextResponse> {
+    const requestId = request.headers.get('x-request-id') || Math.random().toString(36).substring(7)
+    const userAgent = request.headers.get('user-agent')
+    const ip = request.headers.get('x-forwarded-for') || 
+               request.headers.get('x-real-ip') || 
+               undefined
+
+    // Start tracking
+    performanceTracker.startTracking(
+      requestId,
+      request.nextUrl.pathname,
+      request.method,
+      userAgent || undefined,
+      ip
+    )
+
+    // Create response with tracking headers
+    const response = NextResponse.next()
+    response.headers.set('X-Request-ID', requestId)
+
+    // Add performance headers for client-side tracking
+    response.headers.set('X-Performance-Start', Date.now().toString())
+
+    // Add performance headers for server-side tracking
+    if (options.includeHeaders) {
+      response.headers.set('X-Performance-Start', Date.now().toString())
+    }
+
+    return response
+  }
 }
 
 // Helper function to end tracking (to be called in API routes)
@@ -256,18 +295,18 @@ export const rateLimiter = new RateLimiter()
 
 // Rate limiting middleware
 export function rateLimitMiddleware(request: NextRequest): NextResponse | null {
-  const identifier = request.ip || request.headers.get('x-forwarded-for') || 'unknown'
-  
+  const identifier = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+
   if (!rateLimiter.isAllowed(identifier)) {
     const response = new NextResponse(
-      JSON.stringify({ error: 'Rate limit exceeded' }), 
+      JSON.stringify({ error: 'Rate limit exceeded' }),
       { status: 429, headers: { 'Content-Type': 'application/json' } }
     )
-    
+
     response.headers.set('X-RateLimit-Limit', '100')
     response.headers.set('X-RateLimit-Remaining', '0')
     response.headers.set('X-RateLimit-Reset', rateLimiter.getResetTime(identifier).toString())
-    
+
     return response
   }
 

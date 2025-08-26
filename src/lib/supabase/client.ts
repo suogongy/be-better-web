@@ -18,8 +18,27 @@ export const supabase = createSupabaseClient<Database>(supabaseUrl, supabaseAnon
   auth: {
     persistSession: hasValidConfig,
     autoRefreshToken: hasValidConfig,
+    detectSessionInUrl: false, // 禁用 URL 中的会话检测，提高性能
   },
-})
+  global: {
+    headers: {
+      'X-Client-Info': 'be-better-web',
+    },
+  },
+  db: {
+    schema: 'public',
+  },
+  // 修复类型推断问题
+  realtime: {
+    params: {
+      eventsPerSecond: 10,
+    },
+  },
+  // 确保类型推断正确
+  rest: {
+    timeout: 30000,
+  },
+}) as any
 
 // Server-side client with service role key (for admin operations)
 export const supabaseAdmin = hasValidConfig && process.env.SUPABASE_SERVICE_ROLE_KEY ? 

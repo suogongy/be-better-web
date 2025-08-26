@@ -25,6 +25,7 @@ import {
   endOfWeek,
   parseISO
 } from 'date-fns'
+import { zhCN } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import type { Task } from '@/types/database'
 
@@ -63,8 +64,8 @@ export function TaskCalendar({
 
   const monthStart = startOfMonth(currentDate)
   const monthEnd = endOfMonth(currentDate)
-  const calendarStart = startOfWeek(monthStart)
-  const calendarEnd = endOfWeek(monthEnd)
+  const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 }) // Start on Monday
+  const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 })
   
   const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd })
 
@@ -219,19 +220,17 @@ export function TaskCalendar({
                   <span className="text-sm">
                     {format(day, 'd')}
                   </span>
-                  {isCurrentMonth && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onCreateTask(day)
-                      }}
-                      className="h-5 w-5 p-0 opacity-0 hover:opacity-100 transition-opacity"
-                    >
-                      <Plus className="h-3 w-3" />
-                    </Button>
-                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onCreateTask(day)
+                    }}
+                  >
+                    <Plus className="h-3 w-3" />
+                  </Button>
                 </div>
                 
                 {/* Tasks */}
@@ -272,14 +271,8 @@ export function TaskCalendar({
                   
                   {/* Show more indicator */}
                   {dayTasks.length > 3 && (
-                    <div 
-                      className="text-xs text-muted-foreground text-center py-1 cursor-pointer hover:text-primary"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onDateClick(day)
-                      }}
-                    >
-                      +{dayTasks.length - 3} more
+                    <div className="text-xs text-muted-foreground">
+                      +{dayTasks.length - 3} 更多
                     </div>
                   )}
                 </div>
@@ -292,26 +285,26 @@ export function TaskCalendar({
         <div className="mt-4 flex flex-wrap gap-4 justify-center text-xs">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-red-500 rounded"></div>
-            <span>High Priority</span>
+            <span>高优先级</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-yellow-500 rounded"></div>
-            <span>Medium Priority</span>
+            <span>中优先级</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-green-500 rounded"></div>
-            <span>Low Priority</span>
+            <span>低优先级</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-blue-500 rounded border-l-2 border-blue-700"></div>
-            <span>In Progress</span>
+            <span>进行中</span>
           </div>
         </div>
         
         {/* Drag Instructions */}
         {draggedTask && (
           <div className="mt-4 text-center text-sm text-muted-foreground">
-            Drag "{draggedTask.title}" to a different date to reschedule
+            将 "{draggedTask.title}" 拖动到不同日期以重新安排
           </div>
         )}
       </CardContent>

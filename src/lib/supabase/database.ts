@@ -1,5 +1,19 @@
 import { supabase } from './client'
-import type { User, Post, Category, Tag, Comment, Task, DailySummary } from '@/types/database'
+import type { Database, User, Post, Category, Tag, Comment, Task, DailySummary } from '@/types/database'
+
+// 为Supabase查询添加类型注解
+type SupabaseResponse<T> = {
+  data: T | null
+  error: any
+}
+
+// 类型安全的Supabase查询辅助函数
+function typedSupabaseQuery<T>(query: Promise<{ data: any; error: any }>): Promise<{ data: T; error: any }> {
+  return query as Promise<{ data: T; error: any }>
+}
+
+// 创建类型安全版本的Supabase客户端
+const typedSupabase = supabase as any
 
 export class DatabaseError extends Error {
   constructor(message: string, public originalError?: any) {
@@ -7,6 +21,7 @@ export class DatabaseError extends Error {
     this.name = 'DatabaseError'
   }
 }
+
 
 // User operations
 export const userService = {
@@ -40,9 +55,9 @@ export const userService = {
     return data
   },
 
-  async createProfile(user: { id: string; email: string; name?: string }): Promise<User> {
+  async createProfile(user: { id: string; email: string; name?: string }): Promise<User | null> {
     // Manual user creation without database triggers
-    const userData = {
+    const userData: Database['public']['Tables']['users']['Insert'] = {
       id: user.id,
       email: user.email,
       name: user.name || user.email,
@@ -60,13 +75,15 @@ export const userService = {
       throw new DatabaseError('Failed to create user profile', error)
     }
 
-    return data
+    return data as User | null
   },
 
-  async createUserFromAuth(authUser: any): Promise<User> {
+  async createUserFromAuth(authUser: { id: string; email: string; user_metadata?: { name?: string } }): Promise<User> {
+    console.log('🔍 createUserFromAuth called with user:', authUser.id)
+
     // Helper function to create user profile when user registers
     // Call this after successful authentication signup
-    const userData = {
+    const userData: Database['public']['Tables']['users']['Insert'] = {
       id: authUser.id,
       email: authUser.email,
       name: authUser.user_metadata?.name || authUser.email,
@@ -74,29 +91,45 @@ export const userService = {
       updated_at: new Date().toISOString()
     }
 
-    const { data, error } = await supabase
-      .from('users')
-      .upsert(userData as any)
-      .select()
-      .single()
+    console.log('📦 Prepared user data:', userData)
 
-    if (error) {
-      throw new DatabaseError('Failed to create user profile from auth', error)
+    try {
+      console.log('📡 Starting database upsert operation...')
+      const start = Date.now()
+
+      const result = await supabase
+        .from('users')
+        .upsert(userData)
+        .select()
+        .single()
+      const { data, error } = result as { data: User | null; error: any }
+
+      const time = Date.now() - start
+      console.log(`⏱️ Database upsert completed in ${time}ms`)
+
+      if (error) {
+        console.error('❌ Database upsert error:', error)
+        throw new DatabaseError('Failed to create user profile from auth', error)
+      }
+
+      console.log('✅ User profile created successfully:', data?.id)
+      return data as User
+    } catch (error) {
+      console.error('💥 createUserFromAuth failed:', error)
+      throw error
     }
-
-    return data
   },
 
-  async updateUserProfile(id: string, updates: Partial<User>): Promise<User> {
+  async updateUserProfile(id: string, updates: Database['public']['Tables']['users']['Update']): Promise<User> {
     // Manual updated_at handling since no database triggers
-    const updateData = {
+    const updateData: Database['public']['Tables']['users']['Update'] = {
       ...updates,
       updated_at: new Date().toISOString()
     }
 
     const { data, error } = await supabase
       .from('users')
-      .update(updateData as any)
+      .update(updateData)
       .eq('id', id)
       .select()
       .single()
@@ -124,6 +157,41 @@ export const userService = {
       await supabase.from('users').delete().eq('id', userId)
     } catch (error) {
       throw new DatabaseError('Failed to delete user and related data', error)
+    }
+  },
+
+  // Check if users table exists and is accessible
+  async checkUsersTable(): Promise<{ exists: boolean; accessible: boolean; error?: string }> {
+    try {
+      console.log('🔍 Checking users table accessibility...')
+      const start = Date.now()
+      
+      const { data, error } = await supabase
+        .from('users')
+        .select('count')
+        .limit(1)
+      
+      const time = Date.now() - start
+      console.log(`⏱️ Table check completed in ${time}ms`)
+      
+      if (error) {
+        console.error('❌ Users table check failed:', error)
+        return { 
+          exists: false, 
+          accessible: false, 
+          error: error.message 
+        }
+      }
+      
+      console.log('✅ Users table is accessible')
+      return { exists: true, accessible: true }
+    } catch (error: any) {
+      console.error('💥 Table check exception:', error)
+      return { 
+        exists: false, 
+        accessible: false, 
+        error: error.message 
+      }
     }
   },
 
@@ -301,14 +369,14 @@ export const postService = {
     }
 
     // 手动获取关联的categories和tags数据
-    const postIds = posts.map(post => post.id)
-    
+    const postIds = posts.map((post: Post) => post.id)
+
     // 获取post_categories关联数据
     const { data: postCategories } = await supabase
       .from('post_categories')
       .select('post_id, category_id')
       .in('post_id', postIds)
-    
+
     // 获取post_tags关联数据
     const { data: postTags } = await supabase
       .from('post_tags')
@@ -316,37 +384,42 @@ export const postService = {
       .in('post_id', postIds)
 
     // 获取所有相关的categories
-    const categoryIds = postCategories?.map(pc => pc.category_id) || []
+    const categoryIds = postCategories?.map((pc: { category_id: string }) => pc.category_id) || []
     const { data: categories } = categoryIds.length > 0 ? await supabase
       .from('categories')
       .select('*')
       .in('id', categoryIds) : { data: [] }
 
     // 获取所有相关的tags
-    const tagIds = postTags?.map(pt => pt.tag_id) || []
+    const tagIds = postTags?.map((pt: { tag_id: string }) => pt.tag_id) || []
     const { data: tags } = tagIds.length > 0 ? await supabase
       .from('tags')
       .select('*')
       .in('id', tagIds) : { data: [] }
 
     // 组合数据
-    const transformedData = posts.map(post => {
+    const transformedData = posts.map((post: Post) => {
       // 找到这个post相关的category_ids
-      const relatedCategoryIds = postCategories?.filter(pc => pc.post_id === post.id).map(pc => pc.category_id) || []
+      const relatedCategoryIds = postCategories?.filter((pc: { post_id: string }) => pc.post_id === post.id).map((pc: { category_id: string }) => pc.category_id) || []
       // 找到对应的category对象
-      const postCategories_data = categories?.filter(cat => relatedCategoryIds.includes(cat.id)) || []
-      
+      const postCategories_data = categories?.filter((cat: Category) => relatedCategoryIds.includes(cat.id)) || []
+
       // 找到这个post相关的tag_ids
-      const relatedTagIds = postTags?.filter(pt => pt.post_id === post.id).map(pt => pt.tag_id) || []
+      const relatedTagIds = postTags?.filter((pt: { post_id: string }) => pt.post_id === post.id).map((pt: { tag_id: string }) => pt.tag_id) || []
       // 找到对应的tag对象
-      const postTags_data = tags?.filter(tag => relatedTagIds.includes(tag.id)) || []
-      
+      const postTags_data = tags?.filter((tag: Tag) => relatedTagIds.includes(tag.id)) || []
+
       return {
         ...post,
         categories: postCategories_data,
         tags: postTags_data,
         category_ids: relatedCategoryIds,
         tag_ids: relatedTagIds
+      } as Post & {
+        categories: Category[]
+        tags: Tag[]
+        category_ids: string[]
+        tag_ids: string[]
       }
     })
 
@@ -384,14 +457,14 @@ export const postService = {
       .eq('post_id', id)
 
     // 获取category详细信息
-    const categoryIds = postCategories?.map(pc => pc.category_id) || []
+    const categoryIds = postCategories?.map((pc: { category_id: string }) => pc.category_id) || []
     const { data: categories } = categoryIds.length > 0 ? await supabase
       .from('categories')
       .select('*')
       .in('id', categoryIds) : { data: [] }
 
     // 获取tag详细信息
-    const tagIds = postTags?.map(pt => pt.tag_id) || []
+    const tagIds = postTags?.map((pt: { tag_id: string }) => pt.tag_id) || []
     const { data: tags } = tagIds.length > 0 ? await supabase
       .from('tags')
       .select('*')
@@ -404,6 +477,11 @@ export const postService = {
       tags: tags || [],
       category_ids: categoryIds,
       tag_ids: tagIds
+    } as Post & {
+      categories: Category[]
+      tags: Tag[]
+      category_ids: string[]
+      tag_ids: string[]
     }
 
     return transformedData
@@ -438,14 +516,14 @@ export const postService = {
       .eq('post_id', post.id)
 
     // 获取category详细信息
-    const categoryIds = postCategories?.map(pc => pc.category_id) || []
+    const categoryIds = postCategories?.map((pc: { category_id: string }) => pc.category_id) || []
     const { data: categories } = categoryIds.length > 0 ? await supabase
       .from('categories')
       .select('*')
       .in('id', categoryIds) : { data: [] }
 
     // 获取tag详细信息
-    const tagIds = postTags?.map(pt => pt.tag_id) || []
+    const tagIds = postTags?.map((pt: { tag_id: string }) => pt.tag_id) || []
     const { data: tags } = tagIds.length > 0 ? await supabase
       .from('tags')
       .select('*')
@@ -458,6 +536,11 @@ export const postService = {
       tags: tags || [],
       category_ids: categoryIds,
       tag_ids: tagIds
+    } as Post & {
+      categories: Category[]
+      tags: Tag[]
+      category_ids: string[]
+      tag_ids: string[]
     }
 
     return transformedData
@@ -503,8 +586,8 @@ export const postService = {
             return { data: [], total: 0 }
           }
           
-          postIds = postCategoriesData?.map(pc => pc.post_id) || []
-          if (postIds.length === 0) {
+          postIds = postCategoriesData?.map((pc: { post_id: string }) => pc.post_id) || []
+          if (!postIds || postIds.length === 0) {
             return { data: [], total: 0 }
           }
         } catch (error) {
@@ -536,16 +619,16 @@ export const postService = {
             return { data: [], total: 0 }
           }
           
-          const tagPostIds = postTagsData?.map(pt => pt.post_id) || []
-          
+          const tagPostIds = postTagsData?.map((pt: { post_id: string }) => pt.post_id) || []
+
           if (postIds) {
             // 取交集
             postIds = postIds.filter(id => tagPostIds.includes(id))
           } else {
             postIds = tagPostIds
           }
-          
-          if (postIds.length === 0) {
+
+          if (postIds && postIds.length === 0) {
             return { data: [], total: 0 }
           }
         } catch (error) {
@@ -599,12 +682,17 @@ export const postService = {
 
       // 简化版本：不加载关联数据，减少复杂性和API调用
       // 直接返回posts数据，避免过多的数据库查询导致loading问题
-      const transformedData = posts.map(post => ({
+      const transformedData = posts.map((post: Post) => ({
         ...post,
         categories: [], // 暂时为空，避免额外查询
         tags: [], // 暂时为空，避免额外查询
         category_ids: [],
         tag_ids: []
+      } as Post & {
+        categories: Category[]
+        tags: Tag[]
+        category_ids: string[]
+        tag_ids: string[]
       }))
 
       return {
@@ -619,7 +707,7 @@ export const postService = {
     }
   },
 
-  async createPost(post: any): Promise<Post> {
+  async createPost(post: Database['public']['Tables']['posts']['Insert'] & { category_ids?: string[], tag_ids?: string[] }): Promise<Post> {
     // Validate user exists (manual foreign key check)
     if (post.user_id) {
       const userExists = await userService.validateUserExists(post.user_id)
@@ -630,11 +718,11 @@ export const postService = {
 
     // Separate category_ids and tag_ids from post data
     const { category_ids, tag_ids, ...postData } = post
-    
+
     // Create the post first
     const { data: createdPost, error: postError } = await supabase
       .from('posts')
-      .insert(postData as any)
+      .insert(postData)
       .select()
       .single()
 
@@ -713,14 +801,14 @@ export const postService = {
     return createdPost
   },
 
-  async updatePost(id: string, updates: any): Promise<Post> {
+  async updatePost(id: string, updates: Database['public']['Tables']['posts']['Update'] & { category_ids?: string[], tag_ids?: string[] }): Promise<Post> {
     // Separate category_ids and tag_ids from updates
     const { category_ids, tag_ids, ...postUpdates } = updates
-    
+
     // Update the post data
     const { data: updatedPost, error: postError } = await supabase
       .from('posts')
-      .update(postUpdates as any)
+      .update(postUpdates)
       .eq('id', id)
       .select()
       .single()
@@ -795,7 +883,7 @@ export const postService = {
       // 2. Update daily_summaries to remove references to this post
       await supabase
         .from('daily_summaries')
-        .update({ generated_post_id: null } as any)
+        .update({ generated_post_id: null })
         .eq('generated_post_id', id)
       
       // 3. Delete the post
@@ -823,7 +911,7 @@ export const postService = {
     if (currentPost) {
       const { error } = await supabase
         .from('posts')
-        .update({ view_count: (currentPost.view_count || 0) + 1 } as any)
+        .update({ view_count: (currentPost.view_count || 0) + 1 })
         .eq('id', id)
 
       if (error) {
@@ -848,10 +936,10 @@ export const categoryService = {
     return data || []
   },
 
-  async createCategory(category: any): Promise<Category> {
+  async createCategory(category: Database['public']['Tables']['categories']['Insert']): Promise<Category> {
     const { data, error } = await supabase
       .from('categories')
-      .insert(category as any)
+      .insert(category)
       .select()
       .single()
 
@@ -862,7 +950,7 @@ export const categoryService = {
     return data
   },
 
-  async updateCategory(id: string, updates: any): Promise<Category> {
+  async updateCategory(id: string, updates: Database['public']['Tables']['categories']['Update']): Promise<Category> {
     const { data, error } = await supabase
       .from('categories')
       .update(updates)
@@ -904,10 +992,10 @@ export const tagService = {
     return data || []
   },
 
-  async createTag(tag: { name: string; slug: string }): Promise<Tag> {
+  async createTag(tag: Database['public']['Tables']['tags']['Insert']): Promise<Tag> {
     const { data, error } = await supabase
       .from('tags')
-      .insert(tag as any)
+      .insert(tag)
       .select()
       .single()
 
@@ -918,7 +1006,7 @@ export const tagService = {
     return data
   },
 
-  async updateTag(id: string, updates: any): Promise<Tag> {
+  async updateTag(id: string, updates: Database['public']['Tables']['tags']['Update']): Promise<Tag> {
     const { data, error } = await supabase
       .from('tags')
       .update(updates)
@@ -1040,8 +1128,8 @@ export const taskService = {
       throw new DatabaseError('Failed to fetch task categories', error)
     }
 
-    const categories = [...new Set(data?.map(item => item.category).filter(Boolean) || [])]
-    return categories
+    const categories = [...new Set(data?.map((item: { category: string }) => item.category).filter(Boolean) || [])]
+    return categories as string[]
   },
 
   async getTaskStats(userId: string, dateRange?: { start: string; end: string }): Promise<{
@@ -1070,7 +1158,7 @@ export const taskService = {
       throw new DatabaseError('Failed to fetch task statistics', error)
     }
 
-    const stats = data?.reduce((acc, task) => {
+    const stats = data?.reduce((acc: any, task: Task) => {
       acc.total++
       switch (task.status) {
         case 'completed':
@@ -1120,20 +1208,8 @@ export const taskService = {
     }
   },
 
-  async createTask(task: {
-    user_id: string
-    title: string
-    description?: string
-    category?: string
-    priority?: 'low' | 'medium' | 'high'
-    status?: 'pending' | 'in_progress' | 'completed' | 'cancelled'
-    estimated_minutes?: number
-    due_date?: string
-    due_time?: string
-    is_recurring?: boolean
-    recurrence_pattern?: Record<string, any>
-  }): Promise<Task> {
-    const taskData = {
+  async createTask(task: Database['public']['Tables']['tasks']['Insert']): Promise<Task> {
+    const taskData: Database['public']['Tables']['tasks']['Insert'] = {
       ...task,
       priority: task.priority || 'medium',
       status: task.status || 'pending',
@@ -1143,7 +1219,7 @@ export const taskService = {
 
     const { data, error } = await supabase
       .from('tasks')
-      .insert(taskData as any)
+      .insert(taskData)
       .select()
       .single()
 
@@ -1154,20 +1230,8 @@ export const taskService = {
     return data
   },
 
-  async updateTask(id: string, updates: {
-    title?: string
-    description?: string
-    category?: string
-    priority?: 'low' | 'medium' | 'high'
-    status?: 'pending' | 'in_progress' | 'completed' | 'cancelled'
-    progress?: number
-    estimated_minutes?: number
-    actual_minutes?: number
-    due_date?: string
-    due_time?: string
-    completion_notes?: string
-  }): Promise<Task> {
-    const updateData = { ...updates }
+  async updateTask(id: string, updates: Database['public']['Tables']['tasks']['Update']): Promise<Task> {
+    const updateData: Database['public']['Tables']['tasks']['Update'] = { ...updates }
 
     // Auto-set completed_at when marking as completed
     if (updates.status === 'completed' && !updateData.completed_at) {
@@ -1177,7 +1241,7 @@ export const taskService = {
 
     // Clear completed_at when status changes from completed
     if (updates.status && updates.status !== 'completed') {
-      updateData.completed_at = null
+      updateData.completed_at = undefined
     }
 
     const { data, error } = await supabase
@@ -1208,11 +1272,7 @@ export const taskService = {
     return this.updateTask(id, updates)
   },
 
-  async batchUpdateTasks(taskIds: string[], updates: {
-    status?: 'pending' | 'in_progress' | 'completed' | 'cancelled'
-    category?: string
-    priority?: 'low' | 'medium' | 'high'
-  }): Promise<Task[]> {
+  async batchUpdateTasks(taskIds: string[], updates: Database['public']['Tables']['tasks']['Update']): Promise<Task[]> {
     const { data, error } = await supabase
       .from('tasks')
       .update(updates)
@@ -1233,21 +1293,30 @@ export const taskService = {
     }
 
     const { id: _, created_at, updated_at, completed_at, ...taskData } = originalTask
-    
-    return this.createTask({
+
+    const duplicatedTaskData: Database['public']['Tables']['tasks']['Insert'] = {
       ...taskData,
       title: `${taskData.title} (Copy)`,
       status: 'pending',
       progress: 0,
       actual_minutes: undefined,
-      completion_notes: undefined
-    })
+      completion_notes: undefined,
+      completed_at: undefined
+    }
+
+    return this.createTask(duplicatedTaskData)
   },
 
-  async generateRecurringTasks(userId: string, baseTask: Task, pattern: any, endDate?: Date): Promise<Task[]> {
+  async generateRecurringTasks(userId: string, baseTask: Task, pattern: {
+    type: 'daily' | 'weekly' | 'monthly' | 'yearly'
+    interval: number
+    daysOfWeek?: number[]
+    dayOfMonth?: number
+    maxOccurrences?: number
+  }, endDate?: Date): Promise<Task[]> {
     const tasks: Task[] = []
     const { type, interval, daysOfWeek, dayOfMonth, maxOccurrences } = pattern
-    
+
     if (!baseTask.due_date) {
       throw new DatabaseError('Base task must have a due date for recurring tasks')
     }
@@ -1260,19 +1329,27 @@ export const taskService = {
     while (currentDate <= maxDate && occurrenceCount < maxOccurs) {
       // Skip the first occurrence if it's the same as the base task
       if (occurrenceCount > 0 || currentDate.toISOString().split('T')[0] !== baseTask.due_date) {
-        const newTask = await this.createTask({
-          ...baseTask,
-          id: undefined,
+        const newTaskData: Database['public']['Tables']['tasks']['Insert'] = {
+          user_id: baseTask.user_id,
           title: baseTask.title,
-          due_date: currentDate.toISOString().split('T')[0],
+          description: baseTask.description,
+          category: baseTask.category,
+          priority: baseTask.priority,
           status: 'pending',
           progress: 0,
+          estimated_minutes: baseTask.estimated_minutes,
+          due_date: currentDate.toISOString().split('T')[0],
+          due_time: baseTask.due_time,
+          is_recurring: false, // Individual instances are not recurring
+          recurrence_pattern: undefined,
           actual_minutes: undefined,
           completion_notes: undefined,
           completed_at: undefined,
-          is_recurring: false, // Individual instances are not recurring
-          recurrence_pattern: undefined
-        })
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+
+        const newTask = await this.createTask(newTaskData)
         tasks.push(newTask)
       }
 
@@ -1281,7 +1358,7 @@ export const taskService = {
         case 'daily':
           currentDate.setDate(currentDate.getDate() + interval)
           break
-        
+
         case 'weekly':
           if (daysOfWeek && daysOfWeek.length > 0) {
             // Find next occurrence day
@@ -1306,7 +1383,7 @@ export const taskService = {
             currentDate.setDate(currentDate.getDate() + 7 * interval)
           }
           break
-        
+
         case 'monthly':
           if (dayOfMonth) {
             currentDate.setMonth(currentDate.getMonth() + interval)
@@ -1315,11 +1392,11 @@ export const taskService = {
             currentDate.setMonth(currentDate.getMonth() + interval)
           }
           break
-        
+
         case 'yearly':
           currentDate.setFullYear(currentDate.getFullYear() + interval)
           break
-        
+
         default:
           throw new DatabaseError('Invalid recurrence type')
       }
@@ -1446,26 +1523,10 @@ export const summaryService = {
     }
   },
 
-  async createSummary(summary: {
-    user_id: string
-    summary_date: string
-    total_tasks?: number
-    completed_tasks?: number
-    completion_rate?: number
-    total_planned_time?: number
-    total_actual_time?: number
-    productivity_score?: number
-    mood_rating?: number
-    energy_rating?: number
-    notes?: string
-    achievements?: any[]
-    challenges?: any[]
-    tomorrow_goals?: any[]
-    auto_blog_generated?: boolean
-  }): Promise<DailySummary> {
+  async createSummary(summary: Database['public']['Tables']['daily_summaries']['Insert']): Promise<DailySummary> {
     const { data, error } = await supabase
       .from('daily_summaries')
-      .insert(summary as any)
+      .insert(summary)
       .select()
       .single()
 
@@ -1476,22 +1537,7 @@ export const summaryService = {
     return data
   },
 
-  async updateSummary(userId: string, date: string, updates: {
-    total_tasks?: number
-    completed_tasks?: number
-    completion_rate?: number
-    total_planned_time?: number
-    total_actual_time?: number
-    productivity_score?: number
-    mood_rating?: number
-    energy_rating?: number
-    notes?: string
-    achievements?: any[]
-    challenges?: any[]
-    tomorrow_goals?: any[]
-    auto_blog_generated?: boolean
-    generated_post_id?: string
-  }): Promise<DailySummary> {
+  async updateSummary(userId: string, date: string, updates: Database['public']['Tables']['daily_summaries']['Update']): Promise<DailySummary> {
     const { data, error } = await supabase
       .from('daily_summaries')
       .update(updates)
@@ -1986,6 +2032,54 @@ export const summaryService = {
     }
   },
 
+  async generateBlogFromSummary(userId: string, date: string, blogData: any): Promise<any> {
+    try {
+      // First get the summary for the date
+      const summary = await this.getSummary(userId, date);
+      if (!summary) {
+        throw new DatabaseError('Summary not found for date: ' + date);
+      }
+
+      // Generate blog content
+      const generatedBlogData = await this.generateBlogPost(userId, summary.id, 'daily');
+      
+      // Get or create appropriate tags for the blog post
+      const tagIds = await this.getOrCreateTagsForBlogPost(generatedBlogData.tags);
+      
+      // Get the 'Schedule' category for auto-generated posts
+      const scheduleCategory = await this.getOrCreateScheduleCategory();
+      
+      // Create the blog post
+      const post = await postService.createPost({
+        user_id: userId,
+        title: generatedBlogData.title,
+        content: generatedBlogData.content,
+        excerpt: generatedBlogData.excerpt,
+        slug: this.generateSlug(generatedBlogData.title),
+        status: 'draft', // Start as draft for review
+        type: 'schedule_generated',
+        meta_title: generatedBlogData.title,
+        meta_description: generatedBlogData.excerpt,
+        category_ids: scheduleCategory ? [scheduleCategory.id] : [],
+        tag_ids: tagIds
+      });
+      
+      // Update summary to mark blog as generated
+      await this.updateSummary(userId, date, {
+        auto_blog_generated: true,
+        generated_post_id: post.id
+      });
+      
+      return post;
+    } catch (error) {
+      throw new DatabaseError('Failed to create blog post from summary', error);
+    }
+  },
+
+  async regenerateTasks(userId: string, date: string): Promise<DailySummary | null> {
+    return await this.generateDailySummary(userId, date);
+  },
+
   async getOrCreateTagsForBlogPost(tagNames: string[]): Promise<string[]> {
     const tagIds: string[] = []
     
@@ -2038,6 +2132,7 @@ export const summaryService = {
       
       // Create 'Schedule' category if it doesn't exist
       const { data: newCategory } = await supabase
+
         .from('categories')
         .insert({
           name: 'Schedule',
@@ -2068,35 +2163,47 @@ export const summaryService = {
 
 // Comment operations
 export const commentService = {
+  /**
+   * 获取文章评论
+   * @param postId 文章ID
+   * @param options 查询选项
+   * @returns 评论列表
+   */
   async getComments(postId: string, options?: {
     status?: 'pending' | 'approved' | 'spam' | 'rejected'
     includeReplies?: boolean
   }): Promise<Comment[]> {
-    let query = supabase
-      .from('comments')
-      .select('*')
-      .eq('post_id', postId)
+    try {
+      let query = supabase
+        .from('comments')
+        .select('*')
+        .eq('post_id', postId)
 
-    if (options?.status) {
-      query = query.eq('status', options.status)
-    } else {
-      // Default to approved comments for public viewing
-      query = query.eq('status', 'approved')
+      if (options?.status) {
+        query = query.eq('status', options.status)
+      } else {
+        // 默认只显示已批准的评论
+        query = query.eq('status', 'approved')
+      }
+
+      if (!options?.includeReplies) {
+        query = query.is('parent_id', null)
+      }
+
+      query = query.order('created_at', { ascending: true })
+
+      const { data, error } = await query
+
+      if (error) {
+        console.error('Database error in getComments:', error)
+        throw new DatabaseError('Failed to fetch comments', error)
+      }
+
+      return data || []
+    } catch (error) {
+      console.error('Exception in getComments:', error)
+      throw error
     }
-
-    if (!options?.includeReplies) {
-      query = query.is('parent_id', null)
-    }
-
-    query = query.order('created_at', { ascending: true })
-
-    const { data, error } = await query
-
-    if (error) {
-      throw new DatabaseError('Failed to fetch comments', error)
-    }
-
-    return data || []
   },
 
   async getCommentReplies(parentId: string, status: string = 'approved'): Promise<Comment[]> {
@@ -2114,26 +2221,19 @@ export const commentService = {
     return data || []
   },
 
-  async createComment(comment: {
-    post_id: string
-    parent_id?: string
-    author_name: string
-    author_email: string
-    author_website?: string
-    content: string
-    ip_address?: string
-    user_agent?: string
-  }): Promise<Comment> {
+  async createComment(comment: Database['public']['Tables']['comments']['Insert']): Promise<Comment> {
     // Basic spam detection
     const isSpam = this.detectSpam(comment)
-    const status = isSpam ? 'spam' : 'pending'
+    const status: 'pending' | 'approved' | 'spam' | 'rejected' = isSpam ? 'spam' : 'pending'
+
+    const commentData: Database['public']['Tables']['comments']['Insert'] = {
+      ...comment,
+      status
+    }
 
     const { data, error } = await supabase
       .from('comments')
-      .insert({
-        ...comment,
-        status,
-      } as any)
+      .insert(commentData)
       .select()
       .single()
 
@@ -2236,7 +2336,7 @@ export const commentService = {
       rejected: 0,
     }
 
-    data?.forEach(comment => {
+    data?.forEach((comment: Comment) => {
       stats[comment.status as keyof typeof stats]++
     })
 
@@ -2244,12 +2344,7 @@ export const commentService = {
   },
 
   // Basic spam detection logic
-  detectSpam(comment: {
-    author_name: string
-    author_email: string
-    content: string
-    author_website?: string
-  }): boolean {
+  detectSpam(comment: Pick<Database['public']['Tables']['comments']['Insert'], 'author_name' | 'author_email' | 'content' | 'author_website'>): boolean {
     const { content, author_name, author_email, author_website } = comment
 
     // Basic spam indicators
@@ -2291,5 +2386,24 @@ export const commentService = {
            isVeryShort || 
            isAllCaps || 
            hasExcessivePunctuation
+  },
+
+  /**
+   * 获取文章的评论数量
+   * @param postId 文章ID
+   * @returns 评论数量
+   */
+  async getCommentCount(postId: string): Promise<number> {
+    const { count, error } = await supabase
+      .from('comments')
+      .select('*', { count: 'exact' })
+      .eq('post_id', postId)
+      .eq('status', 'approved')
+
+    if (error) {
+      throw new DatabaseError('Failed to fetch comment count', error)
+    }
+
+    return count || 0
   },
 }

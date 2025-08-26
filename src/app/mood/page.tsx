@@ -2,29 +2,22 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/lib/auth/auth-context'
+import { LoadingError } from '@/components/ui/loading-error'
 import { MoodLogger } from '@/components/mood/mood-logger'
-import { Loading } from '@/components/ui/loading'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Heart } from 'lucide-react'
 
 export default function MoodPage() {
-  const { user, loading: authLoading } = useAuth()
+  const { user, loading, error } = useAuth()
   const [refreshKey, setRefreshKey] = useState(0)
 
   const handleMoodAdded = () => {
     setRefreshKey(prev => prev + 1)
   }
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loading text="加载中..." />
-      </div>
-    )
-  }
-
-  if (!user) {
+  // 如果用户未登录，显示登录提示
+  if (!loading && !error && !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md">
@@ -43,22 +36,24 @@ export default function MoodPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Heart className="h-8 w-8 text-red-500" />
-            心情跟踪
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            跟踪您的每日心情、精力和健康状态
-          </p>
+    <LoadingError loading={loading} error={error}>
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold flex items-center gap-2">
+              <Heart className="h-8 w-8 text-red-500" />
+              心情跟踪
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              跟踪您的每日心情、精力和健康状态
+            </p>
+          </div>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <MoodLogger key={refreshKey} onLogAdded={handleMoodAdded} />
-    </div>
+        {/* Main Content */}
+        <MoodLogger key={refreshKey} onLogAdded={handleMoodAdded} />
+      </div>
+    </LoadingError>
   )
 }

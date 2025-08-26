@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { LoadingError } from '@/components/ui/loading-error'
 import { formatDate } from '@/lib/utils'
 import { postService, categoryService, tagService, commentService } from '@/lib/supabase/database'
 import { isSupabaseConfigured } from '@/lib/supabase/client'
@@ -98,354 +99,316 @@ export default function BlogPage() {
       // 为文章加载评论数量（简化版本，避免过多并发请求）
       const postsWithComments = (postsData.data || []).map(post => ({
         ...post,
-        comment_count: 0 // 暂时设为0，避免过多API调用导致loading问题
+        comment_count: 0 // 默认值，实际数量会在后续加载
       }))
       
       setPosts(postsWithComments)
-      setTotalPosts(postsData.total || 0)
+      setTotalPosts(postsData.total)
       
-    } catch (error) {
-      console.error('Failed to load blog data:', error)
-      setError('加载博客数据失败，请稍后重试')
-      // 设置空数据以防止无限loading
-      setPosts([])
-      setTotalPosts(0)
+      // 异步加载每篇文章的评论数量
+      const commentCounts = await Promise.all(
+        (postsData.data || []).map(post => 
+          commentService.getCommentCount(post.id).catch(() => 0)
+        )
+      )
+      
+      // 更新文章列表，添加实际评论数量
+      setPosts(prev => prev.map((post, index) => ({
+        ...post,
+        comment_count: commentCounts[index] || 0
+      })))
+      
+    } catch (err) {
+      console.error('加载博客文章失败:', err)
+      setError('加载文章失败，请稍后重试')
     } finally {
       setLoading(false)
     }
   }
 
-  // 依赖项变化时重新加载数据
+  // 初始加载和过滤条件变化时重新加载
   useEffect(() => {
-    if (mounted) {
-      loadData()
-    }
-  }, [mounted, currentPage, searchTerm, selectedCategory, selectedTag])
+    setCurrentPage(1) // 重置到第一页
+  }, [searchTerm, selectedCategory, selectedTag])
 
-  // 搜索处理
+  useEffect(() => {
+    loadData()
+  }, [searchTerm, selectedCategory, selectedTag, currentPage])
+
+  // 处理搜索
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     setCurrentPage(1)
   }
 
-  // 重置过滤器
-  const resetFilters = () => {
-    setSearchTerm('')
-    setSelectedCategory('all')
-    setSelectedTag('all')
+  // 处理分类选择
+  const handleCategorySelect = (categoryId: string) => {
+    setSelectedCategory(categoryId)
     setCurrentPage(1)
   }
 
-  // 估算阅读时间
-  const estimateReadingTime = (content: string): number => {
-    const wordsPerMinute = 200
-    const words = content.split(/\s+/).length
-    return Math.ceil(words / wordsPerMinute)
+  // 处理标签选择
+  const handleTagSelect = (tagId: string) => {
+    setSelectedTag(tagId)
+    setCurrentPage(1)
   }
 
-  // 如果组件未挂载，显示loading骨架
-  if (!mounted) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center mb-12">
-          <div className="h-12 bg-gray-200 rounded w-64 mx-auto mb-4 animate-pulse"></div>
-          <div className="h-6 bg-gray-200 rounded w-96 mx-auto animate-pulse"></div>
+  // 渲染文章列表
+  const renderPosts = () => {
+    if (loading) {
+      return (
+        <div className="col-span-full flex justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardHeader>
-                <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-                <div className="h-6 bg-gray-200 rounded mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-              </CardHeader>
-              <CardContent>
-                <div className="h-4 bg-gray-200 rounded mb-4"></div>
-                <div className="h-10 bg-gray-200 rounded"></div>
-              </CardContent>
-            </Card>
-          ))}
+      )
+    }
+
+    if (error) {
+      return (
+        <div className="col-span-full">
+          <LoadingError 
+            loading={false}
+            error={error} 
+            onRetry={loadData}
+          >
+            <div></div>
+          </LoadingError>
         </div>
-      </div>
-    )
+      )
+    }
+
+    if (posts.length === 0) {
+      return (
+        <div className="col-span-full text-center py-12">
+          <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground" />
+          <h3 className="mt-4 text-lg font-medium">没有找到文章</h3>
+          <p className="mt-1 text-muted-foreground">
+            当前筛选条件下没有找到相关文章。
+          </p>
+        </div>
+      )
+    }
+
+    return posts.map((post) => (
+      <Card key={post.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+        <Link href={`/blog/${post.slug}`} className="block">
+          {post.featured_image ? (
+            <div className="relative aspect-video">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img 
+                src={post.featured_image} 
+                alt={post.title}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ) : (
+            <div className="bg-gradient-to-r from-blue-500 to-purple-600 h-32 flex items-center justify-center">
+              <span className="text-white text-4xl font-bold">
+                {post.title.charAt(0)}
+              </span>
+            </div>
+          )}
+        </Link>
+        
+        <CardHeader className="pb-2">
+          <Link href={`/blog/${post.slug}`} className="hover:no-underline">
+            <CardTitle className="line-clamp-2 hover:text-primary transition-colors">
+              {post.title}
+            </CardTitle>
+          </Link>
+          <CardDescription className="line-clamp-2 mt-1">
+            {post.excerpt || '这篇文章暂无摘要内容。'}
+          </CardDescription>
+        </CardHeader>
+        
+        <CardContent className="pt-2">
+          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <Calendar className="h-4 w-4" />
+              <time dateTime={post.published_at || post.created_at}>
+                {formatDate(post.published_at || post.created_at)}
+              </time>
+            </div>
+            
+            {post.reading_time && (
+              <div className="flex items-center gap-1">
+                <Clock className="h-4 w-4" />
+                <span>{post.reading_time} 分钟阅读</span>
+              </div>
+            )}
+            
+            <div className="flex items-center gap-1">
+              <Eye className="h-4 w-4" />
+              <span>{post.view_count} 次浏览</span>
+            </div>
+            
+            <div className="flex items-center gap-1">
+              <MessageCircle className="h-4 w-4" />
+              <span>{post.comment_count} 条评论</span>
+            </div>
+          </div>
+          
+          <div className="flex flex-wrap gap-2 mt-4">
+            {categories
+              .filter(cat => (post as any).category_id === cat.id)
+              .map(category => (
+                <Badge 
+                  key={category.id} 
+                  variant="secondary"
+                  className="cursor-pointer hover:bg-secondary/80"
+                  onClick={() => handleCategorySelect(category.id)}
+                >
+                  {category.name}
+                </Badge>
+              ))}
+            
+            {tags
+              .filter(tag => 
+                (post as any).post_tags?.some((pt: any) => pt.tag_id === tag.id)
+              )
+              .map(tag => (
+                <Badge 
+                  key={tag.id} 
+                  variant="outline"
+                  className="cursor-pointer hover:bg-muted"
+                  onClick={() => handleTagSelect(tag.id)}
+                >
+                  {tag.name}
+                </Badge>
+              ))}
+          </div>
+        </CardContent>
+      </Card>
+    ))
   }
+
+  if (!mounted) {
+    return null
+  }
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* 页面标题 */}
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold mb-4">博客</h1>
-        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          分享生产力提升、个人成长和每日进步的心得体会
+    <div className="container py-8">
+      <div className="max-w-4xl mx-auto mb-8 text-center">
+        <h1 className="text-4xl font-bold tracking-tight mb-2">博客文章</h1>
+        <p className="text-lg text-muted-foreground">
+          探索关于生产力提升、个人成长和效率优化的深度内容
         </p>
       </div>
 
-      {/* 错误状态显示 */}
-      {error && (
-        <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
-          <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
-          <div className="flex-1">
-            <p className="text-red-700 font-medium">加载失败</p>
-            <p className="text-red-600 text-sm">{error}</p>
-          </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => {
-              setError(null)
-              loadData()
-            }}
-          >
-            重试
-          </Button>
-        </div>
-      )}
+      <Card className="mb-8">
+        <CardContent className="p-6">
+          <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="搜索文章..."
+                className="pl-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <Button type="submit" className="w-full sm:w-auto">
+              <Search className="h-4 w-4 mr-2" />
+              搜索
+            </Button>
+          </form>
 
-      {/* 搜索和过滤器 */}
-      <div className="mb-8 space-y-4">
-        {/* 搜索栏 */}
-        <form onSubmit={handleSearch} className="flex gap-2 max-w-md mx-auto">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="搜索文章..."
-              className="pl-10"
-            />
-          </div>
-          <Button type="submit" disabled={loading}>
-            搜索
-          </Button>
-        </form>
-
-        {/* 过滤器 */}
-        <div className="flex flex-wrap gap-4 items-center justify-center">
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            <span className="text-sm font-medium">筛选：</span>
-          </div>
-          
-          {/* 分类过滤 */}
-          <div className="flex flex-wrap gap-1">
+          <div className="mt-6 flex flex-wrap gap-2">
             <Button
               variant={selectedCategory === 'all' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => {
-                setSelectedCategory('all')
-                setCurrentPage(1)
-              }}
-              disabled={loading}
+              onClick={() => handleCategorySelect('all')}
+              className="flex items-center gap-1"
             >
-              所有分类
+              <Filter className="h-4 w-4" />
+              全部分类
             </Button>
+            
             {categories.map((category) => (
               <Button
                 key={category.id}
-                variant={selectedCategory === category.slug ? 'default' : 'outline'}
+                variant={selectedCategory === category.id ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => {
-                  setSelectedCategory(category.slug)
-                  setCurrentPage(1)
-                }}
-                disabled={loading}
+                onClick={() => handleCategorySelect(category.id)}
               >
                 {category.name}
               </Button>
             ))}
           </div>
 
-          {/* 标签过滤 */}
-          <div className="flex flex-wrap gap-1">
+          <div className="mt-4 flex flex-wrap gap-2">
+            <span className="text-sm text-muted-foreground self-center">标签:</span>
             <Button
               variant={selectedTag === 'all' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => {
-                setSelectedTag('all')
-                setCurrentPage(1)
-              }}
-              disabled={loading}
+              onClick={() => handleTagSelect('all')}
             >
-              所有标签
+              全部
             </Button>
-            {tags.slice(0, 5).map((tag) => (
+            
+            {tags.slice(0, 10).map((tag) => (
               <Button
                 key={tag.id}
-                variant={selectedTag === tag.slug ? 'default' : 'outline'}
+                variant={selectedTag === tag.id ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => {
-                  setSelectedTag(tag.slug)
-                  setCurrentPage(1)
-                }}
-                disabled={loading}
+                onClick={() => handleTagSelect(tag.id)}
               >
                 {tag.name}
               </Button>
             ))}
           </div>
+        </CardContent>
+      </Card>
 
-          {/* 清除过滤器 */}
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={resetFilters}
-            disabled={loading}
-          >
-            清除筛选
-          </Button>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        {renderPosts()}
       </div>
 
-      {/* 文章列表 */}
-      {loading ? (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardHeader>
-                <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-                <div className="h-6 bg-gray-200 rounded mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-              </CardHeader>
-              <CardContent>
-                <div className="h-4 bg-gray-200 rounded mb-4"></div>
-                <div className="h-10 bg-gray-200 rounded"></div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : posts.length === 0 ? (
-        <div className="text-center py-12">
-          <h3 className="text-xl font-semibold mb-2">暂无文章</h3>
-          <p className="text-muted-foreground mb-4">
-            {searchTerm || selectedCategory !== 'all' || selectedTag !== 'all'
-              ? '试试调整搜索条件或筛选条件'
-              : '尚未发布任何博客文章'}
-          </p>
-          <Button onClick={resetFilters} variant="outline">
-            清除筛选
-          </Button>
-        </div>
-      ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {posts.map((post) => (
-            <Card key={post.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <CardTitle className="line-clamp-2 hover:text-primary">
-                  <Link href={`/blog/${post.slug}`}>
-                    {post.title}
-                  </Link>
-                </CardTitle>
-                <CardDescription className="line-clamp-3">
-                  {post.excerpt || '暂无摘要'}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    {formatDate(post.published_at || post.created_at)}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4" />
-                    {post.reading_time || estimateReadingTime(post.excerpt || '')} 分钟
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
-                  <div className="flex items-center gap-2">
-                    <Eye className="h-4 w-4" />
-                    {post.view_count || 0} 次阅读
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <MessageCircle className="h-4 w-4" />
-                    {post.comment_count || 0} 条评论
-                  </div>
-                </div>
-
-                <Link href={`/blog/${post.slug}`}>
-                  <Button className="w-full">
-                    阅读更多
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {/* 分页器 */}
       {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-2 mt-12">
+        <div className="flex justify-center items-center gap-2">
           <Button
             variant="outline"
-            disabled={currentPage === 1 || loading}
-            onClick={() => setCurrentPage(currentPage - 1)}
+            size="sm"
+            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+            disabled={currentPage === 1}
           >
             上一页
           </Button>
           
-          <div className="flex gap-1">
-            {Array.from({ length: totalPages }, (_, i) => i + 1)
-              .filter(page => {
-                if (totalPages <= 7) return true
-                if (page === 1 || page === totalPages) return true
-                if (Math.abs(page - currentPage) <= 2) return true
-                return false
-              })
-              .map((page, index, array) => {
-                const prevPage = array[index - 1]
-                const showEllipsis = prevPage && page - prevPage > 1
-                
-                return (
-                  <div key={page} className="flex items-center gap-1">
-                    {showEllipsis && (
-                      <span className="px-2 py-1 text-muted-foreground">...</span>
-                    )}
-                    <Button
-                      variant={currentPage === page ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setCurrentPage(page)}
-                      disabled={loading}
-                    >
-                      {page}
-                    </Button>
-                  </div>
-                )
-              })}
+          <div className="flex items-center gap-1">
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              const page = 
+                totalPages <= 5 
+                  ? i + 1 
+                  : currentPage <= 3 
+                    ? i + 1 
+                    : currentPage >= totalPages - 2 
+                      ? totalPages - 4 + i 
+                      : currentPage - 2 + i
+              
+              return (
+                <Button
+                  key={page}
+                  variant={currentPage === page ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setCurrentPage(page)}
+                >
+                  {page}
+                </Button>
+              )
+            })}
           </div>
           
           <Button
             variant="outline"
-            disabled={currentPage === totalPages || loading}
-            onClick={() => setCurrentPage(currentPage + 1)}
+            size="sm"
+            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+            disabled={currentPage === totalPages}
           >
             下一页
           </Button>
         </div>
       )}
-
-      {/* 结果信息 */}
-      <div className="text-center mt-6 text-sm text-muted-foreground">
-        显示 {posts.length} / {totalPosts} 篇文章
-        {(searchTerm || selectedCategory !== 'all' || selectedTag !== 'all') && (
-          <span> （已筛选）</span>
-        )}
-      </div>
-
-      {/* 订阅通知 */}
-      <div className="bg-muted rounded-lg p-8 mt-16 text-center">
-        <h3 className="text-2xl font-bold mb-4">保持更新</h3>
-        <p className="text-muted-foreground mb-6">
-          订阅我们的邮件列表，获取最新的文章和生产力提升技巧。
-        </p>
-        <div className="flex gap-2 max-w-md mx-auto">
-          <input
-            type="email"
-            placeholder="输入您的邮箱"
-            className="flex-1 px-3 py-2 border rounded-md"
-          />
-          <Button>订阅</Button>
-        </div>
-      </div>
     </div>
   )
 }

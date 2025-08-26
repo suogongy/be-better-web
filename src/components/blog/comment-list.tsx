@@ -31,23 +31,31 @@ interface CommentListProps {
   showModeration?: boolean
 }
 
+/**
+ * 评论列表组件
+ * 负责加载和显示文章的评论及回复
+ */
 export function CommentList({ postId, showModeration = false }: CommentListProps) {
   const [comments, setComments] = useState<CommentWithReplies[]>([])
   const [loading, setLoading] = useState(true)
   const [replyingTo, setReplyingTo] = useState<string | null>(null)
   const { addToast } = useToast()
 
+  /**
+   * 加载评论数据
+   * 包括顶级评论和各自的回复
+   */
   const loadComments = async () => {
     try {
       setLoading(true)
       
-      // Get top-level comments
+      // 获取顶级评论
       const topLevelComments = await commentService.getComments(postId, {
         status: showModeration ? undefined : 'approved',
         includeReplies: false,
       })
 
-      // Load replies for each comment
+      // 为每条评论加载回复
       const commentsWithReplies: CommentWithReplies[] = await Promise.all(
         topLevelComments.map(async (comment) => {
           const replies = await commentService.getCommentReplies(
@@ -59,11 +67,11 @@ export function CommentList({ postId, showModeration = false }: CommentListProps
       )
 
       setComments(commentsWithReplies)
-    } catch (error) {
-      console.error('Failed to load comments:', error)
+    } catch (error: any) {
+      console.error('加载评论失败:', error)
       addToast({
-        title: 'Error',
-        description: 'Failed to load comments',
+        title: '错误',
+        description: '加载评论失败',
         variant: 'destructive',
       })
     } finally {
@@ -102,25 +110,25 @@ export function CommentList({ postId, showModeration = false }: CommentListProps
 
   return (
     <div className="space-y-6">
-      {/* Comment Count */}
+      {/* 评论计数 */}
       <div className="flex items-center gap-2">
         <MessageCircle className="h-5 w-5" />
         <h3 className="text-lg font-semibold">
           {comments.length === 0 
-            ? 'No comments yet' 
-            : `${comments.length} comment${comments.length === 1 ? '' : 's'}`
+            ? '还没有评论' 
+            : `${comments.length} 条评论`
           }
         </h3>
       </div>
 
-      {/* Comments */}
+      {/* 评论内容 */}
       {comments.length === 0 ? (
         <Card>
           <CardContent className="p-8 text-center">
             <MessageCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <h4 className="text-lg font-medium mb-2">Be the first to comment</h4>
+            <h4 className="text-lg font-medium mb-2">成为第一个评论的人</h4>
             <p className="text-muted-foreground">
-              Share your thoughts and start a discussion!
+              分享您的想法，开始讨论！
             </p>
           </CardContent>
         </Card>
@@ -140,7 +148,7 @@ export function CommentList({ postId, showModeration = false }: CommentListProps
         </div>
       )}
 
-      {/* Main Comment Form */}
+      {/* 主评论表单 */}
       <CommentForm
         postId={postId}
         onCommentSubmitted={handleCommentSubmitted}
@@ -160,6 +168,10 @@ interface CommentItemProps {
   level?: number
 }
 
+/**
+ * 单个评论项组件
+ * 支持嵌套显示回复评论
+ */
 function CommentItem({
   comment,
   onReply,
@@ -170,13 +182,13 @@ function CommentItem({
   level = 0,
 }: CommentItemProps) {
   const isReplying = replyingTo === comment.id
-  const maxDepth = 3 // Maximum nesting level
+  const maxDepth = 3 // 最大嵌套层级
 
   return (
     <div className={`${level > 0 ? 'ml-8 border-l-2 border-muted pl-4' : ''}`}>
       <Card>
         <CardContent className="p-4">
-          {/* Comment Header */}
+          {/* 评论头部 */}
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-2 flex-wrap">
               <h4 className="font-medium">
@@ -203,7 +215,9 @@ function CommentItem({
                     comment.status === 'spam' ? 'destructive' : 'outline'
                   }
                 >
-                  {comment.status}
+                  {comment.status === 'approved' ? '已批准' :
+                   comment.status === 'pending' ? '待审核' :
+                   comment.status === 'spam' ? '垃圾' : '已拒绝'}
                 </Badge>
               )}
               
@@ -216,12 +230,12 @@ function CommentItem({
             </div>
           </div>
 
-          {/* Comment Content */}
+          {/* 评论内容 */}
           <div className="prose prose-sm max-w-none mb-3">
             <p className="whitespace-pre-wrap">{comment.content}</p>
           </div>
 
-          {/* Comment Actions */}
+          {/* 评论操作 */}
           <div className="flex items-center gap-2">
             {level < maxDepth && (
               <Button
@@ -231,12 +245,12 @@ function CommentItem({
                 className="flex items-center gap-1"
               >
                 <Reply className="h-3 w-3" />
-                Reply
+                回复
               </Button>
             )}
           </div>
 
-          {/* Reply Form */}
+          {/* 回复表单 */}
           {isReplying && (
             <div className="mt-4">
               <CommentForm
@@ -244,7 +258,7 @@ function CommentItem({
                 parentId={comment.id}
                 onCommentSubmitted={onCommentSubmitted}
                 onCancel={() => onReply(comment.id)}
-                placeholder={`Reply to ${comment.author_name}...`}
+                placeholder={`回复 ${comment.author_name}...`}
                 showTitle={false}
               />
             </div>
@@ -252,7 +266,7 @@ function CommentItem({
         </CardContent>
       </Card>
 
-      {/* Replies */}
+      {/* 回复列表 */}
       {comment.replies && comment.replies.length > 0 && (
         <div className="mt-4 space-y-4">
           {comment.replies.map((reply) => (

@@ -19,9 +19,12 @@ import {
   Award,
   AlertTriangle
 } from 'lucide-react'
+import { format } from 'date-fns'
+import { zhCN } from 'date-fns/locale'
 import type { ProductivityCorrelation, WeeklyPattern } from '@/types/advanced'
 
-const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+const dayNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+const dayNamesEnglish = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
 export function ProductivityInsights() {
   const { user } = useAuth()
@@ -45,8 +48,8 @@ export function ProductivityInsights() {
       setWeeklyPatterns(patternsData)
     } catch (error) {
       addToast({
-        title: 'Error',
-        description: 'Failed to load productivity insights.',
+        title: '错误',
+        description: '加载生产力洞察失败。',
         variant: 'destructive',
       })
     } finally {
@@ -97,269 +100,166 @@ export function ProductivityInsights() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Loading text="Analyzing your productivity patterns..." />
+        <Loading text="正在分析您的生产力模式..." />
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div className="text-center py-12">
+        <AlertTriangle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+        <h3 className="text-lg font-medium mb-2">需要登录</h3>
+        <p className="text-muted-foreground">
+          请登录以查看您的生产力洞察
+        </p>
       </div>
     )
   }
 
   return (
     <div className="space-y-6">
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Best Day</p>
-                <p className="text-2xl font-bold">{bestDay?.day_name || 'N/A'}</p>
-                <p className="text-xs text-muted-foreground">
-                  {bestDay ? Math.round(bestDay.avg_productivity) : 0}% avg productivity
-                </p>
-              </div>
-              <Award className="h-8 w-8 text-yellow-600" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">最佳生产力日</CardTitle>
+            <Award className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {bestDay ? dayNames[bestDay.day_of_week] : 'N/A'}
             </div>
+            <p className="text-xs text-muted-foreground">
+              平均 {bestDay?.avg_productivity.toFixed(1)}% 效率
+            </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Habits Impact</p>
-                <p className="text-2xl font-bold">{correlations.length}</p>
-                <p className="text-xs text-muted-foreground">tracked correlations</p>
-              </div>
-              <Target className="h-8 w-8 text-blue-600" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">最具挑战日</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {worstDay ? dayNames[worstDay.day_of_week] : 'N/A'}
             </div>
+            <p className="text-xs text-muted-foreground">
+              平均 {worstDay?.avg_productivity.toFixed(1)}% 效率
+            </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Pattern Strength</p>
-                <p className="text-2xl font-bold">
-                  {correlations.filter(c => c.correlation_strength === 'strong').length}
-                </p>
-                <p className="text-xs text-muted-foreground">strong correlations</p>
-              </div>
-              <Brain className="h-8 w-8 text-purple-600" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">最高任务完成</CardTitle>
+            <Target className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {weeklyPatterns.reduce((max, day) => 
+                Math.max(max, day.task_completion_rate * 100 || 0), 0
+              ).toFixed(0)}%
             </div>
+            <p className="text-xs text-muted-foreground">
+              最高任务完成率
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">习惯完成</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {weeklyPatterns.reduce((max, day) => 
+                Math.max(max, day.avg_habits_completed || 0), 0
+              ).toFixed(1)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              日均习惯完成数
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Weekly Patterns */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Weekly Productivity Patterns
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {weeklyPatterns.length === 0 ? (
-            <div className="text-center py-8">
-              <BarChart3 className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-semibold mb-2">No Pattern Data</h3>
-              <p className="text-muted-foreground">
-                Complete more daily summaries to see your weekly patterns.
-              </p>
-            </div>
-          ) : (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              每周模式分析
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
             <div className="space-y-4">
-              {weeklyPatterns.map(day => (
-                <div
-                  key={day.day_of_week}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-20 font-medium">
-                      {dayNames[day.day_of_week]}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {day.day_name === bestDay?.day_name && (
-                        <Award className="h-4 w-4 text-yellow-500" />
-                      )}
-                      {day.day_name === worstDay?.day_name && worstDay.day_name !== bestDay?.day_name && (
-                        <AlertTriangle className="h-4 w-4 text-red-500" />
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-6">
-                    <div className="text-center">
-                      <div className="text-sm font-medium">
-                        {Math.round(day.avg_productivity)}%
-                      </div>
-                      <div className="text-xs text-muted-foreground">Productivity</div>
-                    </div>
-                    
-                    <div className="text-center">
-                      <div className="text-sm font-medium">
-                        {Math.round(day.avg_mood)}
-                      </div>
-                      <div className="text-xs text-muted-foreground">Mood</div>
-                    </div>
-                    
-                    <div className="text-center">
-                      <div className="text-sm font-medium">
-                        {Math.round(day.avg_habits_completed)}
-                      </div>
-                      <div className="text-xs text-muted-foreground">Habits</div>
-                    </div>
-                    
-                    <div className="text-center">
-                      <div className="text-sm font-medium">
-                        {Math.round(day.task_completion_rate)}%
-                      </div>
-                      <div className="text-xs text-muted-foreground">Tasks</div>
-                    </div>
-                    
-                    <Badge className={getProductivityColor(day.avg_productivity)}>
-                      {day.avg_productivity >= 80 ? 'Excellent' :
-                       day.avg_productivity >= 60 ? 'Good' :
-                       day.avg_productivity >= 40 ? 'Fair' : 'Poor'}
+              {weeklyPatterns.map((pattern) => (
+                <div key={`${pattern.day_of_week}-${pattern.day_name}`} className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">
+                      {dayNames[pattern.day_of_week]}
+                    </span>
+                    <Badge className={getProductivityColor(pattern.avg_productivity || 0)}>
+                      {(pattern.avg_productivity || 0).toFixed(1)}%
                     </Badge>
                   </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 bg-secondary rounded-full h-2">
+                      <div 
+                        className="bg-primary rounded-full h-2 transition-all duration-300"
+                        style={{ width: `${Math.min(100, pattern.avg_productivity || 0)}%` }}
+                      />
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {pattern.task_completion_rate ? `${(pattern.task_completion_rate * 100).toFixed(0)}%` : 'N/A'} 完成率
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Habit Correlations */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5" />
-            Habit-Productivity Correlations
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {correlations.length === 0 ? (
-            <div className="text-center py-8">
-              <Target className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-semibold mb-2">No Correlation Data</h3>
-              <p className="text-muted-foreground">
-                Track habits for a few weeks to see how they impact your productivity.
-              </p>
-            </div>
-          ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              相关性分析
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
             <div className="space-y-4">
-              {correlations.map((correlation, index) => (
-                <div
-                  key={index}
-                  className="p-4 border rounded-lg hover:bg-muted"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      {getCorrelationIcon(correlation.productivity_impact)}
-                      <div>
-                        <div className="font-medium">{correlation.habit_name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {Math.round(correlation.completion_rate)}% completion rate
-                        </div>
+              {correlations.map((correlation) => (
+                <div key={correlation.habit_name} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    {getCorrelationIcon(correlation.productivity_impact)}
+                    <div>
+                      <div className="font-medium capitalize">
+                        {correlation.habit_name}
                       </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-3">
-                      <div className="text-right">
-                        <div className="text-sm font-medium">
-                          {correlation.productivity_impact > 0 ? '+' : ''}{Math.round(correlation.productivity_impact)}%
-                        </div>
-                        <div className="text-xs text-muted-foreground">Impact</div>
+                      <div className="text-sm text-muted-foreground">
+                        习惯完成率: {correlation.completion_rate.toFixed(1)}%
                       </div>
-                      
-                      <Badge className={getCorrelationColor(correlation.correlation_strength)}>
-                        {correlation.correlation_strength}
-                      </Badge>
                     </div>
                   </div>
+                  <Badge className={getCorrelationColor(correlation.correlation_strength)}>
+                    {(correlation.productivity_impact > 0 ? '+' : '') + correlation.productivity_impact.toFixed(1)}%
+                  </Badge>
                 </div>
               ))}
+              
+              {correlations.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Lightbulb className="h-8 w-8 mx-auto mb-2" />
+                  <p>暂无足够的数据来分析相关性</p>
+                </div>
+              )}
             </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Insights and Recommendations */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Lightbulb className="h-5 w-5" />
-            Smart Insights
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {/* Best Day Insight */}
-            {bestDay && (
-              <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                <div className="flex items-start gap-2">
-                  <Award className="h-5 w-5 text-green-600 mt-0.5" />
-                  <div>
-                    <h4 className="font-medium text-green-800">Peak Performance Day</h4>
-                    <p className="text-sm text-green-700">
-                      You're most productive on {bestDay.day_name}s with an average productivity score of {Math.round(bestDay.avg_productivity)}%. 
-                      Consider scheduling your most important tasks on this day.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Strong Habit Correlations */}
-            {correlations.filter(c => c.correlation_strength === 'strong').length > 0 && (
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="flex items-start gap-2">
-                  <Target className="h-5 w-5 text-blue-600 mt-0.5" />
-                  <div>
-                    <h4 className="font-medium text-blue-800">High-Impact Habits</h4>
-                    <p className="text-sm text-blue-700">
-                      You have {correlations.filter(c => c.correlation_strength === 'strong').length} habit{correlations.filter(c => c.correlation_strength === 'strong').length > 1 ? 's' : ''} with strong productivity correlations. 
-                      Focus on maintaining these habits for consistent performance.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Improvement Opportunity */}
-            {worstDay && bestDay && worstDay.day_name !== bestDay.day_name && (
-              <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <div className="flex items-start gap-2">
-                  <TrendingUp className="h-5 w-5 text-yellow-600 mt-0.5" />
-                  <div>
-                    <h4 className="font-medium text-yellow-800">Improvement Opportunity</h4>
-                    <p className="text-sm text-yellow-700">
-                      Your productivity on {worstDay.day_name}s ({Math.round(worstDay.avg_productivity)}%) is lower than your best day. 
-                      Try applying successful strategies from {bestDay.day_name}s to improve this day.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Data Collection Insight */}
-            {correlations.length === 0 && weeklyPatterns.length === 0 && (
-              <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                <div className="flex items-start gap-2">
-                  <Brain className="h-5 w-5 text-gray-600 mt-0.5" />
-                  <div>
-                    <h4 className="font-medium text-gray-800">Building Your Profile</h4>
-                    <p className="text-sm text-gray-700">
-                      Keep tracking your daily summaries and habits to unlock personalized insights about your productivity patterns.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

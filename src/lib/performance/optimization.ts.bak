@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react'
+import { useState, useEffect, useCallback, useMemo, lazy, Suspense, useRef } from 'react'
 
 // Cache implementation for client-side caching
 class SimpleCache {
@@ -217,6 +217,22 @@ export const imageUtils = {
 
 // Bundle size analysis utilities
 export const bundleUtils = {
+  // Lazy load component with loading state
+  lazyWithLoading: <T extends React.ComponentType<any>>(
+    importFn: () => Promise<{ default: T }>,
+    fallback?: React.ReactNode
+  ) => {
+    const LazyComponent = lazy(importFn)
+    
+    return function Component(props: React.ComponentProps<T>) {
+      return (
+        <Suspense fallback={fallback || <div>Loading...</div>}>
+          <LazyComponent {...props} />
+        </Suspense>
+      )
+    }
+  },
+
   // Dynamic import with error handling
   dynamicImport: async <T>(importFn: () => Promise<T>): Promise<T | null> => {
     try {
@@ -230,56 +246,48 @@ export const bundleUtils = {
 
 // Performance monitoring
 export const performanceUtils = {
+  // Measure component render time
+  measureRender: (componentName: string) => {
+    return <T extends React.ComponentType<any>>(Component: T) => {
+      const WrappedComponent = (props: React.ComponentProps<T>) => {
+        useEffect(() => {
+          const start = performance.now()
+          return () => {
+            const end = performance.now()
+            console.log(`${componentName} render time: ${end - start}ms`)
+          }
+        }, [])
+
+        return <Component {...props} />
+      }
+      
+      return WrappedComponent
+    }
+  },
+
   // Log performance metrics
   logMetrics: () => {
     if (typeof window !== 'undefined' && 'performance' in window) {
       const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming
-
+      
       console.group('Performance Metrics')
-      console.log('DOM Content Loaded:', navigation.domContentLoadedEventEnd - (navigation.activationStart || 0), 'ms')
-      console.log('Load Complete:', navigation.loadEventEnd - (navigation.activationStart || 0), 'ms')
+      console.log('DOM Content Loaded:', navigation.domContentLoadedEventEnd - navigation.navigationStart, 'ms')
+      console.log('Load Complete:', navigation.loadEventEnd - navigation.navigationStart, 'ms')
       console.log('First Paint:', performance.getEntriesByName('first-paint')[0]?.startTime || 'N/A', 'ms')
       console.log('First Contentful Paint:', performance.getEntriesByName('first-contentful-paint')[0]?.startTime || 'N/A', 'ms')
       console.groupEnd()
     }
   },
 
-  // Log navigation timing
-  logNavigationTiming: () => {
-    if (typeof window === 'undefined' || !window.performance) return
-    
-    setTimeout(() => {
-      const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming
-      if (!navigation) return
-      
-      console.log('Navigation Timing:')
-      console.log('DOM Content Loaded:', navigation.domContentLoadedEventEnd - (navigation.activationStart || 0), 'ms')
-      console.log('Load Complete:', navigation.loadEventEnd - (navigation.activationStart || 0), 'ms')
-    }, 0)
-  },
-
-  // Track Core Web Vitals
-  trackWebVitals: () => {
-    if (typeof window === 'undefined') return
-    
-    import('web-vitals').then((webVitals) => {
-      webVitals.onCLS(console.log)
-      webVitals.onFCP(console.log)
-      webVitals.onLCP(console.log)
-      webVitals.onTTFB(console.log)
-    }).catch(error => {
-      console.error('Failed to load web-vitals:', error)
-    })
-  },
-
   // Web Vitals monitoring
   observeWebVitals: (callback: (metric: any) => void) => {
     if (typeof window !== 'undefined') {
-      import('web-vitals').then(({ onCLS, onFCP, onLCP, onTTFB }) => {
-        onCLS(callback)
-        onFCP(callback)
-        onLCP(callback)
-        onTTFB(callback)
+      import('web-vitals').then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {
+        getCLS(callback)
+        getFID(callback)
+        getFCP(callback)
+        getLCP(callback)
+        getTTFB(callback)
       })
     }
   }
@@ -287,15 +295,25 @@ export const performanceUtils = {
 
 // Memory optimization
 export const memoryUtils = {
+  // Clean up function references
+  useStableCallback: <T extends (...args: any[]) => any>(callback: T): T => {
+    const callbackRef = useRef(callback)
+    callbackRef.current = callback
+    
+    return useCallback((...args: Parameters<T>) => {
+      return callbackRef.current(...args)
+    }, []) as T
+  },
+
   // Memoize expensive calculations
   useMemoizedValue: <T>(factory: () => T, deps: React.DependencyList): T => {
-    // This is just a placeholder - actual implementation requires React
-    return factory()
+    return useMemo(factory, deps)
   },
 
   // Clean up event listeners and timers
   useCleanup: (cleanup: () => void, deps: React.DependencyList = []) => {
-    // This is just a placeholder - actual implementation requires React
-    // In a real React component, you would use useEffect(() => cleanup, deps)
+    useEffect(() => {
+      return cleanup
+    }, deps)
   }
 }

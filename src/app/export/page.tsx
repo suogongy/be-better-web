@@ -1,24 +1,17 @@
 'use client'
 
 import { useAuth } from '@/lib/auth/auth-context'
+import { LoadingError } from '@/components/ui/loading-error'
 import { DataExporter } from '@/components/export/data-exporter'
-import { Loading } from '@/components/ui/loading'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Download } from 'lucide-react'
 
 export default function ExportPage() {
-  const { user, loading: authLoading } = useAuth()
+  const { user, loading, error } = useAuth()
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loading text="加载中..." />
-      </div>
-    )
-  }
-
-  if (!user) {
+  // 如果用户未登录，显示登录提示
+  if (!loading && !error && !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md">
@@ -37,22 +30,24 @@ export default function ExportPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Download className="h-8 w-8 text-blue-600" />
-            数据导出
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            导出您的生产力数据用于备份或分析
-          </p>
+    <LoadingError loading={loading} error={error}>
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold flex items-center gap-2">
+              <Download className="h-8 w-8 text-blue-600" />
+              数据导出
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              导出您的生产力数据用于备份或分析
+            </p>
+          </div>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <DataExporter />
-    </div>
+        {/* Main Content */}
+        <DataExporter />
+      </div>
+    </LoadingError>
   )
 }

@@ -9,7 +9,7 @@ import { TaskForm } from '@/components/tasks/task-form'
 import { TaskStats } from '@/components/tasks/task-stats'
 import { TaskCalendar } from '@/components/tasks/task-calendar'
 import { TaskFilters } from '@/components/tasks/task-filters'
-import { Loading } from '@/components/ui/loading'
+import { LoadingError } from '@/components/ui/loading-error'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Plus, Calendar, BarChart3 } from 'lucide-react'
@@ -26,7 +26,7 @@ interface TaskFilters {
 }
 
 export default function SchedulePage() {
-  const { user, loading: authLoading } = useAuth()
+  const { user, loading: authLoading, error: authError } = useAuth()
   const { addToast } = useToast()
   
   const [tasks, setTasks] = useState<Task[]>([])
@@ -99,7 +99,9 @@ export default function SchedulePage() {
     }
   }
 
-  const handleUpdateTask = async (taskId: string, updates: any) => {
+  const handleUpdateTask = async (taskId: string, updates: Partial<Task>) => {
+    if (!user) return
+    
     try {
       await taskService.updateTask(taskId, updates)
       
@@ -121,6 +123,8 @@ export default function SchedulePage() {
   }
 
   const handleDeleteTask = async (taskId: string) => {
+    if (!user) return
+    
     try {
       await taskService.deleteTask(taskId)
       
@@ -140,43 +144,16 @@ export default function SchedulePage() {
     }
   }
 
-  const handleCompleteTask = async (taskId: string, completionData?: any) => {
+  const handleTaskMove = async (taskId: string, newStatus: string) => {
+    if (!user) return
+    
     try {
-      await taskService.completeTask(taskId, completionData)
-      
-      addToast({
-        title: '成功',
-        description: '任务完成成功。',
-        variant: 'success',
-      })
-      
+      await taskService.updateTask(taskId, { status: newStatus })
       loadData()
     } catch (error) {
       addToast({
         title: '错误',
-        description: '完成任务失败，请重试。',
-        variant: 'destructive',
-      })
-    }
-  }
-
-  const handleTaskMove = async (taskId: string, newDate: string) => {
-    try {
-      await taskService.updateTask(taskId, {
-        due_date: newDate
-      })
-      
-      addToast({
-        title: '成功',
-        description: '任务重新安排成功。',
-        variant: 'success',
-      })
-      
-      loadData()
-    } catch (error) {
-      addToast({
-        title: '错误',
-        description: '重新安排任务失败，请重试。',
+        description: '移动任务失败，请重试。',
         variant: 'destructive',
       })
     }
@@ -197,15 +174,8 @@ export default function SchedulePage() {
     // We'll handle the date pre-filling in the form component later
   }
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loading text="加载中..." />
-      </div>
-    )
-  }
-
-  if (!user) {
+  // 如果用户未登录，显示登录提示
+  if (!authLoading && !authError && !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md">
@@ -224,110 +194,98 @@ export default function SchedulePage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">我的日程安排</h1>
-          <p className="text-muted-foreground mt-1">
-            管理您的任务，保持高效
-          </p>
-        </div>
-        
-        <div className="flex items-center gap-2 mt-4 sm:mt-0">
-          {/* View Toggle */}
-          <div className="flex rounded-lg border">
-            <Button
-              variant={currentView === 'list' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setCurrentView('list')}
-              className="rounded-r-none"
-            >
-              列表
-            </Button>
-            <Button
-              variant={currentView === 'calendar' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setCurrentView('calendar')}
-              className="rounded-none border-x-0"
-            >
-              <Calendar className="h-4 w-4 mr-2" />
-              日历
-            </Button>
-            <Button
-              variant={currentView === 'stats' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setCurrentView('stats')}
-              className="rounded-l-none"
-            >
-              <BarChart3 className="h-4 w-4 mr-2" />
-              统计
+    <LoadingError loading={authLoading} error={authError}>
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold">日程安排</h1>
+            <p className="text-muted-foreground mt-1">
+              管理您的任务、截止日期和日程
+            </p>
+          </div>
+          <div className="flex gap-2 mt-4 sm:mt-0">
+            <Button onClick={() => setShowTaskForm(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              添加任务
             </Button>
           </div>
-          
-          <Button onClick={() => setShowTaskForm(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            新任务
+        </div>
+
+        {/* View Toggle */}
+        <div className="flex gap-2 mb-6">
+          <Button
+            variant={currentView === 'list' ? 'default' : 'outline'}
+            onClick={() => setCurrentView('list')}
+          >
+            <BarChart3 className="h-4 w-4 mr-2" />
+            列表视图
+          </Button>
+          <Button
+            variant={currentView === 'calendar' ? 'default' : 'outline'}
+            onClick={() => setCurrentView('calendar')}
+          >
+            <Calendar className="h-4 w-4 mr-2" />
+            日历视图
+          </Button>
+          <Button
+            variant={currentView === 'stats' ? 'default' : 'outline'}
+            onClick={() => setCurrentView('stats')}
+          >
+            <BarChart3 className="h-4 w-4 mr-2" />
+            统计视图
           </Button>
         </div>
-      </div>
 
-      {/* Stats View */}
-      {currentView === 'stats' && (
-        <TaskStats userId={user.id} />
-      )}
-
-      {/* List/Calendar View */}
-      {(currentView === 'list' || currentView === 'calendar') && (
-        <>
-          {/* Filters */}
-          <TaskFilters
-            filters={filters}
-            categories={categories}
-            onFiltersChange={setFilters}
-            className="mb-6"
-          />
-
-          {/* Task Content */}
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loading text="加载任务..." />
-            </div>
-          ) : currentView === 'list' ? (
-            <TaskList
-              tasks={tasks}
-              onEdit={setEditingTask}
-              onDelete={handleDeleteTask}
-              onComplete={handleCompleteTask}
-              onUpdate={handleUpdateTask}
-            />
-          ) : (
-            <TaskCalendar
-              tasks={tasks}
-              onTaskClick={setEditingTask}
-              onDateClick={handleDateClick}
-              onTaskMove={handleTaskMove}
-              onCreateTask={handleCreateTaskForDate}
-            />
-          )}
-        </>
-      )}
-
-      {/* Task Form Modal */}
-      {(showTaskForm || editingTask) && (
-        <TaskForm
-          task={editingTask}
+        {/* Filters */}
+        <TaskFilters
+          filters={filters}
+          onFiltersChange={setFilters}
           categories={categories}
-          onSubmit={editingTask ? 
-            (data: any) => handleUpdateTask(editingTask.id, data) : 
-            handleCreateTask
-          }
-          onCancel={() => {
-            setShowTaskForm(false)
-            setEditingTask(null)
-          }}
         />
-      )}
-    </div>
+
+        {/* Content */}
+        {currentView === 'list' && (
+          <TaskList
+            tasks={tasks}
+            loading={loading}
+            onEdit={setEditingTask}
+            onDelete={handleDeleteTask}
+            onStatusChange={handleTaskMove}
+          />
+        )}
+
+        {currentView === 'calendar' && (
+          <TaskCalendar
+            tasks={tasks}
+            onDateClick={handleDateClick}
+            onCreateTask={handleCreateTaskForDate}
+          />
+        )}
+
+        {currentView === 'stats' && (
+          <TaskStats tasks={tasks} />
+        )}
+
+        {/* Task Form Modal */}
+        {showTaskForm && (
+          <TaskForm
+            onSubmit={handleCreateTask}
+            onCancel={() => setShowTaskForm(false)}
+            categories={categories}
+          />
+        )}
+
+        {/* Edit Task Modal */}
+        {editingTask && (
+          <TaskForm
+            task={editingTask}
+            onSubmit={(data) => handleUpdateTask(editingTask.id, data)}
+            onCancel={() => setEditingTask(null)}
+            categories={categories}
+          />
+        )}
+      </div>
+    </LoadingError>
   )
 }

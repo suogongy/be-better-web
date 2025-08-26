@@ -5,14 +5,57 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Loading } from '@/components/ui/loading'
 import Link from 'next/link'
-import { CheckCircle, Calendar, BookOpen, TrendingUp } from 'lucide-react'
+import { CheckCircle, Calendar, BookOpen, TrendingUp, AlertCircle } from 'lucide-react'
 
 export default function Home() {
-  const { user, loading } = useAuth()
+  const { user, loading, error } = useAuth()
 
+  // 如果认证服务未配置，显示配置提示
+  if (error && error.includes('未配置')) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+        <Card className="w-full max-w-md mx-4">
+          <CardContent className="text-center py-8">
+            <AlertCircle className="h-12 w-12 text-orange-500 mx-auto mb-4" />
+            <h1 className="text-2xl font-bold mb-4">配置提示</h1>
+            <p className="text-gray-600 dark:text-gray-300 mb-4">
+              认证服务未配置。请检查您的环境变量设置。
+            </p>
+            <div className="space-y-2 text-sm text-left bg-gray-50 dark:bg-gray-800 p-4 rounded">
+              <p>请确保在项目根目录创建 <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded">.env.local</code> 文件，包含：</p>
+              <p><code>NEXT_PUBLIC_SUPABASE_URL=your-supabase-url</code></p>
+              <p><code>NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key</code></p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // 如果认证服务连接超时，显示网络错误
+  if (error && error.includes('超时')) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+        <Card className="w-full max-w-md mx-4">
+          <CardContent className="text-center py-8">
+            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h1 className="text-2xl font-bold mb-4">连接超时</h1>
+            <p className="text-gray-600 dark:text-gray-300 mb-4">
+              认证服务连接超时，请检查您的网络连接。
+            </p>
+            <Button onClick={() => window.location.reload()}>
+              重新加载
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // 如果正在加载，显示加载状态
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
         <Loading text="加载中..." />
       </div>
     )

@@ -62,7 +62,7 @@ export function CommentModeration() {
     try {
       setLoading(true)
       
-      // Load comments for moderation
+      // 加载待审核评论
       const filterStatus = activeTab === 'all' ? undefined : (activeTab as 'pending' | 'spam')
       const { data, total } = await commentService.getCommentsForModeration({
         status: filterStatus,
@@ -73,14 +73,14 @@ export function CommentModeration() {
       setComments(data)
       setTotalPages(Math.ceil(total / ITEMS_PER_PAGE))
       
-      // Load statistics
+      // 加载统计数据
       const commentStats = await commentService.getCommentStats()
       setStats(commentStats)
     } catch (error) {
-      console.error('Failed to load comments:', error)
+      console.error('加载评论失败:', error)
       addToast({
-        title: 'Error',
-        description: 'Failed to load comments for moderation',
+        title: '错误',
+        description: '加载待审核评论失败',
         variant: 'destructive',
       })
     } finally {
@@ -100,24 +100,24 @@ export function CommentModeration() {
       await commentService.updateCommentStatus(commentId, newStatus)
       
       addToast({
-        title: 'Success',
-        description: `Comment ${newStatus} successfully`,
+        title: '成功',
+        description: `评论已${newStatus === 'approved' ? '批准' : newStatus === 'spam' ? '标记为垃圾' : '拒绝'}`,
         variant: 'success',
       })
       
       loadComments()
     } catch (error) {
-      console.error('Failed to update comment status:', error)
+      console.error('更新评论状态失败:', error)
       addToast({
-        title: 'Error',
-        description: 'Failed to update comment status',
+        title: '错误',
+        description: '更新评论状态失败',
         variant: 'destructive',
       })
     }
   }
 
   const handleDelete = async (commentId: string) => {
-    if (!confirm('Are you sure you want to permanently delete this comment?')) {
+    if (!confirm('您确定要永久删除这条评论吗？')) {
       return
     }
 
@@ -125,17 +125,17 @@ export function CommentModeration() {
       await commentService.deleteComment(commentId)
       
       addToast({
-        title: 'Success',
-        description: 'Comment deleted successfully',
+        title: '成功',
+        description: '评论已删除',
         variant: 'success',
       })
       
       loadComments()
     } catch (error) {
-      console.error('Failed to delete comment:', error)
+      console.error('删除评论失败:', error)
       addToast({
-        title: 'Error',
-        description: 'Failed to delete comment',
+        title: '错误',
+        description: '删除评论失败',
         variant: 'destructive',
       })
     }
@@ -153,21 +153,21 @@ export function CommentModeration() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* 标题 */}
       <div>
-        <h1 className="text-3xl font-bold mb-2">Comment Moderation</h1>
+        <h1 className="text-3xl font-bold mb-2">评论管理</h1>
         <p className="text-muted-foreground">
-          Manage and moderate comments across all blog posts
+          管理和审核所有博客文章的评论
         </p>
       </div>
 
-      {/* Statistics */}
+      {/* 统计信息 */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total</p>
+                <p className="text-sm font-medium text-muted-foreground">总计</p>
                 <p className="text-2xl font-bold">{stats.total}</p>
               </div>
               <MessageCircle className="h-4 w-4 text-muted-foreground" />
@@ -179,7 +179,7 @@ export function CommentModeration() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Approved</p>
+                <p className="text-sm font-medium text-muted-foreground">已批准</p>
                 <p className="text-2xl font-bold text-green-600">{stats.approved}</p>
               </div>
               <Check className="h-4 w-4 text-green-600" />
@@ -191,7 +191,7 @@ export function CommentModeration() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Pending</p>
+                <p className="text-sm font-medium text-muted-foreground">待审核</p>
                 <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
               </div>
               <AlertTriangle className="h-4 w-4 text-yellow-600" />
@@ -203,7 +203,7 @@ export function CommentModeration() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Spam</p>
+                <p className="text-sm font-medium text-muted-foreground">垃圾评论</p>
                 <p className="text-2xl font-bold text-red-600">{stats.spam}</p>
               </div>
               <Shield className="h-4 w-4 text-red-600" />
@@ -215,7 +215,7 @@ export function CommentModeration() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Rejected</p>
+                <p className="text-sm font-medium text-muted-foreground">已拒绝</p>
                 <p className="text-2xl font-bold text-gray-600">{stats.rejected}</p>
               </div>
               <X className="h-4 w-4 text-gray-600" />
@@ -224,12 +224,12 @@ export function CommentModeration() {
         </Card>
       </div>
 
-      {/* Moderation Interface */}
+      {/* 管理界面 */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Filter className="h-5 w-5" />
-            Comments to Review
+            待审核评论
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -239,13 +239,13 @@ export function CommentModeration() {
           }}>
             <TabsList>
               <TabsTrigger value="pending">
-                Pending ({stats.pending})
+                待审核 ({stats.pending})
               </TabsTrigger>
               <TabsTrigger value="spam">
-                Spam ({stats.spam})
+                垃圾评论 ({stats.spam})
               </TabsTrigger>
               <TabsTrigger value="all">
-                All
+                全部
               </TabsTrigger>
             </TabsList>
 
@@ -253,11 +253,13 @@ export function CommentModeration() {
               {comments.length === 0 ? (
                 <div className="text-center py-8">
                   <MessageCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-lg font-medium mb-2">No comments to review</h3>
+                  <h3 className="text-lg font-medium mb-2">没有待审核的评论</h3>
                   <p className="text-muted-foreground">
                     {activeTab === 'pending' 
-                      ? 'All comments have been moderated'
-                      : `No ${activeTab} comments found`
+                      ? '所有评论都已审核完毕'
+                      : activeTab === 'spam' 
+                      ? '未找到垃圾评论'
+                      : '未找到评论'
                     }
                   </p>
                 </div>
@@ -274,7 +276,7 @@ export function CommentModeration() {
                 </div>
               )}
 
-              {/* Pagination */}
+              {/* 分页 */}
               {totalPages > 1 && (
                 <div className="flex justify-center items-center gap-2 mt-6">
                   <Button
@@ -282,11 +284,11 @@ export function CommentModeration() {
                     disabled={currentPage === 1}
                     onClick={() => setCurrentPage(currentPage - 1)}
                   >
-                    Previous
+                    上一页
                   </Button>
                   
                   <span className="text-sm text-muted-foreground">
-                    Page {currentPage} of {totalPages}
+                    第 {currentPage} 页，共 {totalPages} 页
                   </span>
                   
                   <Button
@@ -294,7 +296,7 @@ export function CommentModeration() {
                     disabled={currentPage === totalPages}
                     onClick={() => setCurrentPage(currentPage + 1)}
                   >
-                    Next
+                    下一页
                   </Button>
                 </div>
               )}
@@ -317,6 +319,16 @@ function CommentModerationItem({
   onStatusUpdate, 
   onDelete 
 }: CommentModerationItemProps) {
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'approved': return '已批准';
+      case 'pending': return '待审核';
+      case 'spam': return '垃圾';
+      case 'rejected': return '已拒绝';
+      default: return status;
+    }
+  };
+
   return (
     <Card>
       <CardContent className="p-4">
@@ -330,7 +342,7 @@ function CommentModerationItem({
                 comment.status === 'spam' ? 'destructive' : 'outline'
               }
             >
-              {comment.status}
+              {getStatusText(comment.status)}
             </Badge>
             <time 
               className="text-sm text-muted-foreground"
@@ -342,9 +354,9 @@ function CommentModerationItem({
         </div>
 
         <div className="text-sm text-muted-foreground mb-2">
-          <div>Email: {comment.author_email}</div>
+          <div>邮箱: {comment.author_email}</div>
           {comment.author_website && (
-            <div>Website: {comment.author_website}</div>
+            <div>网站: {comment.author_website}</div>
           )}
           {comment.ip_address && (
             <div>IP: {comment.ip_address}</div>
@@ -365,7 +377,7 @@ function CommentModerationItem({
               className="flex items-center gap-1"
             >
               <Check className="h-3 w-3" />
-              Approve
+              批准
             </Button>
           )}
           
@@ -377,7 +389,7 @@ function CommentModerationItem({
               className="flex items-center gap-1"
             >
               <Shield className="h-3 w-3" />
-              Mark as Spam
+              标记为垃圾
             </Button>
           )}
           
@@ -389,7 +401,7 @@ function CommentModerationItem({
               className="flex items-center gap-1"
             >
               <X className="h-3 w-3" />
-              Reject
+              拒绝
             </Button>
           )}
           
@@ -400,7 +412,7 @@ function CommentModerationItem({
             className="flex items-center gap-1 text-red-600 hover:text-red-700"
           >
             <Trash2 className="h-3 w-3" />
-            Delete
+            删除
           </Button>
         </div>
       </CardContent>

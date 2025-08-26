@@ -13,10 +13,10 @@ import { commentService } from '@/lib/supabase/database'
 import { MessageCircle, Send } from 'lucide-react'
 
 const commentSchema = z.object({
-  author_name: z.string().min(2, 'Name must be at least 2 characters').max(100, 'Name too long'),
-  author_email: z.string().email('Valid email required').max(255, 'Email too long'),
-  author_website: z.string().url('Valid URL required').optional().or(z.literal('')),
-  content: z.string().min(10, 'Comment must be at least 10 characters').max(2000, 'Comment too long'),
+  author_name: z.string().min(2, '姓名至少需要2个字符').max(100, '姓名太长'),
+  author_email: z.string().email('请输入有效的邮箱地址').max(255, '邮箱地址太长'),
+  author_website: z.string().url('请输入有效的网址').optional().or(z.literal('')),
+  content: z.string().min(10, '评论至少需要10个字符').max(2000, '评论太长'),
 })
 
 type CommentFormData = z.infer<typeof commentSchema>
@@ -35,7 +35,7 @@ export function CommentForm({
   parentId,
   onCommentSubmitted,
   onCancel,
-  placeholder = 'Write your comment...',
+  placeholder = '写下您的评论...',
   showTitle = true,
 }: CommentFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -53,9 +53,9 @@ export function CommentForm({
   const handleFormSubmit = async (data: CommentFormData) => {
     setIsSubmitting(true)
     try {
-      // Get client information for spam detection
+      // 获取客户端信息用于垃圾评论检测
       const userAgent = navigator.userAgent
-      const ipAddress = undefined // We don't have access to IP on client side
+      const ipAddress = undefined // 客户端无法获取IP地址
 
       const commentData = {
         post_id: postId,
@@ -71,18 +71,18 @@ export function CommentForm({
       await commentService.createComment(commentData)
 
       addToast({
-        title: 'Comment Submitted',
-        description: 'Your comment has been submitted for review. It will appear after moderation.',
+        title: '评论已提交',
+        description: '您的评论已提交审核，审核通过后将显示。',
         variant: 'success',
       })
 
       reset()
       onCommentSubmitted()
     } catch (error) {
-      console.error('Failed to submit comment:', error)
+      console.error('提交评论失败:', error)
       addToast({
-        title: 'Error',
-        description: 'Failed to submit comment. Please try again.',
+        title: '错误',
+        description: '提交评论失败，请重试。',
         variant: 'destructive',
       })
     } finally {
@@ -96,21 +96,21 @@ export function CommentForm({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <MessageCircle className="h-5 w-5" />
-            {parentId ? 'Reply to Comment' : 'Leave a Comment'}
+            {parentId ? '回复评论' : '发表评论'}
           </CardTitle>
         </CardHeader>
       )}
       <CardContent>
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
-          {/* Author Information */}
+          {/* 作者信息 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-2">
-                Name <span className="text-red-500">*</span>
+                姓名 <span className="text-red-500">*</span>
               </label>
               <Input
                 {...register('author_name')}
-                placeholder="Your name"
+                placeholder="您的姓名"
                 className={errors.author_name ? 'border-red-500' : ''}
               />
               {errors.author_name && (
@@ -120,7 +120,7 @@ export function CommentForm({
 
             <div>
               <label className="block text-sm font-medium mb-2">
-                Email <span className="text-red-500">*</span>
+                邮箱 <span className="text-red-500">*</span>
               </label>
               <Input
                 {...register('author_email')}
@@ -129,7 +129,7 @@ export function CommentForm({
                 className={errors.author_email ? 'border-red-500' : ''}
               />
               <p className="mt-1 text-xs text-muted-foreground">
-                Email will not be published
+                邮箱不会被公开
               </p>
               {errors.author_email && (
                 <p className="mt-1 text-sm text-red-600">{errors.author_email.message}</p>
@@ -139,7 +139,7 @@ export function CommentForm({
 
           <div>
             <label className="block text-sm font-medium mb-2">
-              Website <span className="text-muted-foreground">(optional)</span>
+              网站 <span className="text-muted-foreground">（可选）</span>
             </label>
             <Input
               {...register('author_website')}
@@ -152,10 +152,10 @@ export function CommentForm({
             )}
           </div>
 
-          {/* Comment Content */}
+          {/* 评论内容 */}
           <div>
             <label className="block text-sm font-medium mb-2">
-              Comment <span className="text-red-500">*</span>
+              评论 <span className="text-red-500">*</span>
             </label>
             <Textarea
               {...register('content')}
@@ -168,18 +168,18 @@ export function CommentForm({
             )}
           </div>
 
-          {/* Guidelines */}
+          {/* 评论指南 */}
           <div className="bg-muted rounded-lg p-4 text-sm">
-            <h4 className="font-medium mb-2">Comment Guidelines:</h4>
+            <h4 className="font-medium mb-2">评论指南：</h4>
             <ul className="space-y-1 text-muted-foreground">
-              <li>• Be respectful and constructive</li>
-              <li>• Stay on topic</li>
-              <li>• No spam, self-promotion, or offensive content</li>
-              <li>• Comments are moderated and may take time to appear</li>
+              <li>• 请保持尊重和建设性</li>
+              <li>• 请保持话题相关性</li>
+              <li>• 禁止垃圾信息、自我推广或攻击性内容</li>
+              <li>• 评论需要经过审核，可能需要一些时间才会显示</li>
             </ul>
           </div>
 
-          {/* Submit Buttons */}
+          {/* 提交按钮 */}
           <div className="flex gap-2">
             <Button
               type="submit"
@@ -187,11 +187,11 @@ export function CommentForm({
               className="flex items-center gap-2"
             >
               <Send className="h-4 w-4" />
-              {parentId ? 'Post Reply' : 'Post Comment'}
+              {parentId ? '发表回复' : '发表评论'}
             </Button>
             {onCancel && (
               <Button type="button" variant="outline" onClick={onCancel}>
-                Cancel
+                取消
               </Button>
             )}
           </div>
