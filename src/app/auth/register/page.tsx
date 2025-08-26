@@ -47,7 +47,7 @@ export default function RegisterPage() {
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true)
     try {
-      const { error } = await signUp(data.email, data.password)
+      const { error } = await signUp(data.email, data.password, { name: data.name })
       
       if (error) {
         addToast({

@@ -2,13 +2,14 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client'
+import { userService } from '@/lib/supabase/database'
 import type { User, AuthError, AuthChangeEvent, Session } from '@supabase/supabase-js'
 
 interface AuthContextType {
   user: User | null
   loading: boolean
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>
-  signUp: (email: string, password: string) => Promise<{ error: AuthError | null }>
+  signUp: (email: string, password: string, metadata?: { name?: string }) => Promise<{ error: AuthError | null }>
   signOut: () => Promise<{ error: AuthError | null }>
   resetPassword: (email: string) => Promise<{ error: AuthError | null }>
 }
@@ -29,6 +30,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const supabase = createClient()
   const isConfigured = isSupabaseConfigured()
 
+  // Helper function to ensure user profile exists
+  const ensureUserProfile = async (user: User) => {
+    try {
+      await userService.createUserFromAuth(user)
+    } catch (error) {
+      console.warn('Failed to create user profile:', error)
+      // Don't throw error, as this is not critical for auth
+    }
+  }
+
   useEffect(() => {
     // If Supabase is not configured, just set loading to false
     if (!isConfigured) {
@@ -40,6 +51,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const getSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
+        if (session?.user) {
+          // Ensure user profile exists in public.users table
+          await ensureUserProfile(session.user)
+        }
         setUser(session?.user ?? null)
       } catch (error) {
         console.error('Error getting session:', error)
@@ -54,6 +69,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        // Create user profile when user signs in for the first time
+        await ensureUserProfile(session.user)
+      }
       setUser(session?.user ?? null)
       setLoading(false)
     })
@@ -85,7 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string, metadata?: { name?: string }) => {
     if (!isConfigured) {
       return { error: { message: 'Authentication service not configured. Please check your environment settings.' } as AuthError }
     }
@@ -95,6 +114,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: metadata
+        }
       })
       return { error }
     } catch (error: any) {

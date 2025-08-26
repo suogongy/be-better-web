@@ -41,13 +41,18 @@ export const userService = {
   },
 
   async createProfile(user: { id: string; email: string; name?: string }): Promise<User> {
+    // Manual user creation without database triggers
+    const userData = {
+      id: user.id,
+      email: user.email,
+      name: user.name || user.email,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+
     const { data, error } = await supabase
       .from('users')
-      .insert({
-        id: user.id,
-        email: user.email,
-        name: user.name || user.email,
-      } as any)
+      .upsert(userData as any)
       .select()
       .single()
 
@@ -56,6 +61,91 @@ export const userService = {
     }
 
     return data
+  },
+
+  async createUserFromAuth(authUser: any): Promise<User> {
+    // Helper function to create user profile when user registers
+    // Call this after successful authentication signup
+    const userData = {
+      id: authUser.id,
+      email: authUser.email,
+      name: authUser.user_metadata?.name || authUser.email,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+
+    const { data, error } = await supabase
+      .from('users')
+      .upsert(userData as any)
+      .select()
+      .single()
+
+    if (error) {
+      throw new DatabaseError('Failed to create user profile from auth', error)
+    }
+
+    return data
+  },
+
+  async updateUserProfile(id: string, updates: Partial<User>): Promise<User> {
+    // Manual updated_at handling since no database triggers
+    const updateData = {
+      ...updates,
+      updated_at: new Date().toISOString()
+    }
+
+    const { data, error } = await supabase
+      .from('users')
+      .update(updateData as any)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) {
+      throw new DatabaseError('Failed to update user profile', error)
+    }
+
+    return data
+  },
+
+  async deleteUser(userId: string): Promise<void> {
+    // Manual cascade deletion for user and all related data
+    try {
+      // Delete in reverse dependency order
+      await supabase.from('post_categories').delete().eq('post_id', userId)
+      await supabase.from('post_tags').delete().eq('post_id', userId)
+      await supabase.from('comments').delete().eq('post_id', userId)
+      await supabase.from('habit_logs').delete().eq('user_id', userId)
+      await supabase.from('mood_logs').delete().eq('user_id', userId)
+      await supabase.from('habits').delete().eq('user_id', userId)
+      await supabase.from('daily_summaries').delete().eq('user_id', userId)
+      await supabase.from('tasks').delete().eq('user_id', userId)
+      await supabase.from('posts').delete().eq('user_id', userId)
+      await supabase.from('users').delete().eq('id', userId)
+    } catch (error) {
+      throw new DatabaseError('Failed to delete user and related data', error)
+    }
+  },
+
+  // Validation helpers to maintain data integrity
+  async validateUserExists(userId: string): Promise<boolean> {
+    const { data } = await supabase
+      .from('users')
+      .select('id')
+      .eq('id', userId)
+      .single()
+    
+    return !!data
+  },
+
+  async validatePostExists(postId: string): Promise<boolean> {
+    const { data } = await supabase
+      .from('posts')
+      .select('id')
+      .eq('id', postId)
+      .single()
+    
+    return !!data
   },
 }
 
@@ -163,8 +253,165 @@ export const postService = {
     return data
   },
 
-  async getPostBySlug(slug: string): Promise<Post | null> {
-    const { data, error } = await supabase
+  async getPostsWithRelations(options?: {
+    status?: 'draft' | 'published' | 'archived'
+    userId?: string
+    limit?: number
+    offset?: number
+    search?: string
+    category?: string
+    tag?: string
+  }): Promise<{ data: any[]; total: number }> {
+    // 首先获取基础的posts数据
+    let query = supabase
+      .from('posts')
+      .select('*', { count: 'exact' })
+
+    // 应用过滤条件
+    if (options?.status) {
+      query = query.eq('status', options.status)
+    }
+
+    if (options?.userId) {
+      query = query.eq('user_id', options.userId)
+    }
+
+    if (options?.search) {
+      query = query.or(`title.ilike.%${options.search}%,excerpt.ilike.%${options.search}%`)
+    }
+
+    // 应用排序
+    query = query.order('published_at', { ascending: false, nullsFirst: false })
+    query = query.order('created_at', { ascending: false })
+
+    // 应用分页
+    if (options?.limit) {
+      const offset = options?.offset || 0
+      query = query.range(offset, offset + options.limit - 1)
+    }
+
+    const { data: posts, error, count } = await query
+
+    if (error) {
+      throw new DatabaseError('Failed to fetch posts', error)
+    }
+
+    if (!posts || posts.length === 0) {
+      return { data: [], total: count || 0 }
+    }
+
+    // 手动获取关联的categories和tags数据
+    const postIds = posts.map(post => post.id)
+    
+    // 获取post_categories关联数据
+    const { data: postCategories } = await supabase
+      .from('post_categories')
+      .select('post_id, category_id')
+      .in('post_id', postIds)
+    
+    // 获取post_tags关联数据
+    const { data: postTags } = await supabase
+      .from('post_tags')
+      .select('post_id, tag_id')
+      .in('post_id', postIds)
+
+    // 获取所有相关的categories
+    const categoryIds = postCategories?.map(pc => pc.category_id) || []
+    const { data: categories } = categoryIds.length > 0 ? await supabase
+      .from('categories')
+      .select('*')
+      .in('id', categoryIds) : { data: [] }
+
+    // 获取所有相关的tags
+    const tagIds = postTags?.map(pt => pt.tag_id) || []
+    const { data: tags } = tagIds.length > 0 ? await supabase
+      .from('tags')
+      .select('*')
+      .in('id', tagIds) : { data: [] }
+
+    // 组合数据
+    const transformedData = posts.map(post => {
+      // 找到这个post相关的category_ids
+      const relatedCategoryIds = postCategories?.filter(pc => pc.post_id === post.id).map(pc => pc.category_id) || []
+      // 找到对应的category对象
+      const postCategories_data = categories?.filter(cat => relatedCategoryIds.includes(cat.id)) || []
+      
+      // 找到这个post相关的tag_ids
+      const relatedTagIds = postTags?.filter(pt => pt.post_id === post.id).map(pt => pt.tag_id) || []
+      // 找到对应的tag对象
+      const postTags_data = tags?.filter(tag => relatedTagIds.includes(tag.id)) || []
+      
+      return {
+        ...post,
+        categories: postCategories_data,
+        tags: postTags_data,
+        category_ids: relatedCategoryIds,
+        tag_ids: relatedTagIds
+      }
+    })
+
+    return {
+      data: transformedData,
+      total: count || 0
+    }
+  },
+
+  async getPostWithRelations(id: string): Promise<any | null> {
+    // 首先获取基础post数据
+    const { data: post, error } = await supabase
+      .from('posts')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    if (error) {
+      if (error.code === 'PGRST116') return null
+      throw new DatabaseError('Failed to fetch post', error)
+    }
+
+    if (!post) return null
+
+    // 手动获取关联的categories数据
+    const { data: postCategories } = await supabase
+      .from('post_categories')
+      .select('category_id')
+      .eq('post_id', id)
+
+    // 手动获取关联的tags数据
+    const { data: postTags } = await supabase
+      .from('post_tags')
+      .select('tag_id')
+      .eq('post_id', id)
+
+    // 获取category详细信息
+    const categoryIds = postCategories?.map(pc => pc.category_id) || []
+    const { data: categories } = categoryIds.length > 0 ? await supabase
+      .from('categories')
+      .select('*')
+      .in('id', categoryIds) : { data: [] }
+
+    // 获取tag详细信息
+    const tagIds = postTags?.map(pt => pt.tag_id) || []
+    const { data: tags } = tagIds.length > 0 ? await supabase
+      .from('tags')
+      .select('*')
+      .in('id', tagIds) : { data: [] }
+
+    // 组合数据
+    const transformedData = {
+      ...post,
+      categories: categories || [],
+      tags: tags || [],
+      category_ids: categoryIds,
+      tag_ids: tagIds
+    }
+
+    return transformedData
+  },
+
+  async getPostBySlugWithRelations(slug: string): Promise<any | null> {
+    // 首先获取基础post数据
+    const { data: post, error } = await supabase
       .from('posts')
       .select('*')
       .eq('slug', slug)
@@ -176,46 +423,392 @@ export const postService = {
       throw new DatabaseError('Failed to fetch post by slug', error)
     }
 
-    return data
+    if (!post) return null
+
+    // 手动获取关联的categories数据
+    const { data: postCategories } = await supabase
+      .from('post_categories')
+      .select('category_id')
+      .eq('post_id', post.id)
+
+    // 手动获取关联的tags数据
+    const { data: postTags } = await supabase
+      .from('post_tags')
+      .select('tag_id')
+      .eq('post_id', post.id)
+
+    // 获取category详细信息
+    const categoryIds = postCategories?.map(pc => pc.category_id) || []
+    const { data: categories } = categoryIds.length > 0 ? await supabase
+      .from('categories')
+      .select('*')
+      .in('id', categoryIds) : { data: [] }
+
+    // 获取tag详细信息
+    const tagIds = postTags?.map(pt => pt.tag_id) || []
+    const { data: tags } = tagIds.length > 0 ? await supabase
+      .from('tags')
+      .select('*')
+      .in('id', tagIds) : { data: [] }
+
+    // 组合数据
+    const transformedData = {
+      ...post,
+      categories: categories || [],
+      tags: tags || [],
+      category_ids: categoryIds,
+      tag_ids: tagIds
+    }
+
+    return transformedData
+  },
+
+  // 优化的支持category和tag过滤的方法
+  async getPostsWithFilters(options?: {
+    status?: 'draft' | 'published' | 'archived'
+    userId?: string
+    limit?: number
+    offset?: number
+    search?: string
+    category?: string
+    tag?: string
+  }): Promise<{ data: any[]; total: number }> {
+    try {
+      // 设置默认值和限制
+      const limit = Math.min(options?.limit || 10, 50) // 限制最大50条
+      const offset = options?.offset || 0
+      
+      let postIds: string[] | undefined
+
+      // 如果有category过滤，先获取相关的post_ids
+      if (options?.category && options.category !== 'all') {
+        try {
+          const { data: categoryData, error: categoryError } = await supabase
+            .from('categories')
+            .select('id')
+            .eq('slug', options.category)
+            .single()
+          
+          if (categoryError || !categoryData) {
+            return { data: [], total: 0 }
+          }
+          
+          const { data: postCategoriesData, error: postCategoriesError } = await supabase
+            .from('post_categories')
+            .select('post_id')
+            .eq('category_id', categoryData.id)
+          
+          if (postCategoriesError) {
+            console.error('Error fetching post categories:', postCategoriesError)
+            return { data: [], total: 0 }
+          }
+          
+          postIds = postCategoriesData?.map(pc => pc.post_id) || []
+          if (postIds.length === 0) {
+            return { data: [], total: 0 }
+          }
+        } catch (error) {
+          console.error('Error in category filtering:', error)
+          return { data: [], total: 0 }
+        }
+      }
+
+      // 如果有tag过滤，进一步筛选post_ids
+      if (options?.tag && options.tag !== 'all') {
+        try {
+          const { data: tagData, error: tagError } = await supabase
+            .from('tags')
+            .select('id')
+            .eq('slug', options.tag)
+            .single()
+          
+          if (tagError || !tagData) {
+            return { data: [], total: 0 }
+          }
+          
+          const { data: postTagsData, error: postTagsError } = await supabase
+            .from('post_tags')
+            .select('post_id')
+            .eq('tag_id', tagData.id)
+          
+          if (postTagsError) {
+            console.error('Error fetching post tags:', postTagsError)
+            return { data: [], total: 0 }
+          }
+          
+          const tagPostIds = postTagsData?.map(pt => pt.post_id) || []
+          
+          if (postIds) {
+            // 取交集
+            postIds = postIds.filter(id => tagPostIds.includes(id))
+          } else {
+            postIds = tagPostIds
+          }
+          
+          if (postIds.length === 0) {
+            return { data: [], total: 0 }
+          }
+        } catch (error) {
+          console.error('Error in tag filtering:', error)
+          return { data: [], total: 0 }
+        }
+      }
+
+      // 构建posts查询
+      let query = supabase
+        .from('posts')
+        .select('*', { count: 'exact' })
+
+      // 如果有过滤后的post_ids，只查询这些posts
+      if (postIds && postIds.length > 0) {
+        query = query.in('id', postIds)
+      }
+
+      // 应用其他过滤条件
+      if (options?.status) {
+        query = query.eq('status', options.status)
+      }
+
+      if (options?.userId) {
+        query = query.eq('user_id', options.userId)
+      }
+
+      if (options?.search) {
+        // 限制搜索词长度，防止过长的查询
+        const searchTerm = options.search.slice(0, 100)
+        query = query.or(`title.ilike.%${searchTerm}%,excerpt.ilike.%${searchTerm}%`)
+      }
+
+      // 应用排序
+      query = query.order('published_at', { ascending: false, nullsFirst: false })
+      query = query.order('created_at', { ascending: false })
+
+      // 应用分页
+      query = query.range(offset, offset + limit - 1)
+
+      const { data: posts, error, count } = await query
+
+      if (error) {
+        console.error('Error fetching posts:', error)
+        throw new DatabaseError('Failed to fetch posts with filters', error)
+      }
+
+      if (!posts || posts.length === 0) {
+        return { data: [], total: count || 0 }
+      }
+
+      // 简化版本：不加载关联数据，减少复杂性和API调用
+      // 直接返回posts数据，避免过多的数据库查询导致loading问题
+      const transformedData = posts.map(post => ({
+        ...post,
+        categories: [], // 暂时为空，避免额外查询
+        tags: [], // 暂时为空，避免额外查询
+        category_ids: [],
+        tag_ids: []
+      }))
+
+      return {
+        data: transformedData,
+        total: count || 0
+      }
+      
+    } catch (error) {
+      console.error('Error in getPostsWithFilters:', error)
+      // 返回空结果而不是抛出错误，避免页面崩溃
+      return { data: [], total: 0 }
+    }
   },
 
   async createPost(post: any): Promise<Post> {
-    const { data, error } = await supabase
+    // Validate user exists (manual foreign key check)
+    if (post.user_id) {
+      const userExists = await userService.validateUserExists(post.user_id)
+      if (!userExists) {
+        throw new DatabaseError('User does not exist', { code: 'USER_NOT_FOUND' })
+      }
+    }
+
+    // Separate category_ids and tag_ids from post data
+    const { category_ids, tag_ids, ...postData } = post
+    
+    // Create the post first
+    const { data: createdPost, error: postError } = await supabase
       .from('posts')
-      .insert(post as any)
+      .insert(postData as any)
       .select()
       .single()
 
-    if (error) {
-      throw new DatabaseError('Failed to create post', error)
+    if (postError) {
+      throw new DatabaseError('Failed to create post', postError)
     }
 
-    return data
+    // Handle category relationships
+    if (category_ids && category_ids.length > 0) {
+      // Validate categories exist
+      for (const categoryId of category_ids) {
+        const { data: category } = await supabase
+          .from('categories')
+          .select('id')
+          .eq('id', categoryId)
+          .single()
+        
+        if (!category) {
+          // Clean up the post if category validation fails
+          await supabase.from('posts').delete().eq('id', createdPost.id)
+          throw new DatabaseError(`Category ${categoryId} does not exist`, { code: 'CATEGORY_NOT_FOUND' })
+        }
+      }
+
+      const categoryRelations = category_ids.map((categoryId: string) => ({
+        post_id: createdPost.id,
+        category_id: categoryId
+      }))
+      
+      const { error: categoryError } = await supabase
+        .from('post_categories')
+        .insert(categoryRelations)
+      
+      if (categoryError) {
+        // If category insertion fails, clean up the post
+        await supabase.from('posts').delete().eq('id', createdPost.id)
+        throw new DatabaseError('Failed to create post categories', categoryError)
+      }
+    }
+
+    // Handle tag relationships
+    if (tag_ids && tag_ids.length > 0) {
+      // Validate tags exist
+      for (const tagId of tag_ids) {
+        const { data: tag } = await supabase
+          .from('tags')
+          .select('id')
+          .eq('id', tagId)
+          .single()
+        
+        if (!tag) {
+          // Clean up the post and categories if tag validation fails
+          await supabase.from('post_categories').delete().eq('post_id', createdPost.id)
+          await supabase.from('posts').delete().eq('id', createdPost.id)
+          throw new DatabaseError(`Tag ${tagId} does not exist`, { code: 'TAG_NOT_FOUND' })
+        }
+      }
+
+      const tagRelations = tag_ids.map((tagId: string) => ({
+        post_id: createdPost.id,
+        tag_id: tagId
+      }))
+      
+      const { error: tagError } = await supabase
+        .from('post_tags')
+        .insert(tagRelations)
+      
+      if (tagError) {
+        // If tag insertion fails, clean up the post and categories
+        await supabase.from('post_categories').delete().eq('post_id', createdPost.id)
+        await supabase.from('posts').delete().eq('id', createdPost.id)
+        throw new DatabaseError('Failed to create post tags', tagError)
+      }
+    }
+
+    return createdPost
   },
 
   async updatePost(id: string, updates: any): Promise<Post> {
-    const { data, error } = await supabase
+    // Separate category_ids and tag_ids from updates
+    const { category_ids, tag_ids, ...postUpdates } = updates
+    
+    // Update the post data
+    const { data: updatedPost, error: postError } = await supabase
       .from('posts')
-      .update(updates)
+      .update(postUpdates as any)
       .eq('id', id)
       .select()
       .single()
 
-    if (error) {
-      throw new DatabaseError('Failed to update post', error)
+    if (postError) {
+      throw new DatabaseError('Failed to update post', postError)
     }
 
-    return data
+    // Handle category relationships update
+    if (category_ids !== undefined) {
+      // Remove existing categories
+      await supabase
+        .from('post_categories')
+        .delete()
+        .eq('post_id', id)
+      
+      // Add new categories
+      if (category_ids.length > 0) {
+        const categoryRelations = category_ids.map((categoryId: string) => ({
+          post_id: id,
+          category_id: categoryId
+        }))
+        
+        const { error: categoryError } = await supabase
+          .from('post_categories')
+          .insert(categoryRelations)
+        
+        if (categoryError) {
+          throw new DatabaseError('Failed to update post categories', categoryError)
+        }
+      }
+    }
+
+    // Handle tag relationships update
+    if (tag_ids !== undefined) {
+      // Remove existing tags
+      await supabase
+        .from('post_tags')
+        .delete()
+        .eq('post_id', id)
+      
+      // Add new tags
+      if (tag_ids.length > 0) {
+        const tagRelations = tag_ids.map((tagId: string) => ({
+          post_id: id,
+          tag_id: tagId
+        }))
+        
+        const { error: tagError } = await supabase
+          .from('post_tags')
+          .insert(tagRelations)
+        
+        if (tagError) {
+          throw new DatabaseError('Failed to update post tags', tagError)
+        }
+      }
+    }
+
+    return updatedPost
   },
 
   async deletePost(id: string): Promise<void> {
-    const { error } = await supabase
-      .from('posts')
-      .delete()
-      .eq('id', id)
+    // Manual cascade deletion - handle relationships in application code
+    try {
+      // 1. Delete related data first (no foreign key constraints now)
+      await Promise.all([
+        supabase.from('post_categories').delete().eq('post_id', id),
+        supabase.from('post_tags').delete().eq('post_id', id),
+        supabase.from('comments').delete().eq('post_id', id)
+      ])
+      
+      // 2. Update daily_summaries to remove references to this post
+      await supabase
+        .from('daily_summaries')
+        .update({ generated_post_id: null } as any)
+        .eq('generated_post_id', id)
+      
+      // 3. Delete the post
+      const { error } = await supabase
+        .from('posts')
+        .delete()
+        .eq('id', id)
 
-    if (error) {
-      throw new DatabaseError('Failed to delete post', error)
+      if (error) {
+        throw new DatabaseError('Failed to delete post', error)
+      }
+    } catch (error) {
+      throw new DatabaseError('Failed to delete post and related data', error)
     }
   },
 
@@ -1360,6 +1953,12 @@ export const summaryService = {
       // Generate blog content
       const blogData = await this.generateBlogPost(userId, summaryId, template)
       
+      // Get or create appropriate tags for the blog post
+      const tagIds = await this.getOrCreateTagsForBlogPost(blogData.tags)
+      
+      // Get the 'Schedule' category for auto-generated posts
+      const scheduleCategory = await this.getOrCreateScheduleCategory()
+      
       // Create the blog post
       const post = await postService.createPost({
         user_id: userId,
@@ -1370,7 +1969,9 @@ export const summaryService = {
         status: 'draft', // Start as draft for review
         type: 'schedule_generated',
         meta_title: blogData.title,
-        meta_description: blogData.excerpt
+        meta_description: blogData.excerpt,
+        category_ids: scheduleCategory ? [scheduleCategory.id] : [],
+        tag_ids: tagIds
       })
       
       // Update summary to mark blog as generated
@@ -1382,6 +1983,75 @@ export const summaryService = {
       return post
     } catch (error) {
       throw new DatabaseError('Failed to create blog post from summary', error)
+    }
+  },
+
+  async getOrCreateTagsForBlogPost(tagNames: string[]): Promise<string[]> {
+    const tagIds: string[] = []
+    
+    for (const tagName of tagNames) {
+      try {
+        // First, try to find existing tag
+        const { data: existingTags } = await supabase
+          .from('tags')
+          .select('id')
+          .eq('slug', this.generateSlug(tagName))
+          .limit(1)
+        
+        if (existingTags && existingTags.length > 0) {
+          tagIds.push(existingTags[0].id)
+        } else {
+          // Create new tag if it doesn't exist
+          const { data: newTag } = await supabase
+            .from('tags')
+            .insert({
+              name: tagName,
+              slug: this.generateSlug(tagName)
+            })
+            .select('id')
+            .single()
+          
+          if (newTag) {
+            tagIds.push(newTag.id)
+          }
+        }
+      } catch (error) {
+        console.warn(`Failed to create/find tag "${tagName}":`, error)
+      }
+    }
+    
+    return tagIds
+  },
+
+  async getOrCreateScheduleCategory(): Promise<{id: string} | null> {
+    try {
+      // First, try to find existing 'Schedule' category
+      const { data: existingCategory } = await supabase
+        .from('categories')
+        .select('id')
+        .eq('slug', 'schedule')
+        .single()
+      
+      if (existingCategory) {
+        return existingCategory
+      }
+      
+      // Create 'Schedule' category if it doesn't exist
+      const { data: newCategory } = await supabase
+        .from('categories')
+        .insert({
+          name: 'Schedule',
+          slug: 'schedule',
+          description: 'Posts generated from daily schedules and summaries',
+          color: '#F59E0B'
+        })
+        .select('id')
+        .single()
+      
+      return newCategory
+    } catch (error) {
+      console.warn('Failed to create/find Schedule category:', error)
+      return null
     }
   },
 

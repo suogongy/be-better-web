@@ -15,7 +15,7 @@ interface PageProps {
 
 // Generate metadata for SEO
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const post = await postService.getPostBySlug(params.slug)
+  const post = await postService.getPostBySlugWithRelations(params.slug)
 
   if (!post) {
     return {
@@ -67,7 +67,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function BlogPostPage({ params }: PageProps) {
-  const post = await postService.getPostBySlug(params.slug)
+  const post = await postService.getPostBySlugWithRelations(params.slug)
 
   if (!post) {
     notFound()

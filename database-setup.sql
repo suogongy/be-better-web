@@ -5,9 +5,9 @@
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Users table (extends Supabase auth.users)
+-- Users table (no foreign key constraints)
 CREATE TABLE IF NOT EXISTS public.users (
-  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   email VARCHAR(255) UNIQUE NOT NULL,
   name VARCHAR(100),
   avatar_url TEXT,
@@ -37,10 +37,10 @@ CREATE TABLE IF NOT EXISTS public.tags (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Posts table
+-- Posts table (no foreign key constraints)
 CREATE TABLE IF NOT EXISTS public.posts (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+  user_id UUID,
   title VARCHAR(255) NOT NULL,
   slug VARCHAR(255) UNIQUE NOT NULL,
   content TEXT,
@@ -56,25 +56,25 @@ CREATE TABLE IF NOT EXISTS public.posts (
   view_count INTEGER DEFAULT 0
 );
 
--- Post-Category junction table
+-- Post-Category junction table (no foreign key constraints)
 CREATE TABLE IF NOT EXISTS public.post_categories (
-  post_id UUID REFERENCES public.posts(id) ON DELETE CASCADE,
-  category_id UUID REFERENCES public.categories(id) ON DELETE CASCADE,
+  post_id UUID,
+  category_id UUID,
   PRIMARY KEY (post_id, category_id)
 );
 
--- Post-Tag junction table
+-- Post-Tag junction table (no foreign key constraints)
 CREATE TABLE IF NOT EXISTS public.post_tags (
-  post_id UUID REFERENCES public.posts(id) ON DELETE CASCADE,
-  tag_id UUID REFERENCES public.tags(id) ON DELETE CASCADE,
+  post_id UUID,
+  tag_id UUID,
   PRIMARY KEY (post_id, tag_id)
 );
 
--- Comments table
+-- Comments table (no foreign key constraints)
 CREATE TABLE IF NOT EXISTS public.comments (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  post_id UUID REFERENCES public.posts(id) ON DELETE CASCADE,
-  parent_id UUID REFERENCES public.comments(id) ON DELETE CASCADE,
+  post_id UUID,
+  parent_id UUID,
   author_name VARCHAR(100) NOT NULL,
   author_email VARCHAR(255) NOT NULL,
   author_website VARCHAR(255),
@@ -85,10 +85,10 @@ CREATE TABLE IF NOT EXISTS public.comments (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Tasks table
+-- Tasks table (no foreign key constraints)
 CREATE TABLE IF NOT EXISTS public.tasks (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+  user_id UUID,
   title VARCHAR(255) NOT NULL,
   description TEXT,
   category VARCHAR(50),
@@ -107,10 +107,10 @@ CREATE TABLE IF NOT EXISTS public.tasks (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Daily summaries table
+-- Daily summaries table (no foreign key constraints)
 CREATE TABLE IF NOT EXISTS public.daily_summaries (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+  user_id UUID,
   summary_date DATE NOT NULL,
   total_tasks INTEGER DEFAULT 0,
   completed_tasks INTEGER DEFAULT 0,
@@ -125,16 +125,15 @@ CREATE TABLE IF NOT EXISTS public.daily_summaries (
   challenges JSONB DEFAULT '[]',
   tomorrow_goals JSONB DEFAULT '[]',
   auto_blog_generated BOOLEAN DEFAULT FALSE,
-  generated_post_id UUID REFERENCES public.posts(id),
+  generated_post_id UUID,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(user_id, summary_date)
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Advanced Features: Habits table
+-- Advanced Features: Habits table (no foreign key constraints)
 CREATE TABLE IF NOT EXISTS public.habits (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+  user_id UUID,
   name VARCHAR(255) NOT NULL,
   description TEXT,
   category VARCHAR(100),
@@ -151,24 +150,23 @@ CREATE TABLE IF NOT EXISTS public.habits (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Habit logs table
+-- Habit logs table (no foreign key constraints)
 CREATE TABLE IF NOT EXISTS public.habit_logs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  habit_id UUID REFERENCES public.habits(id) ON DELETE CASCADE,
-  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+  habit_id UUID,
+  user_id UUID,
   log_date DATE NOT NULL,
   completed_count INTEGER DEFAULT 1,
   target_count INTEGER DEFAULT 1,
   notes TEXT,
   mood_after INTEGER CHECK (mood_after >= 1 AND mood_after <= 5),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(habit_id, log_date)
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Mood logs table
+-- Mood logs table (no foreign key constraints)
 CREATE TABLE IF NOT EXISTS public.mood_logs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+  user_id UUID,
   log_date DATE NOT NULL,
   log_time TIME DEFAULT CURRENT_TIME,
   mood_rating INTEGER NOT NULL CHECK (mood_rating >= 1 AND mood_rating <= 10),

@@ -15,10 +15,23 @@ async function createTestUser() {
   const testUser = {
     id: TEST_USER_ID,
     email: TEST_EMAIL,
-    name: 'Blog Test User'
+    name: 'Blog Test User',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   }
   
-  return await userService.createProfile(testUser)
+  // Use direct database insertion since we removed foreign key constraints
+  const { data, error } = await supabase
+    .from('users')
+    .upsert(testUser)
+    .select()
+    .single()
+  
+  if (error) {
+    throw new Error(`Failed to create test user: ${error.message}`)
+  }
+  
+  return data
 }
 
 // Helper function to clean up test data
@@ -452,6 +465,106 @@ describe('Blog Management Integration Tests', () => {
       const tags = await tagService.getTags()
       const deletedTag = tags.find(t => t.id === tag.id)
       expect(deletedTag).toBeUndefined()
+    })
+  })
+
+  describe('Post with Categories and Tags', () => {
+    it('should create a post with categories and tags', async () => {
+      // First create categories and tags
+      const category = await categoryService.createCategory({
+        name: 'Test Category',
+        slug: 'test-category-' + Date.now(),
+        description: 'A test category',
+        color: '#FF5733'
+      })
+      createdCategories.push(category)
+
+      const tag = await tagService.createTag({
+        name: 'test-tag',
+        slug: 'test-tag-' + Date.now()
+      })
+      createdTags.push(tag)
+
+      // Create post with category and tag relationships
+      const postData = {
+        user_id: TEST_USER_ID,
+        title: 'Post with Categories and Tags',
+        slug: 'post-with-categories-tags-' + Date.now(),
+        content: 'This post has categories and tags attached.',
+        excerpt: 'A post to test category and tag relationships.',
+        status: 'published' as const,
+        category_ids: [category.id],
+        tag_ids: [tag.id]
+      }
+
+      const post = await postService.createPost(postData)
+      createdPosts.push(post)
+
+      expect(post).toBeDefined()
+      expect(post.id).toBeDefined()
+      expect(post.title).toBe(postData.title)
+
+      // Get post with relations to verify categories and tags
+      const postWithRelations = await postService.getPostWithRelations(post.id)
+      expect(postWithRelations).toBeDefined()
+      expect(postWithRelations.categories).toHaveLength(1)
+      expect(postWithRelations.categories[0].id).toBe(category.id)
+      expect(postWithRelations.tags).toHaveLength(1)
+      expect(postWithRelations.tags[0].id).toBe(tag.id)
+      expect(postWithRelations.category_ids).toContain(category.id)
+      expect(postWithRelations.tag_ids).toContain(tag.id)
+    })
+
+    it('should update post categories and tags', async () => {
+      // Create initial categories and tags
+      const category1 = await categoryService.createCategory({
+        name: 'Category 1',
+        slug: 'category-1-' + Date.now(),
+        color: '#FF5733'
+      })
+      const category2 = await categoryService.createCategory({
+        name: 'Category 2',
+        slug: 'category-2-' + Date.now(),
+        color: '#33FF57'
+      })
+      createdCategories.push(category1, category2)
+
+      const tag1 = await tagService.createTag({
+        name: 'tag-1',
+        slug: 'tag-1-' + Date.now()
+      })
+      const tag2 = await tagService.createTag({
+        name: 'tag-2',
+        slug: 'tag-2-' + Date.now()
+      })
+      createdTags.push(tag1, tag2)
+
+      // Create post with initial categories and tags
+      const post = await postService.createPost({
+        user_id: TEST_USER_ID,
+        title: 'Post for Update Test',
+        slug: 'post-update-test-' + Date.now(),
+        content: 'Initial content',
+        category_ids: [category1.id],
+        tag_ids: [tag1.id]
+      })
+      createdPosts.push(post)
+
+      // Update with different categories and tags
+      const updatedPost = await postService.updatePost(post.id, {
+        title: 'Updated Post Title',
+        category_ids: [category2.id],
+        tag_ids: [tag2.id]
+      })
+
+      expect(updatedPost.title).toBe('Updated Post Title')
+
+      // Verify the relationships were updated
+      const postWithRelations = await postService.getPostWithRelations(post.id)
+      expect(postWithRelations.categories).toHaveLength(1)
+      expect(postWithRelations.categories[0].id).toBe(category2.id)
+      expect(postWithRelations.tags).toHaveLength(1)
+      expect(postWithRelations.tags[0].id).toBe(tag2.id)
     })
   })
 
