@@ -1,14 +1,28 @@
 'use client'
 
-import { useAuth } from '@/lib/auth/auth-context'
 import { Loading } from '@/components/ui/loading'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { PlusCircle, Calendar, BookOpen, TrendingUp, Clock } from 'lucide-react'
+import { useState, useEffect } from 'react'
 
 export default function DashboardPage() {
-  const { user, loading } = useAuth()
+  const [loading, setLoading] = useState(true)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+    setLoading(false)
+  }, [])
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loading text="Loading dashboard..." />
+      </div>
+    )
+  }
 
   if (loading) {
     return (
@@ -18,26 +32,12 @@ export default function DashboardPage() {
     )
   }
 
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
-          <p className="text-gray-600 mb-4">You need to be logged in to view this page.</p>
-          <Link href="/auth/login">
-            <Button>Sign In</Button>
-          </Link>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Welcome back, {user.user_metadata?.name || user.email}!
+          Welcome to Be Better Web!
         </h1>
         <p className="text-gray-600 dark:text-gray-400 mt-2">
           Here's an overview of your productivity and content.
@@ -118,7 +118,7 @@ export default function DashboardPage() {
                     Welcome to Be Better Web
                   </p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Your account has been created successfully
+                    Your dashboard is ready to use
                   </p>
                 </div>
                 <div className="text-sm text-gray-500 dark:text-gray-400">
@@ -179,7 +179,7 @@ export default function DashboardPage() {
               <div className="w-6 h-6 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
                 <span className="text-green-600 dark:text-green-400 text-sm">✓</span>
               </div>
-              <span className="text-sm text-gray-600 dark:text-gray-400">Create your account</span>
+              <span className="text-sm text-gray-600 dark:text-gray-400">Dashboard is working!</span>
             </div>
             
             <div className="flex items-center space-x-3">
