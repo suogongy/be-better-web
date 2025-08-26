@@ -12,13 +12,20 @@
 
 ## 解决方案
 
-### 1. 增强认证上下文 (auth-context.tsx)
+### 1. 更新导入引用
 
-我们更新了 `src/lib/auth/auth-context.tsx` 文件，添加了以下功能：
+我们更新了多个文件中的导入引用，将用户服务导入路径从旧路径更新到新路径。
 
-#### 导入数据库服务
+#### 更新认证上下文 (auth-context.tsx)
+
+在 `src/lib/auth/auth-context.tsx` 中：
+
 ```typescript
-import { userService } from '@/lib/supabase/database'
+// 修复前
+// import { userService } from '@/lib/supabase/database'
+
+// 修复后
+import { userService } from '@/lib/supabase/services/index'
 ```
 
 #### 添加用户资料创建函数
@@ -119,7 +126,7 @@ node test-user-creation.js
 3. **Supabase 创建认证用户** → 在 `auth.users` 表中创建记录
 4. **触发认证状态变化** → `onAuthStateChange` 监听器被调用
 5. **自动创建用户资料** → `ensureUserProfile` 函数被执行
-6. **调用数据库服务** → `userService.createUserFromAuth` 创建 `public.users` 记录
+6. **调用用户服务** → `userService.createUserFromAuth` 创建 `public.users` 记录
 
 ## 优点
 
@@ -134,15 +141,17 @@ node test-user-creation.js
 2. **检查数据库**: 验证 `public.users` 表中是否创建了对应记录
 3. **登录测试**: 已有用户登录时也会触发资料检查和创建
 4. **运行测试脚本**: 使用 `node test-user-creation.js` 验证数据状态
+5. **检查导入**: 验证所有相关文件的导入路径是否正确
 
 ## 故障排除
 
-如果用户资料仍未创建：
+如果遇到问题：
 
 1. **检查网络连接**: 确保可以访问 Supabase
 2. **验证环境配置**: 检查 `.env.local` 中的 Supabase 配置
 3. **检查 RLS 策略**: 确保 Row Level Security 策略允许插入数据
 4. **查看浏览器控制台**: 检查是否有 JavaScript 错误
-5. **重新登录**: 已有用户可以重新登录触发资料创建
+5. **验证导入路径**: 确保所有文件的导入路径正确无误
+6. **重新登录测试**: 已有用户可以重新登录触发资料创建
 
 现在用户注册后，`auth.users` 和 `public.users` 表应该都会包含用户数据！

@@ -49,7 +49,7 @@ export interface MoodLog {
 export interface DataExport {
   id: string
   user_id: string
-  export_type: 'tasks' | 'summaries' | 'habits' | 'moods' | 'all'
+  export_type: 'posts' | 'tasks' | 'summaries' | 'habits' | 'moods' | 'all'
   format: 'json' | 'csv' | 'pdf'
   date_range_start?: string
   date_range_end?: string
@@ -165,7 +165,7 @@ export interface WeeklyPattern {
 }
 
 export interface ExportOptions {
-  type: 'tasks' | 'summaries' | 'habits' | 'moods' | 'all'
+  type: 'posts' | 'tasks' | 'summaries' | 'habits' | 'moods' | 'all'
   format: 'json' | 'csv' | 'pdf'
   dateRange: {
     start: string

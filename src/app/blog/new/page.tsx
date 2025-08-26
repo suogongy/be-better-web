@@ -2,13 +2,13 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/lib/auth/auth-context'
+import { postService } from '@/lib/supabase/services/index'
+import { useAuth } from '@/lib/auth/useAuth'
 import { useToast } from '@/components/ui/toast-provider'
-import { postService } from '@/lib/supabase/database'
+import { Button } from '@/components/ui/button'
 import { BlogPostForm } from '@/components/blog/blog-post-form'
 import { LoadingError } from '@/components/ui/loading-error'
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
 
 export default function NewBlogPostPage() {
   const { user, loading, error } = useAuth()
@@ -31,40 +31,47 @@ export default function NewBlogPostPage() {
     )
   }
 
-  const handleSubmit = async (data: {
-    title: string;
-    slug: string;
-    content: string;
-    excerpt: string;
-    category_id?: string;
-    tags?: string[];
-    status: 'draft' | 'published';
+  const handleSubmit = async (data: { 
+    title: string
+    slug: string
+    content: string
+    status: 'draft' | 'published'
+    excerpt?: string
+    category_ids?: string[]
+    tag_ids?: string[]
   }) => {
-    if (!user) return
+    if (!user) {
+      addToast({
+        title: "错误",
+        description: "请先登录",
+        variant: "destructive"
+      })
+      return
+    }
 
     try {
       setIsSubmitting(true)
-      
-      const post = await postService.createPost({
+      const postData = {
         ...data,
-        author_id: user.id,
-        published_at: data.status === 'published' ? new Date().toISOString() : null
-      })
-
+        excerpt: data.excerpt || '',
+        category_id: data.category_ids?.[0],
+        tags: data.tag_ids
+      }
+      
+      const result = await postService.createPost(postData)
+      
       addToast({
-        title: '成功',
-        description: `文章${data.status === 'published' ? '发布' : '保存'}成功！`,
-        variant: 'success',
+        title: "成功",
+        description: "文章创建成功"
       })
-
-      // Redirect to the new post
-      router.push(`/blog/${post.slug}`)
+      
+      router.push(`/blog/${result.slug}`)
     } catch (error: any) {
-      console.error('Failed to create post:', error)
+      console.error('创建文章失败:', error)
       addToast({
-        title: '错误',
-        description: error.message || '创建文章失败，请重试。',
-        variant: 'destructive',
+        title: "错误",
+        description: error.message || "创建文章失败",
+        variant: "destructive"
       })
     } finally {
       setIsSubmitting(false)
@@ -90,10 +97,10 @@ export default function NewBlogPostPage() {
         </div>
 
         {/* Blog Post Form */}
-        <BlogPostForm
+        <BlogPostForm 
           onSubmit={handleSubmit}
-          isSubmitting={isSubmitting}
         />
+
       </div>
     </LoadingError>
   )

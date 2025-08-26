@@ -1,89 +1,66 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Check, Mail } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 export function NewsletterSubscription() {
   const [email, setEmail] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubscribed, setIsSubscribed] = useState(false)
-  const [error, setError] = useState('')
-  
+  const [isLoading, setIsLoading] = useState(false)
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setIsLoading(true)
     
-    if (!email) {
-      setError('请输入邮箱地址')
-      return
-    }
-    
-    if (!email.includes('@')) {
-      setError('请输入有效的邮箱地址')
-      return
-    }
-    
-    setIsSubmitting(true)
-    setError('')
-    
+    // 模拟订阅过程
     try {
-      // 这里可以集成邮件订阅服务
-      // 暂时模拟一个成功的订阅
       await new Promise(resolve => setTimeout(resolve, 1000))
-      
       setIsSubscribed(true)
       setEmail('')
     } catch (error) {
-      setError('订阅失败，请稍后重试')
+      console.error('订阅失败:', error)
     } finally {
-      setIsSubmitting(false)
+      setIsLoading(false)
     }
   }
-  
+
   if (isSubscribed) {
     return (
-      <div className="flex items-center justify-center gap-2 text-green-600">
-        <Check className="h-5 w-5" />
-        <span>订阅成功！感谢您的关注。</span>
-      </div>
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle>订阅成功！</CardTitle>
+          <CardDescription>感谢您订阅我们的博客更新</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p>您将定期收到我们的最新博客文章通知。</p>
+        </CardContent>
+      </Card>
     )
   }
-  
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="flex gap-2">
-        <div className="flex-1">
+    <Card className="mb-8">
+      <CardHeader>
+        <CardTitle>订阅博客更新</CardTitle>
+        <CardDescription>获取最新的博客文章和更新通知</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="flex gap-2">
           <Input
             type="email"
+            placeholder="输入您的邮箱地址"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="输入您的邮箱地址"
-            className={error ? 'border-red-500' : ''}
-            disabled={isSubmitting}
+            required
+            className="flex-1"
           />
-          {error && (
-            <p className="mt-1 text-sm text-red-600">{error}</p>
-          )}
-        </div>
-        <Button 
-          type="submit" 
-          disabled={isSubmitting}
-          className="flex items-center gap-2"
-        >
-          {isSubmitting ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              订阅中...
-            </>
-          ) : (
-            <>
-              <Mail className="h-4 w-4" />
-              订阅
-            </>
-          )}
-        </Button>
-      </div>
-    </form>
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? '订阅中...' : '订阅'}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   )
 }

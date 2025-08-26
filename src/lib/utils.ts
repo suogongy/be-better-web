@@ -67,30 +67,50 @@ export function formatRelativeTime(date: string | Date): string {
 }
 
 export function createSlug(text: string): string {
-  // 简单的中文到拼音的映射（基础版）
-  const chineseToPinyin: { [key: string]: string } = {
-    '中': 'zhong', '文': 'wen', '博': 'bo', '客': 'ke', '文': 'wen', '章': 'zhang',
-    '技': 'ji', '术': 'shu', '学': 'xue', '习': 'xi', '分': 'fen', '享': 'xiang',
-    '经': 'jing', '验': 'yan', '教': 'jiao', '程': 'cheng', '教': 'jiao', '学': 'xue',
-    '开': 'kai', '发': 'fa', '编': 'bian', '程': 'cheng', '设': 'she', '计': 'ji',
-    '产': 'chan', '品': 'pin', '管': 'guan', '理': 'li', '项': 'xiang', '目': 'mu'
+  // 基础拼音映射表，用于中文转拼音
+  const pinyinMap: Record<string, string> = {
+    // 基础数字
+    '0': 'ling', '1': 'yi', '2': 'er', '3': 'san', '4': 'si', '5': 'wu', '6': 'liu', '7': 'qi', '8': 'ba', '9': 'jiu',
+    
+    // 常用中文字符
+    '一': 'yi', '二': 'er', '三': 'san', '四': 'si', '五': 'wu', '六': 'liu', '七': 'qi', '八': 'ba', '九': 'jiu', '十': 'shi',
+    '中': 'zhong', '文': 'wen', '博': 'bo', '客': 'ke', '章': 'zhang',
+    '日': 'ri', '常': 'chang', '计': 'ji', '划': 'hua', '任': 'ren', '务': 'wu', '管': 'guan', '理': 'li',
+    '学': 'xue', '习': 'xi', '工': 'gong', '作': 'zuo', '生': 'sheng', '活': 'huo', '健': 'jian', '康': 'kang',
+    '运': 'yun', '动': 'dong', '饮': 'yin', '食': 'shi', '休': 'xiu', '闲': 'xian', '娱': 'yu', '乐': 'le',
+    '旅': 'lv', '游': 'you', '读': 'du', '书': 'shu', '写': 'xie', '创': 'chuang', '新': 'xin',
+    '技': 'ji', '术': 'shu', '开': 'kai', '发': 'fa', '编': 'bian', '设': 'she',
+    '项': 'xiang', '目': 'mu', '研': 'yan', '究': 'jiu', '测': 'ce', '试': 'shi', '部': 'bu', '署': 'shu',
+    '维': 'wei', '护': 'hu', '优': 'you', '化': 'hua', '性': 'xing', '能': 'neng', '安': 'an', '全': 'quan',
+    '经': 'jing', '验': 'yan', '教': 'jiao',
+    '个': 'ge', '人': 'ren', '团': 'tuan', '队': 'dui', '协': 'xie', '通': 'tong',
+    '会': 'hui', '议': 'yi', '报': 'bao', '告': 'gao', '展': 'zhan', '演': 'yan', '示': 'shi',
+    '总': 'zong', '结': 'jie', '回': 'hui', '顾': 'gu', '望': 'wang', '未': 'wei', '来': 'lai',
+    '挑': 'tiao', '战': 'zhan', '机': 'ji', '成': 'cheng', '功': 'gong', '失': 'shi', '败': 'bai',
+    '帮': 'bang', '助': 'zhu', '支': 'zhi', '持': 'chi', '反': 'fan', '馈': 'kui', '建': 'jian',
+    
+    // 标点符号和特殊字符
+    ' ': '-', ',': '-', '.': '-', '!': '-', '?': '-', ':': '-', ';': '-', '/': '-', '\\': '-', '|': '-', '_': '-',
+    '~': '-', '*': '-', '+': '-', '=': '-', '@': '-', '#': '-', '$': '-', '%': '-', '^': '-', '&': '-', 
+    '（': '-', '）': '-', '【': '-', '】': '-', '《': '-', '》': '-', '「': '-', '」': '-', '『': '-', '』': '-',
+    '[': '-', ']': '-', '{': '-', '}': '-', '(': '-', ')': '-', '<': '-', '>': '-',
+    '"': '-', '\'': '-', '`': '-', '“': '-', '”': '-', '‘': '-', '’': '-', '·': '-'
   }
-  
-  let result = text.toLowerCase()
-  
-  // 将中文字符转换为拼音
-  for (const [chinese, pinyin] of Object.entries(chineseToPinyin)) {
-    result = result.replace(new RegExp(chinese, 'g'), pinyin)
+
+  // 替换中文字符为拼音
+  let slug = ''
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i]
+    slug += pinyinMap[char] || char
   }
-  
-  // 处理其他中文字符（如果没有在映射表中）
-  result = result.replace(/[\u4e00-\u9fff]/g, '') // 移除剩余的中文字符
-  
-  return result
-    .replace(/[^\w\s-]/g, '') // 移除特殊字符
-    .replace(/[\s_-]+/g, '-') // 用连字符替换空格和下划线
-    .replace(/^-+|-+$/g, '') // 移除开头和结尾的连字符
-    .slice(0, 50) // 限制长度
+
+  // 转换为小写并清理特殊字符
+  return slug
+    .toLowerCase()
+    .replace(/[^a-z0-9\-]/g, '')  // 只保留字母、数字和连字符
+    .replace(/-+/g, '-')          // 将多个连字符合并为一个
+    .replace(/^-|-$/g, '')        // 移除开头和结尾的连字符
+    || 'post'                     // 如果结果为空，则使用默认值
 }
 
 export function truncateText(text: string, length: number = 150): string {

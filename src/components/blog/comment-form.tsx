@@ -4,39 +4,47 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { commentService } from '@/lib/supabase/services/index'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/components/ui/toast-provider'
-import { commentService } from '@/lib/supabase/database'
+import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { isSupabaseConfigured } from '@/lib/supabase/client'
 import { MessageCircle, Send } from 'lucide-react'
 
 const commentSchema = z.object({
-  author_name: z.string().min(2, '姓名至少需要2个字符').max(100, '姓名太长'),
-  author_email: z.string().email('请输入有效的邮箱地址').max(255, '邮箱地址太长'),
+  author_name: z.string().min(1, '姓名不能为空'),
+  author_email: z.string().email('请输入有效的邮箱地址'),
   author_website: z.string().url('请输入有效的网址').optional().or(z.literal('')),
-  content: z.string().min(10, '评论至少需要10个字符').max(2000, '评论太长'),
+  content: z.string().min(1, '评论内容不能为空')
 })
-
-type CommentFormData = z.infer<typeof commentSchema>
 
 interface CommentFormProps {
   postId: string
   parentId?: string
-  onCommentSubmitted: () => void
+  onCommentSubmitted?: () => void
   onCancel?: () => void
   placeholder?: string
   showTitle?: boolean
+  className?: string
 }
 
-export function CommentForm({
-  postId,
+interface CommentFormData {
+  author_name: string
+  author_email: string
+  author_website?: string
+  content: string
+}
+
+export function CommentForm({ 
+  postId, 
   parentId,
-  onCommentSubmitted,
+  onCommentSubmitted, 
   onCancel,
-  placeholder = '写下您的评论...',
-  showTitle = true,
+  placeholder = "请输入您的评论...",
+  showTitle = false,
+  className 
 }: CommentFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { addToast } = useToast()
@@ -77,7 +85,7 @@ export function CommentForm({
       })
 
       reset()
-      onCommentSubmitted()
+      onCommentSubmitted?.()
     } catch (error) {
       console.error('提交评论失败:', error)
       addToast({
@@ -91,7 +99,7 @@ export function CommentForm({
   }
 
   return (
-    <Card className="mt-6">
+    <Card className={className}>
       {showTitle && (
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -183,7 +191,7 @@ export function CommentForm({
           <div className="flex gap-2">
             <Button
               type="submit"
-              loading={isSubmitting}
+              disabled={isSubmitting}
               className="flex items-center gap-2"
             >
               <Send className="h-4 w-4" />

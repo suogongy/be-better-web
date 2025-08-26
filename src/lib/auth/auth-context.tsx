@@ -1,11 +1,11 @@
 'use client'
 
-'use client'
-
-import React, { createContext, useContext, useEffect, useState } from 'react'
-import { createClient, isSupabaseConfigured } from '@/lib/supabase/client'
-import { userService } from '@/lib/supabase/database'
-import type { User, AuthError, AuthChangeEvent, Session } from '@supabase/supabase-js'
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { userService } from '@/lib/supabase/services/index'
+import { User } from '@/types/database'
+import { isSupabaseConfigured } from '@/lib/supabase/client'
+import { AuthError, Session } from '@supabase/supabase-js'
 
 interface AuthContextType {
   user: User | null
@@ -34,26 +34,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const supabase = createClient()
   const isConfigured = isSupabaseConfigured()
 
-  // Helper function to ensure user profile exists
-  const ensureUserProfile = async (user: User) => {
+  // 获取用户资料
+  const getUserProfile = async (user: any) => {
     try {
-      console.log(`🔍 为用户 ${user.id.substring(0, 8)}... 创建配置文件`)
-      
-      const profilePromise = userService.createUserFromAuth({
-        id: user.id,
-        email: user.email || '',
-        user_metadata: {
-          name: user.user_metadata?.name
-        }
-      })
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Profile creation timeout')), 8000)
-      )
-      await Promise.race([profilePromise, timeoutPromise])
-      console.log('✅ 配置文件创建成功')
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+
+      if (error) throw error
+
+      return {
+        id: data.id,
+        email: data.email,
+        name: data.name,
+        avatar_url: data.avatar_url,
+        bio: data.bio,
+        website: data.website,
+        social_links: data.social_links,
+        preferences: data.preferences,
+        created_at: data.created_at,
+        updated_at: data.updated_at
+      }
     } catch (error) {
-      console.warn('⚠️ 配置文件创建失败（非关键）:', error instanceof Error ? error.message : String(error))
-      // Don't throw error, as this is not critical for auth
+      console.error('获取用户资料失败:', error)
+      throw error
+    }
+  }
+
+  // 确保用户资料存在
+  const ensureUserProfile = async (user: any) => {
+    try {
+      // 先尝试获取现有资料
+      await getUserProfile(user)
+    } catch (error: any) {
+      if (error.code === 'PGRST116') {
+        // 用户不存在，创建新用户
+        const { error: insertError } = await supabase
+          .from('users')
+          .insert({
+            id: user.id,
+            email: user.email,
+            name: user.user_metadata?.name,
+            avatar_url: user.user_metadata?.avatar_url,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+
+        if (insertError) throw insertError
+      } else {
+        throw error
+      }
     }
   }
 
@@ -137,19 +169,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
-      if (!mounted) return
+    } = supabase.auth.onAuthStateChange(async (event: any, session: any) => {
+      console.log('Auth state changed:', event, session?.user?.id)
       
-      console.log('🔄 认证状态变化:', event, session?.user?.email || '无用户')
-      
-      if (event === 'SIGNED_IN' && session?.user) {
-        // Create user profile when user signs in (non-blocking)
-        ensureUserProfile(session.user).catch(() => {})
+      if (session?.user) {
+        try {
+          await ensureUserProfile(session.user)
+          setUser({
+            id: session.user.id,
+            email: session.user.email || '',
+            name: session.user.user_metadata?.name,
+            avatar_url: session.user.user_metadata?.avatar_url,
+            bio: session.user.user_metadata?.bio,
+            website: session.user.user_metadata?.website,
+            social_links: session.user.user_metadata?.social_links,
+            preferences: session.user.user_metadata?.preferences,
+            created_at: session.user.created_at,
+            updated_at: new Date().toISOString()
+          })
+        } catch (error) {
+          console.error('Failed to ensure user profile:', error)
+        }
+      } else {
+        setUser(null)
       }
       
-      setUser(session?.user ?? null)
       setLoading(false)
-      setError(null)
     })
 
     return () => {

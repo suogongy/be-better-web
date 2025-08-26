@@ -1,56 +1,55 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/lib/auth/auth-context'
-import { useToast } from '@/components/ui/toast-provider'
-import { exportService } from '@/lib/supabase/advanced-services'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { exportService } from '@/lib/supabase/services/index'
 import { Button } from '@/components/ui/button'
+import { useToast } from '@/components/ui/toast-provider'
+import { Download, FileText, Calendar, FileArchive, Loader2, Database, CheckCircle, AlertCircle, Clock } from 'lucide-react'
+import { format } from 'date-fns'
+import { useAuth } from '@/lib/auth/useAuth'
+import { Loading } from '@/components/ui/loading'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Loading } from '@/components/ui/loading'
-import { 
-  Download,
-  FileText,
-  Database,
-  Calendar,
-  Clock,
-  CheckCircle,
-  AlertCircle,
-  Loader2
-} from 'lucide-react'
-import { format } from 'date-fns'
+
 import type { DataExport, ExportOptions } from '@/types/advanced'
+
 
 const exportTypes = [
   { 
     value: 'all', 
-    label: 'All Data', 
-    description: 'Complete export of all your data',
+    label: '全部数据', 
+    description: '导出您的所有数据',
     icon: Database 
   },
   { 
+    value: 'posts', 
+    label: '博客文章', 
+    description: '导出所有博客文章',
+    icon: FileText 
+  },
+  { 
     value: 'tasks', 
-    label: 'Tasks', 
-    description: 'All your tasks and task history',
+    label: '任务', 
+    description: '导出所有任务和任务历史',
     icon: CheckCircle 
   },
   { 
     value: 'summaries', 
-    label: 'Daily Summaries', 
-    description: 'All daily summaries and analytics',
+    label: '每日总结', 
+    description: '导出所有每日总结和分析',
     icon: Calendar 
   },
   { 
     value: 'habits', 
-    label: 'Habits', 
-    description: 'Habit tracking data and logs',
+    label: '习惯', 
+    description: '导出习惯追踪数据和日志',
     icon: CheckCircle 
   },
   { 
     value: 'moods', 
-    label: 'Mood Logs', 
-    description: 'Mood tracking and wellness data',
+    label: '情绪日志', 
+    description: '导出情绪追踪和健康数据',
     icon: AlertCircle 
   },
 ]
@@ -59,19 +58,19 @@ const exportFormats = [
   { 
     value: 'json', 
     label: 'JSON', 
-    description: 'Machine-readable format for developers',
+    description: '适用于开发者的机器可读格式',
     extension: '.json'
   },
   { 
     value: 'csv', 
     label: 'CSV', 
-    description: 'Spreadsheet format for analysis',
+    description: '适用于分析的电子表格格式',
     extension: '.csv'
   },
   { 
     value: 'pdf', 
     label: 'PDF', 
-    description: 'Human-readable report format',
+    description: '适用于人类阅读的报告格式',
     extension: '.pdf'
   },
 ]
@@ -85,7 +84,7 @@ export function DataExporter() {
   const [creating, setCreating] = useState(false)
   
   // Export form state
-  const [selectedType, setSelectedType] = useState<'tasks' | 'summaries' | 'habits' | 'moods' | 'all'>('all')
+  const [selectedType, setSelectedType] = useState<'posts' | 'tasks' | 'summaries' | 'habits' | 'moods' | 'all'>('all')
   const [selectedFormat, setSelectedFormat] = useState<'json' | 'csv' | 'pdf'>('json')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
@@ -96,11 +95,12 @@ export function DataExporter() {
     try {
       setLoading(true)
       const data = await exportService.getExports(user.id)
-      setExports(data)
+      setExports(data || [])
     } catch (error) {
+      console.error('加载导出历史失败:', error)
       addToast({
-        title: 'Error',
-        description: 'Failed to load export history.',
+        title: '错误',
+        description: '加载导出历史失败',
         variant: 'destructive',
       })
     } finally {
@@ -129,7 +129,7 @@ export function DataExporter() {
       setCreating(true)
       
       const options: ExportOptions = {
-        type: selectedType,
+        type: selectedType, // 移除了类型断言
         format: selectedFormat,
         dateRange: {
           start: startDate,
@@ -140,16 +140,17 @@ export function DataExporter() {
       await exportService.createExport(user.id, options)
       
       addToast({
-        title: 'Export Started',
-        description: 'Your data export has been queued for processing.',
+        title: '导出已开始',
+        description: '您的数据导出已加入处理队列',
         variant: 'success',
       })
       
       loadExports()
-    } catch (error) {
+    } catch (error: any) {
+      console.error('创建导出失败:', error)
       addToast({
-        title: 'Error',
-        description: 'Failed to create export. Please try again.',
+        title: '错误',
+        description: error.message || '创建导出失败，请重试',
         variant: 'destructive',
       })
     } finally {
@@ -194,7 +195,7 @@ export function DataExporter() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Loading text="Loading export history..." />
+        <Loading text="加载导出历史..." />
       </div>
     )
   }
@@ -206,14 +207,14 @@ export function DataExporter() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Download className="h-5 w-5" />
-            Create Data Export
+            创建数据导出
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Export Type */}
           <div>
             <label className="block text-sm font-medium mb-3">
-              What to Export
+              导出内容
             </label>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {exportTypes.map(type => {
@@ -254,7 +255,7 @@ export function DataExporter() {
           {/* Export Format */}
           <div>
             <label className="block text-sm font-medium mb-3">
-              Format
+              格式
             </label>
             <div className="grid grid-cols-3 gap-3">
               {exportFormats.map(format => (
@@ -285,27 +286,27 @@ export function DataExporter() {
           {/* Date Range */}
           <div>
             <label className="block text-sm font-medium mb-3">
-              Date Range
+              日期范围
             </label>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-muted-foreground mb-1">
-                  Start Date
+                  开始日期
                 </label>
                 <Input
                   type="date"
                   value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setStartDate(e.target.value)}
                 />
               </div>
               <div>
                 <label className="block text-xs font-medium text-muted-foreground mb-1">
-                  End Date
+                  结束日期
                 </label>
                 <Input
                   type="date"
                   value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEndDate(e.target.value)}
                 />
               </div>
             </div>
@@ -319,7 +320,7 @@ export function DataExporter() {
             disabled={!startDate || !endDate}
           >
             <Download className="h-4 w-4 mr-2" />
-            Create Export
+            创建导出
           </Button>
         </CardContent>
       </Card>
@@ -327,15 +328,15 @@ export function DataExporter() {
       {/* Export History */}
       <Card>
         <CardHeader>
-          <CardTitle>Export History</CardTitle>
+          <CardTitle>导出历史</CardTitle>
         </CardHeader>
         <CardContent>
           {exports.length === 0 ? (
             <div className="text-center py-8">
               <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-semibold mb-2">No Exports Yet</h3>
+              <h3 className="text-lg font-semibold mb-2">暂无导出记录</h3>
               <p className="text-muted-foreground">
-                Create your first data export to get started.
+                创建您的第一个数据导出以开始使用。
               </p>
             </div>
           ) : (
@@ -353,7 +354,7 @@ export function DataExporter() {
                           {exportTypes.find(t => t.value === exportItem.export_type)?.label || exportItem.export_type}
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {exportItem.format.toUpperCase()} format
+                          {exportItem.format.toUpperCase()} 格式
                           {exportItem.date_range_start && exportItem.date_range_end && (
                             <span> • {format(new Date(exportItem.date_range_start), 'MMM d')} - {format(new Date(exportItem.date_range_end), 'MMM d, yyyy')}</span>
                           )}
@@ -363,14 +364,17 @@ export function DataExporter() {
                     
                     <div className="flex items-center gap-3">
                       <Badge className={getStatusColor(exportItem.status)}>
-                        {exportItem.status}
+                        {exportItem.status === 'completed' && '已完成'}
+                        {exportItem.status === 'failed' && '失败'}
+                        {exportItem.status === 'processing' && '处理中'}
+                        {exportItem.status === 'pending' && '待处理'}
                       </Badge>
                       
                       {exportItem.status === 'completed' && exportItem.file_url && (
                         <Button size="sm" variant="outline" asChild>
                           <a href={exportItem.file_url} download>
                             <Download className="h-4 w-4 mr-2" />
-                            Download
+                            下载
                           </a>
                         </Button>
                       )}
@@ -378,12 +382,12 @@ export function DataExporter() {
                   </div>
                   
                   <div className="flex items-center justify-between mt-3 text-xs text-muted-foreground">
-                    <span>Created {format(new Date(exportItem.created_at), 'MMM d, yyyy at h:mm a')}</span>
+                    <span>创建于 {format(new Date(exportItem.created_at), 'yyyy年M月d日 H:mm')}</span>
                     <div className="flex items-center gap-4">
                       {exportItem.file_size && (
                         <span>{formatFileSize(exportItem.file_size)}</span>
                       )}
-                      <span>Expires {format(new Date(exportItem.expires_at), 'MMM d, yyyy')}</span>
+                      <span>过期时间 {format(new Date(exportItem.expires_at), 'yyyy年M月d日')}</span>
                     </div>
                   </div>
                 </div>

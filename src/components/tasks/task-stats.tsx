@@ -1,22 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { taskService } from '@/lib/supabase/services/index'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Calendar, CheckCircle, Circle, TrendingUp, AlertCircle, Clock, Target } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { Loading } from '@/components/ui/loading'
-import { taskService } from '@/lib/supabase/database'
-import { 
-  BarChart3, 
-  TrendingUp, 
-  Clock, 
-  Target,
-  CheckCircle,
-  Circle,
-  AlertCircle,
-  Calendar
-} from 'lucide-react'
-import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns'
+import { Button } from '@/components/ui/button'
+import { startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns'
 
 interface TaskStatsProps {
   userId: string
@@ -30,6 +20,8 @@ interface StatsData {
   cancelled: number
   completionRate: number
   avgCompletionTime: number
+  total_tasks?: number
+  completed_tasks?: number
 }
 
 export function TaskStats({ userId }: TaskStatsProps) {
@@ -99,8 +91,8 @@ export function TaskStats({ userId }: TaskStatsProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <Loading text="Loading statistics..." />
+      <div className="flex items-center justify-center h-64">
+        <div>加载统计信息...</div>
       </div>
     )
   }
@@ -111,11 +103,20 @@ export function TaskStats({ userId }: TaskStatsProps) {
     return (
       <Card>
         <CardContent className="text-center py-8">
-          <BarChart3 className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-          <h3 className="text-lg font-semibold mb-2">No Statistics Available</h3>
-          <p className="text-muted-foreground">
-            Start creating and completing tasks to see your productivity analytics.
-          </p>
+          <div className="text-center">
+            <div className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <h3 className="text-lg font-semibold mb-2">任务统计</h3>
+            <p className="text-muted-foreground">
+              {currentStats ? (
+                <>
+                  完成 {currentStats.completed || 0} / {currentStats.total || 0} 个任务
+                </>
+              ) : (
+                "暂无统计数据"
+              )}
+            </p>
+          </div>
+
         </CardContent>
       </Card>
     )

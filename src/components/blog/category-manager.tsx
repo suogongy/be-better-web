@@ -1,18 +1,26 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
+import { categoryService } from '@/lib/supabase/services/index'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { useToast } from '@/components/ui/toast-provider'
-import { categoryService } from '@/lib/supabase/database'
-import { createSlug } from '@/lib/utils'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { useToast } from '@/components/ui/use-toast'
 import { Plus, Edit, Trash2, Save, X } from 'lucide-react'
+import { z } from 'zod'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { createSlug } from '@/lib/utils'
 
 const categorySchema = z.object({
   name: z.string().min(1, 'Name is required'),

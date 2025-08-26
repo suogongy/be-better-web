@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase/client'
-import type { Comment, Post } from '@/types/database'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -36,7 +35,7 @@ export async function GET(request: Request) {
     // 按状态统计
     const statusStats: Record<string, number> = {}
     allComments?.forEach(comment => {
-      statusStats[comment.status as string] = (statusStats[comment.status as string] || 0) + 1
+      statusStats[comment.status] = (statusStats[comment.status] || 0) + 1
     })
     
     // 查询已批准的评论
@@ -54,17 +53,17 @@ export async function GET(request: Request) {
     
     return NextResponse.json({
       post: {
-        id: (post as Post).id,
-        title: (post as Post).title,
-        slug: (post as Post).slug
+        id: post.id,
+        title: post.title,
+        slug: post.slug
       },
       totalComments: allComments?.length || 0,
       approvedComments: approvedComments?.length || 0,
       statusStats,
-      comments: approvedComments
+      allComments: allComments || [],
+      approvedCommentsList: approvedComments || []
     })
-  } catch (error) {
-    console.error('Debug comments error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

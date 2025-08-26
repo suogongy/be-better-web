@@ -1,14 +1,17 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { commentService } from '@/lib/supabase/services/index'
 import { formatDate } from '@/lib/utils'
-import { commentService } from '@/lib/supabase/database'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { CommentForm } from './comment-form'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useToast } from '@/components/ui/toast-provider'
-import { MessageCircle, Reply, ExternalLink } from 'lucide-react'
+import { isSupabaseConfigured } from '@/lib/supabase/client'
+import { MessageCircle, ExternalLink, Reply, Shield } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import Link from 'next/link'
+import { Card, CardContent } from '@/components/ui/card'
+import { CommentForm } from '@/components/blog/comment-form'
 
 interface Comment {
   id: string
@@ -119,6 +122,14 @@ export function CommentList({ postId, showModeration = false }: CommentListProps
             : `${comments.length} 条评论`
           }
         </h3>
+        {showModeration && (
+          <Link href="/blog/admin/comments">
+            <Button variant="outline" size="sm" className="ml-2 flex items-center gap-1">
+              <Shield className="h-3 w-3" />
+              评论管理
+            </Button>
+          </Link>
+        )}
       </div>
 
       {/* 评论内容 */}
@@ -130,6 +141,15 @@ export function CommentList({ postId, showModeration = false }: CommentListProps
             <p className="text-muted-foreground">
               分享您的想法，开始讨论！
             </p>
+            {!showModeration && (
+              <div className="mt-4 text-sm text-muted-foreground">
+                <p>📝 评论需要管理员审核后才会显示</p>
+                <Link href="/blog/admin/comments" className="inline-flex items-center gap-1 text-primary hover:underline mt-1">
+                  <Shield className="h-3 w-3" />
+                  管理员可以在这里审核评论
+                </Link>
+              </div>
+            )}
           </CardContent>
         </Card>
       ) : (
@@ -191,7 +211,10 @@ function CommentItem({
           {/* 评论头部 */}
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-2 flex-wrap">
-              <h4 className="font-medium">
+              <h4 className="font-medium flex items-center gap-2">
+                <Avatar>
+                  <AvatarFallback>{comment.author_name.charAt(0)}</AvatarFallback>
+                </Avatar>
                 {comment.author_website ? (
                   <a
                     href={comment.author_website}
@@ -259,7 +282,7 @@ function CommentItem({
                 onCommentSubmitted={onCommentSubmitted}
                 onCancel={() => onReply(comment.id)}
                 placeholder={`回复 ${comment.author_name}...`}
-                showTitle={false}
+                showTitle={true}
               />
             </div>
           )}

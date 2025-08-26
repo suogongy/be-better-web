@@ -17,7 +17,8 @@ import {
   Brain,
   Lightbulb,
   Award,
-  AlertTriangle
+  AlertTriangle,
+  RefreshCw
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
@@ -33,6 +34,7 @@ export function ProductivityInsights() {
   const [correlations, setCorrelations] = useState<ProductivityCorrelation[]>([])
   const [weeklyPatterns, setWeeklyPatterns] = useState<WeeklyPattern[]>([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
 
   const loadInsights = async () => {
     if (!user) return
@@ -54,6 +56,35 @@ export function ProductivityInsights() {
       })
     } finally {
       setLoading(false)
+    }
+  }
+
+  const refreshInsights = async () => {
+    if (!user) return
+    
+    try {
+      setRefreshing(true)
+      const [correlationsData, patternsData] = await Promise.all([
+        insightsService.getProductivityCorrelations(user.id),
+        insightsService.getWeeklyPatterns(user.id)
+      ])
+      
+      setCorrelations(correlationsData)
+      setWeeklyPatterns(patternsData)
+      
+      addToast({
+        title: '成功',
+        description: '生产力洞察已刷新。',
+        variant: 'success',
+      })
+    } catch (error) {
+      addToast({
+        title: '错误',
+        description: '刷新生产力洞察失败。',
+        variant: 'destructive',
+      })
+    } finally {
+      setRefreshing(false)
     }
   }
 
@@ -119,6 +150,18 @@ export function ProductivityInsights() {
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">生产力洞察</h2>
+        <button 
+          onClick={refreshInsights}
+          disabled={refreshing}
+          className="flex items-center gap-2 px-3 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50"
+        >
+          <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+          {refreshing ? '刷新中...' : '刷新数据'}
+        </button>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -254,12 +297,36 @@ export function ProductivityInsights() {
                 <div className="text-center py-8 text-muted-foreground">
                   <Lightbulb className="h-8 w-8 mx-auto mb-2" />
                   <p>暂无足够的数据来分析相关性</p>
+                  <p className="text-sm mt-2">继续使用应用以积累更多数据</p>
                 </div>
               )}
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* 添加使用说明 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Brain className="h-5 w-5" />
+            洞察说明
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="prose prose-sm max-w-none">
+            <ul className="space-y-2">
+              <li><strong>最佳生产力日</strong>：根据您的历史数据，您在这一天通常表现最佳</li>
+              <li><strong>最具挑战日</strong>：您在这一天可能需要额外的动力和支持</li>
+              <li><strong>每周模式分析</strong>：显示您一周中每天的生产力水平</li>
+              <li><strong>相关性分析</strong>：展示您的习惯与整体生产力之间的关系</li>
+            </ul>
+            <p className="mt-3 text-sm text-muted-foreground">
+              💡 提示：定期查看这些洞察，调整您的计划和习惯，以提高整体生产力。
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

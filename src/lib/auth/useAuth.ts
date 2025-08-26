@@ -3,10 +3,11 @@
  * Handles all user registration logic in application code (no database triggers)
  */
 
-import { useState, useEffect } from 'react'
-import { User } from '@supabase/supabase-js'
+import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
-import { userService } from '@/lib/supabase/database'
+import { userService } from '@/lib/supabase/services/index'
+import { User } from '@/types/database'
+import { isSupabaseConfigured } from '@/lib/supabase/client'
 
 interface AuthState {
   user: User | null
@@ -47,7 +48,7 @@ export function useAuth() {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (event: any, session: any) => {
         if (event === 'SIGNED_IN' && session?.user) {
           // Create user profile when user signs in for the first time
           await ensureUserProfile(session.user)
@@ -65,9 +66,13 @@ export function useAuth() {
   }, [])
 
   // Ensure user profile exists in public.users table
-  const ensureUserProfile = async (user: User) => {
+  const ensureUserProfile = async (user: any) => {
     try {
-      await userService.createUserFromAuth(user)
+      await userService.createUserFromAuth({
+        id: user.id,
+        email: user.email,
+        user_metadata: user.user_metadata
+      })
     } catch (error) {
       console.warn('Failed to create user profile:', error)
       // Don't throw error, as this is not critical for auth

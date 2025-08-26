@@ -1,119 +1,122 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { postService } from '@/lib/supabase/database'
+import { postService, userService } from '@/lib/supabase/services/index'
 import { formatDate } from '@/lib/utils'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
-import { CommentList } from '@/components/blog/comment-list'
-import { ShareButtons } from '@/components/blog/share-buttons'
-import { NewsletterSubscription } from '@/components/blog/newsletter-subscription'
+import { Button } from '@/components/ui/button'
+import { isSupabaseConfigured } from '@/lib/supabase/client'
 import Link from 'next/link'
-import { Calendar, Clock, Eye, ArrowLeft } from 'lucide-react'
+import { Calendar, Clock, Eye, MessageCircle, ArrowLeft, User } from 'lucide-react'
+import { CommentList } from '@/components/blog/comment-list'
+import { CommentForm } from '@/components/blog/comment-form'
+import { NewsletterSubscription } from '@/components/blog/newsletter-subscription'
+import { MDXContent } from '@/components/blog/mdx-content'
+import { ShareButtons } from '@/components/blog/share-buttons'
+import { Badge } from '@/components/ui/badge'
 
-interface PageProps {
-  params: Promise<{ slug: string }>
+interface BlogPostPageProps {
+  params: {
+    slug: string
+  }
 }
 
 // 生成SEO元数据
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { slug } = await params
-  const post = await postService.getPostBySlugWithRelations(slug)
+export async function generateMetadata({ params }: BlogPostPageProps): Promise<Metadata> {
+  // @ts-ignore
+  const post = await postService.getPostBySlugWithRelations(params.slug)
 
   if (!post) {
     return {
       title: '文章未找到',
-      description: '请求的博客文章不存在。',
+      description: '请求的文章不存在。',
     }
   }
 
   const title = `${post.title} | Be Better Web`
-  const description = post.excerpt || '阅读这篇关于生产力提升和个人成长的深度文章。'
+  const description = post.excerpt || post.content?.slice(0, 160) || '博客文章'
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bebetterweb.com'
-  const url = `${siteUrl}/blog/${post.slug}`
+  const url = `${siteUrl}/blog/${post.id}`
 
   return {
     title,
     description,
     keywords: [
+      ...post.categories?.map((cat: any) => cat.name) || [],
+      ...post.tags?.map((tag: any) => tag.name) || [],
       '博客',
       '生产力',
       '个人成长',
-      '效率提升',
-      '工作效率',
-      '时间管理',
-      post.title
+      '效率提升'
     ],
-    authors: [{ name: 'Be Better Web' }],
-    creator: 'Be Better Web',
+    authors: [{ name: post.author?.name || post.author?.email || '匿名作者' }],
+    creator: post.author?.name || post.author?.email || '匿名作者',
     publisher: 'Be Better Web',
     openGraph: {
       title,
       description,
       url,
       type: 'article',
-      publishedTime: post.published_at || post.created_at,
-      modifiedTime: post.updated_at,
-      authors: ['Be Better Web'],
       siteName: 'Be Better Web',
       locale: 'zh_CN',
-      images: post.featured_image ? [
-        {
-          url: post.featured_image,
-          width: 1200,
-          height: 630,
-          alt: post.title,
-        }
-      ] : [{
-        url: `${siteUrl}/og-image.jpg`,
-        width: 1200,
-        height: 630,
-        alt: 'Be Better Web - 生产力提升和个人成长博客',
-      }],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
-      creator: '@bebetterweb',
-      images: post.featured_image ? [post.featured_image] : [`${siteUrl}/og-image.jpg`],
+      publishedTime: post.published_at,
+      modifiedTime: post.updated_at,
+      authors: [post.author?.name || post.author?.email || '匿名作者'],
+      tags: post.tags?.map((tag: any) => tag.name) || [],
     },
     alternates: {
       canonical: url,
     },
     robots: {
-      index: true,
-      follow: true,
+      index: post.status === 'published',
+      follow: post.status === 'published',
       googleBot: {
-        index: true,
-        follow: true,
+        index: post.status === 'published',
+        follow: post.status === 'published',
         'max-video-preview': -1,
         'max-image-preview': 'large',
         'max-snippet': -1,
       },
     },
-    other: {
-      'article:published_time': post.published_at || post.created_at,
-      'article:modified_time': post.updated_at,
-      'article:author': 'Be Better Web',
-      'article:section': '博客',
-    },
   }
 }
 
-export default async function BlogPostPage({ params }: PageProps) {
-  const { slug } = await params
-  const post = await postService.getPostBySlugWithRelations(slug)
+export default async function BlogPostPage({ params }: BlogPostPageProps) {
+  // 检查Supabase配置
+  if (!isSupabaseConfigured()) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">功能受限</h1>
+          <p className="text-muted-foreground">
+            此功能需要数据库支持。请配置Supabase以启用完整功能。
+          </p>
+        </div>
+      </div>
+    )
+  }
 
-  if (!post) {
+  // @ts-ignore
+  const post = await postService.getPostBySlugWithRelations(params.slug)
+
+  if (!post || post.status !== 'published') {
     notFound()
   }
 
-  // Increment view count
+  // 增加浏览量
   try {
+    // @ts-ignore
     await postService.incrementViewCount(post.id)
   } catch (error) {
-    // Non-critical error, continue rendering
-    console.error('Failed to increment view count:', error)
+    console.error('增加浏览量失败:', error)
+  }
+
+  // 获取作者信息
+  let author = null
+  if (post.user_id && isSupabaseConfigured()) {
+    try {
+      author = await userService.getUserById(post.user_id)
+    } catch (error) {
+      console.error('获取作者信息失败:', error)
+    }
   }
 
   const estimateReadingTime = (content: string): number => {
@@ -124,6 +127,17 @@ export default async function BlogPostPage({ params }: PageProps) {
 
   const readingTime = estimateReadingTime(post.content || '')
 
+  // 获取相邻文章
+  // @ts-ignore
+  const allPosts = await postService.getPosts({
+    status: 'published',
+    userId: post.user_id // 只获取同一作者的文章
+  })
+
+  const currentIndex = allPosts.data.findIndex((p: any) => p.id === post.id)
+  const prevPost = currentIndex > 0 ? allPosts.data[currentIndex - 1] : null
+  const nextPost = currentIndex < allPosts.data.length - 1 ? allPosts.data[currentIndex + 1] : null
+
   return (
     <article className="container mx-auto px-4 py-8 max-w-4xl">
       {/* 返回导航 */}
@@ -133,6 +147,31 @@ export default async function BlogPostPage({ params }: PageProps) {
           返回博客列表
         </Link>
       </div>
+
+              {/* 文章导航 */}
+        <div className="flex justify-between items-center mb-12">
+          {prevPost ? (
+            <Button variant="outline" asChild className="flex items-center gap-2">
+              <Link href={`/blog/${prevPost.id}`}>
+                <ArrowLeft className="h-4 w-4" />
+                {prevPost.title}
+              </Link>
+            </Button>
+          ) : (
+            <div></div>
+          )}
+          
+          {nextPost ? (
+            <Button variant="outline" asChild className="flex items-center gap-2">
+              <Link href={`/blog/${nextPost.id}`}>
+                {nextPost.title}
+                <ArrowLeft className="h-4 w-4 rotate-180" />
+              </Link>
+            </Button>
+          ) : (
+            <div></div>
+          )}
+        </div>
 
       {/* Article Header */}
       <header className="mb-8">
@@ -146,15 +185,38 @@ export default async function BlogPostPage({ params }: PageProps) {
           </p>
         )}
 
+        {/* 作者信息 */}
+        {author && (
+          <div className="flex items-center gap-3 mb-6 p-3 bg-muted rounded-lg">
+            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
+              <span className="text-primary-foreground font-bold">
+                {author.name ? author.name.charAt(0).toUpperCase() : author.email.charAt(0).toUpperCase()}
+              </span>
+            </div>
+            <div>
+              <div className="font-medium">
+                <Link href={`/blog/user/${author.id}`} className="hover:text-primary">
+                  {author.name || author.email}
+                </Link>
+              </div>
+              <div className="text-sm text-muted-foreground flex items-center gap-2">
+                <time dateTime={post.published_at || post.created_at}>
+                  {formatDate(post.published_at || post.created_at)}
+                </time>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* 分类和标签 */}
         {((post.categories && post.categories.length > 0) || (post.tags && post.tags.length > 0)) && (
           <div className="flex flex-wrap gap-2 mb-6">
-            {post.categories?.map((category: any) => (
+            {post.categories?.map((category: { id: string; name: string }) => (
               <Badge key={category.id} variant="default" className="text-xs">
                 {category.name}
               </Badge>
             ))}
-            {post.tags?.map((tag: any) => (
+            {post.tags?.map((tag: { id: string; name: string }) => (
               <Badge key={tag.id} variant="outline" className="text-xs">
                 #{tag.name}
               </Badge>
@@ -193,10 +255,9 @@ export default async function BlogPostPage({ params }: PageProps) {
       </header>
 
       {/* Article Content */}
-      <div 
-        className="prose dark:prose-invert max-w-none mb-12"
-        dangerouslySetInnerHTML={{ __html: post.content || '' }}
-      />
+      <div className="prose dark:prose-invert max-w-none mb-12">
+        {post.content && <MDXContent content={post.content} />}
+      </div>
 
       {/* Article Footer */}
       <footer className="border-t pt-8">
@@ -205,37 +266,6 @@ export default async function BlogPostPage({ params }: PageProps) {
           <h3 className="text-lg font-semibold mb-4">分享这篇文章</h3>
           <ShareButtons title={post.title} />
         </div>
-
-        {/* 文章导航 */}
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card>
-            <CardContent className="p-4">
-              <h4 className="font-semibold mb-2">上一篇</h4>
-              <p className="text-sm text-muted-foreground">
-                正在开发中 - 文章导航功能
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <h4 className="font-semibold mb-2">下一篇</h4>
-              <p className="text-sm text-muted-foreground">
-                正在开发中 - 文章导航功能
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* 行动召唤 */}
-        <Card className="mt-8">
-          <CardContent className="p-6 text-center">
-            <h3 className="text-xl font-bold mb-2">喜欢这篇文章吗？</h3>
-            <p className="text-muted-foreground mb-4">
-              订阅我们的邮件列表，获取最新的文章和生产力提升技巧。
-            </p>
-            <NewsletterSubscription />
-          </CardContent>
-        </Card>
       </footer>
 
       {/* 评论区域 */}
@@ -255,8 +285,8 @@ export default async function BlogPostPage({ params }: PageProps) {
             image: post.featured_image || `${process.env.NEXT_PUBLIC_SITE_URL || 'https://bebetterweb.com'}/og-image.jpg`,
             author: {
               '@type': 'Person',
-              name: 'Be Better Web',
-              url: process.env.NEXT_PUBLIC_SITE_URL || 'https://bebetterweb.com',
+              name: author?.name || author?.email || 'Be Better Web',
+              url: author ? `${process.env.NEXT_PUBLIC_SITE_URL || 'https://bebetterweb.com'}/blog/user/${author.id}` : undefined,
             },
             publisher: {
               '@type': 'Organization',
@@ -273,7 +303,7 @@ export default async function BlogPostPage({ params }: PageProps) {
             inLanguage: 'zh-CN',
             mainEntityOfPage: {
               '@type': 'WebPage',
-              '@id': `${process.env.NEXT_PUBLIC_SITE_URL || 'https://bebetterweb.com'}/blog/${post.slug}`,
+              '@id': `${process.env.NEXT_PUBLIC_SITE_URL || 'https://bebetterweb.com'}/blog/${post.id}`,
             },
             keywords: ['生产力', '个人成长', '效率提升', '博客'].join(','),
             articleSection: '博客',

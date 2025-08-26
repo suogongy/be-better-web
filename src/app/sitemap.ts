@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next'
-import { postService } from '@/lib/supabase/database'
+import { postService } from '@/lib/supabase/services/index'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bebetterweb.com'
@@ -31,7 +31,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       limit: 1000
     })
 
-    const blogRoutes = posts.map(post => ({
+    const blogRoutes = posts.data.map((post: any) => ({
       url: `${baseUrl}/blog/${post.slug}`,
       lastModified: new Date(post.updated_at),
       changeFrequency: 'monthly' as const,

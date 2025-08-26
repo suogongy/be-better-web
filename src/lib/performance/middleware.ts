@@ -133,9 +133,10 @@ export function performanceMiddleware(request: NextRequest): NextResponse {
   const route = request.nextUrl.pathname
   const method = request.method
   const userAgent = request.headers.get('user-agent') || undefined
-  const ip = request.headers.get('x-forwarded-for') 
-           ? request.headers.get('x-forwarded-for')?.split(',')[0].trim() 
-           : request.headers.get('x-real-ip') ?? undefined
+  const xForwardedFor = request.headers.get('x-forwarded-for')
+  const ip = xForwardedFor 
+    ? xForwardedFor.split(',')[0].trim() 
+    : request.ip ?? undefined
 
   // Start tracking
   performanceTracker.startTracking(requestId, route, method, userAgent, ip)

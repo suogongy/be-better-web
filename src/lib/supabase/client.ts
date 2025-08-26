@@ -34,10 +34,6 @@ export const supabase = createSupabaseClient<Database>(supabaseUrl, supabaseAnon
       eventsPerSecond: 10,
     },
   },
-  // 确保类型推断正确
-  rest: {
-    timeout: 30000,
-  },
 }) as any
 
 // Server-side client with service role key (for admin operations)

@@ -334,6 +334,47 @@ export interface Database {
           updated_at?: string
         }
       }
+      data_exports: {
+        Row: {
+          id: string
+          user_id: string
+          export_type: string
+          format: string
+          date_range_start?: string
+          date_range_end?: string
+          file_url?: string
+          file_size?: number
+          status: 'pending' | 'processing' | 'completed' | 'failed'
+          created_at: string
+          expires_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          export_type: string
+          format: string
+          date_range_start?: string
+          date_range_end?: string
+          file_url?: string
+          file_size?: number
+          status?: 'pending' | 'processing' | 'completed' | 'failed'
+          created_at?: string
+          expires_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          export_type?: string
+          format?: string
+          date_range_start?: string
+          date_range_end?: string
+          file_url?: string
+          file_size?: number
+          status?: 'pending' | 'processing' | 'completed' | 'failed'
+          created_at?: string
+          expires_at?: string
+        }
+      }
     }
     Views: {
       // Views would go here
@@ -355,3 +396,4 @@ export type Tag = Database['public']['Tables']['tags']['Row']
 export type Comment = Database['public']['Tables']['comments']['Row']
 export type Task = Database['public']['Tables']['tasks']['Row']
 export type DailySummary = Database['public']['Tables']['daily_summaries']['Row']
+export type DataExport = Database['public']['Tables']['data_exports']['Row']

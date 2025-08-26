@@ -1,23 +1,17 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { commentService } from '@/lib/supabase/database'
-import { formatDate } from '@/lib/utils'
+import { commentService } from '@/lib/supabase/services/index'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/components/ui/toast-provider'
+import { isSupabaseConfigured } from '@/lib/supabase/client'
+import { format } from 'date-fns'
+import { zhCN } from 'date-fns/locale'
+import { MessageCircle, Check, X as XIcon, AlertTriangle, Shield, Filter, Trash2 } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { 
-  Check, 
-  X, 
-  Shield, 
-  Trash2, 
-  AlertTriangle, 
-  MessageCircle,
-  Eye,
-  Filter
-} from 'lucide-react'
+import { formatDate } from '@/lib/utils'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 interface Comment {
   id: string
@@ -41,21 +35,20 @@ interface CommentStats {
   rejected: number
 }
 
-export function CommentModeration() {
+export default function CommentModeration() {
   const [comments, setComments] = useState<Comment[]>([])
-  const [stats, setStats] = useState<CommentStats>({
+  const [activeTab, setActiveTab] = useState('pending')
+  const [loading, setLoading] = useState(true)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(0)
+  const [stats, setStats] = useState({
     total: 0,
     approved: 0,
     pending: 0,
     spam: 0,
-    rejected: 0,
+    rejected: 0
   })
-  const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'pending' | 'spam' | 'all'>('pending')
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
   const { addToast } = useToast()
-
   const ITEMS_PER_PAGE = 10
 
   const loadComments = async () => {
@@ -79,9 +72,9 @@ export function CommentModeration() {
     } catch (error) {
       console.error('加载评论失败:', error)
       addToast({
-        title: '错误',
-        description: '加载待审核评论失败',
-        variant: 'destructive',
+        title: "错误",
+        description: "加载待审核评论失败",
+        variant: "destructive"
       })
     } finally {
       setLoading(false)
@@ -92,26 +85,22 @@ export function CommentModeration() {
     loadComments()
   }, [activeTab, currentPage])
 
-  const handleStatusUpdate = async (
-    commentId: string, 
-    newStatus: 'approved' | 'spam' | 'rejected'
-  ) => {
+  const handleStatusUpdate = async (commentId: string, newStatus: Comment['status']) => {
     try {
       await commentService.updateCommentStatus(commentId, newStatus)
-      
+      setComments(comments.map(comment => 
+        comment.id === commentId ? { ...comment, status: newStatus } : comment
+      ))
       addToast({
-        title: '成功',
-        description: `评论已${newStatus === 'approved' ? '批准' : newStatus === 'spam' ? '标记为垃圾' : '拒绝'}`,
-        variant: 'success',
+        title: "成功",
+        description: "评论状态已更新"
       })
-      
-      loadComments()
     } catch (error) {
       console.error('更新评论状态失败:', error)
       addToast({
-        title: '错误',
-        description: '更新评论状态失败',
-        variant: 'destructive',
+        title: "错误",
+        description: "更新评论状态失败",
+        variant: "destructive"
       })
     }
   }
@@ -125,18 +114,17 @@ export function CommentModeration() {
       await commentService.deleteComment(commentId)
       
       addToast({
-        title: '成功',
-        description: '评论已删除',
-        variant: 'success',
+        title: "成功",
+        description: "评论已删除"
       })
       
       loadComments()
     } catch (error) {
       console.error('删除评论失败:', error)
       addToast({
-        title: '错误',
-        description: '删除评论失败',
-        variant: 'destructive',
+        title: "错误",
+        description: "删除评论失败",
+        variant: "destructive"
       })
     }
   }
@@ -218,7 +206,7 @@ export function CommentModeration() {
                 <p className="text-sm font-medium text-muted-foreground">已拒绝</p>
                 <p className="text-2xl font-bold text-gray-600">{stats.rejected}</p>
               </div>
-              <X className="h-4 w-4 text-gray-600" />
+              <XIcon className="h-4 w-4 text-gray-600" />
             </div>
           </CardContent>
         </Card>
@@ -310,47 +298,41 @@ export function CommentModeration() {
 
 interface CommentModerationItemProps {
   comment: Comment
-  onStatusUpdate: (id: string, status: 'approved' | 'spam' | 'rejected') => void
+  onStatusUpdate: (id: string, status: Comment['status']) => void
   onDelete: (id: string) => void
 }
 
-function CommentModerationItem({ 
-  comment, 
-  onStatusUpdate, 
-  onDelete 
-}: CommentModerationItemProps) {
-  const getStatusText = (status: string) => {
+const CommentModerationItem = ({ comment, onStatusUpdate, onDelete }: CommentModerationItemProps) => {
+  const getStatusText = (status: Comment['status']) => {
     switch (status) {
-      case 'approved': return '已批准';
-      case 'pending': return '待审核';
-      case 'spam': return '垃圾';
-      case 'rejected': return '已拒绝';
-      default: return status;
+      case 'approved': return '已批准'
+      case 'pending': return '待审核'
+      case 'spam': return '垃圾评论'
+      case 'rejected': return '已拒绝'
+      default: return status
     }
-  };
+  }
 
   return (
-    <Card>
+    <Card key={comment.id} className="mb-4">
       <CardContent className="p-4">
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h4 className="font-medium">{comment.author_name}</h4>
-            <Badge
-              variant={
-                comment.status === 'approved' ? 'default' :
-                comment.status === 'pending' ? 'secondary' :
-                comment.status === 'spam' ? 'destructive' : 'outline'
-              }
-            >
-              {getStatusText(comment.status)}
-            </Badge>
-            <time 
-              className="text-sm text-muted-foreground"
-              dateTime={comment.created_at}
-            >
-              {formatDate(comment.created_at)}
-            </time>
-          </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <h4 className="font-medium">{comment.author_name}</h4>
+          <Badge
+            variant={
+              comment.status === 'approved' ? 'default' :
+              comment.status === 'pending' ? 'secondary' :
+              comment.status === 'spam' ? 'destructive' : 'outline'
+            }
+          >
+            {getStatusText(comment.status)}
+          </Badge>
+          <time 
+            className="text-sm text-muted-foreground"
+            dateTime={comment.created_at}
+          >
+            {formatDate(comment.created_at)}
+          </time>
         </div>
 
         <div className="text-sm text-muted-foreground mb-2">
@@ -400,7 +382,7 @@ function CommentModerationItem({
               onClick={() => onStatusUpdate(comment.id, 'rejected')}
               className="flex items-center gap-1"
             >
-              <X className="h-3 w-3" />
+              <XIcon className="h-3 w-3" />
               拒绝
             </Button>
           )}

@@ -1,28 +1,24 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useAuth } from '@/lib/auth/auth-context'
+import React, { useState, useEffect } from 'react'
+import { format } from 'date-fns'
+import { zhCN } from 'date-fns/locale'
 import { useToast } from '@/components/ui/toast-provider'
-import { summaryService } from '@/lib/supabase/database'
+import { Calendar, Plus, RefreshCw, ChevronLeft, ChevronRight, TrendingUp, BarChart3 } from 'lucide-react'
+import { LoadingError } from '@/components/ui/loading-error'
 import { DailySummaryCard } from '@/components/summary/daily-summary-card'
-import { SummaryForm } from '@/components/summary/summary-form'
 import { ProductivityChart } from '@/components/summary/productivity-chart'
 import { WeeklyInsights } from '@/components/summary/weekly-insights'
+import { SummaryForm } from '@/components/summary/summary-form'
 import { BlogGenerationForm } from '@/components/summary/blog-generation-form'
-import { LoadingError } from '@/components/ui/loading-error'
+import { summaryService } from '@/lib/supabase/services/index'
+import { useAuth } from '@/lib/auth/useAuth'
+import { isSupabaseConfigured } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { 
-  Plus, 
-  Calendar,
-  TrendingUp,
-  BarChart3,
-  ChevronLeft,
-  ChevronRight,
-  RefreshCw
-} from 'lucide-react'
-import { format, parseISO, addDays, subDays } from 'date-fns'
-import type { DailySummary } from '@/types/database'
+import { Card, CardContent } from '@/components/ui/card'
+import { addDays, subDays } from 'date-fns'
+import { DailySummary } from '@/types/database'
+import { DatePicker } from '@/components/tasks/date-picker'
 
 export default function SummaryPage() {
   const { user, loading: authLoading, error: authError } = useAuth()
@@ -322,9 +318,9 @@ export default function SummaryPage() {
         {/* Blog Generation Form Modal */}
         {showBlogForm && currentSummary && (
           <BlogGenerationForm
+            summary={currentSummary}
             onGenerate={handleGenerateBlog}
             onCancel={() => setShowBlogForm(false)}
-            summary={currentSummary}
           />
         )}
       </div>

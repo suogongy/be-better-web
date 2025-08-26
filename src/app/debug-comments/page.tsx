@@ -1,8 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { commentService } from '@/lib/supabase/services/index'
+import { Button } from '@/components/ui/button'
+import { useToast } from '@/components/ui/toast-provider'
+import { isSupabaseConfigured } from '@/lib/supabase/client'
+import { format } from 'date-fns'
+import { zhCN } from 'date-fns/locale'
+import { MessageCircle, Check, X as XIcon, AlertTriangle } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
-import { commentService } from '@/lib/supabase/database'
 
 export default function DebugComments() {
   const [debugInfo, setDebugInfo] = useState<any>(null)
@@ -80,14 +86,14 @@ export default function DebugComments() {
 
         // 5. 统计各状态评论数量
         const statusStats: any = {}
-        allComments?.forEach(comment => {
+        allComments?.forEach((comment: any) => {
           statusStats[comment.status] = (statusStats[comment.status] || 0) + 1
         })
         info.statusStats = statusStats
 
         // 6. 分析顶级评论和回复
-        const topLevel = allComments?.filter(c => !c.parent_id) || []
-        const replies = allComments?.filter(c => c.parent_id) || []
+        const topLevel = allComments?.filter((c: any) => !c.parent_id) || []
+        const replies = allComments?.filter((c: any) => c.parent_id) || []
         
         info.topLevelCount = topLevel.length
         info.repliesCount = replies.length

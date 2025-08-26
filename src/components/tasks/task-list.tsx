@@ -42,10 +42,15 @@ export function TaskList({ tasks, onEdit, onDelete, onComplete, onUpdate }: Task
   }
 
   const handleStatusChange = async (task: Task, newStatus: Task['status']) => {
-    if (newStatus === 'completed') {
-      onComplete(task.id)
-    } else {
-      onUpdate(task.id, { status: newStatus })
+    try {
+      if (newStatus === 'completed') {
+        await onComplete(task.id)
+      } else {
+        await onUpdate(task.id, { status: newStatus })
+      }
+    } catch (error) {
+      console.error('Failed to update task status:', error)
+      // Handle error appropriately - could show a toast notification
     }
   }
 

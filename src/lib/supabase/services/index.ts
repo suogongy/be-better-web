@@ -1,0 +1,10 @@
+// 统一导出所有服务和错误处理类
+export { postService } from './post-service'
+export { categoryService } from './category-service'
+export { tagService } from './tag-service'
+export { commentService } from './comment-service'
+export { taskService } from './task-service'
+export { userService } from './user-service'
+export { summaryService } from './summary-service'
+export { exportService } from './export-service'
+export { DatabaseError } from '../utils/database-error'
