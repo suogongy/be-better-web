@@ -1,6 +1,7 @@
 'use client'
 
 import { useEditor, EditorContent } from '@tiptap/react'
+import { useState, useEffect } from 'react'
 import StarterKit from '@tiptap/starter-kit'
 import Image from '@tiptap/extension-image'
 import Link from '@tiptap/extension-link'
@@ -24,6 +25,12 @@ export function BlogEditor({
   editable = true,
   className,
 }: BlogEditorProps) {
+  const [isMounted, setIsMounted] = useState(false)
+
+  // Handle SSR by checking if component is mounted
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -48,13 +55,19 @@ export function BlogEditor({
     ],
     content,
     editable,
+    immediatelyRender: false, // Prevent SSR hydration mismatches
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML())
     },
   })
 
+  // Don't render during SSR to prevent hydration mismatches
+  if (!isMounted) {
+    return <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-64 rounded-md" />
+  }
+
   if (!editor) {
-    return <div className="animate-pulse bg-gray-200 h-64 rounded-md" />
+    return <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-64 rounded-md" />
   }
 
   const MenuButton = ({ onClick, isActive, disabled, children, title }: {

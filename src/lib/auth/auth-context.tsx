@@ -63,7 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     if (!isConfigured) {
-      return { error: { message: 'Supabase not configured' } as AuthError }
+      return { error: { message: 'Authentication service not configured. Please check your environment settings.' } as AuthError }
     }
     
     try {
@@ -73,7 +73,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         password,
       })
       return { error }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('SignIn error:', error)
+      // Handle network errors specifically
+      if (error.message?.includes('fetch') || error.name === 'TypeError') {
+        return { error: { message: 'Unable to connect to authentication service. Please check your network connection.' } as AuthError }
+      }
       return { error: error as AuthError }
     } finally {
       setLoading(false)
@@ -82,7 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string) => {
     if (!isConfigured) {
-      return { error: { message: 'Supabase not configured' } as AuthError }
+      return { error: { message: 'Authentication service not configured. Please check your environment settings.' } as AuthError }
     }
     
     try {
@@ -92,7 +97,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         password,
       })
       return { error }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('SignUp error:', error)
+      // Handle network errors specifically
+      if (error.message?.includes('fetch') || error.name === 'TypeError') {
+        return { error: { message: 'Unable to connect to authentication service. Please check your network connection.' } as AuthError }
+      }
       return { error: error as AuthError }
     } finally {
       setLoading(false)
@@ -101,14 +111,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     if (!isConfigured) {
-      return { error: { message: 'Supabase not configured' } as AuthError }
+      return { error: { message: 'Authentication service not configured. Please check your environment settings.' } as AuthError }
     }
     
     try {
       setLoading(true)
       const { error } = await supabase.auth.signOut()
       return { error }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('SignOut error:', error)
+      // Handle network errors specifically
+      if (error.message?.includes('fetch') || error.name === 'TypeError') {
+        return { error: { message: 'Unable to connect to authentication service. Please check your network connection.' } as AuthError }
+      }
       return { error: error as AuthError }
     } finally {
       setLoading(false)
@@ -117,13 +132,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const resetPassword = async (email: string) => {
     if (!isConfigured) {
-      return { error: { message: 'Supabase not configured' } as AuthError }
+      return { error: { message: 'Authentication service not configured. Please check your environment settings.' } as AuthError }
     }
     
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email)
       return { error }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Reset password error:', error)
+      // Handle network errors specifically
+      if (error.message?.includes('fetch') || error.name === 'TypeError') {
+        return { error: { message: 'Unable to connect to authentication service. Please check your network connection.' } as AuthError }
+      }
       return { error: error as AuthError }
     }
   }

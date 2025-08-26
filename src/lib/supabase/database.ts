@@ -1108,7 +1108,7 @@ export const summaryService = {
     }
   },
 
-  private async generateDailyBlogPost(summary: DailySummary, tasks: any[]): Promise<{
+  async generateDailyBlogPost(summary: DailySummary, tasks: any[]): Promise<{
     title: string
     content: string
     excerpt: string
@@ -1268,7 +1268,7 @@ export const summaryService = {
     }
   },
 
-  private async generateWeeklyBlogPost(userId: string, date: string): Promise<{
+  async generateWeeklyBlogPost(userId: string, date: string): Promise<{
     title: string
     content: string
     excerpt: string
@@ -1310,7 +1310,7 @@ export const summaryService = {
     }
   },
 
-  private async generateMonthlyBlogPost(userId: string, date: string): Promise<{
+  async generateMonthlyBlogPost(userId: string, date: string): Promise<{
     title: string
     content: string
     excerpt: string
@@ -1385,7 +1385,7 @@ export const summaryService = {
     }
   },
 
-  private generateSlug(title: string): string {
+  generateSlug(title: string): string {
     return title
       .toLowerCase()
       .replace(/[^a-z0-9\s-]/g, '')
