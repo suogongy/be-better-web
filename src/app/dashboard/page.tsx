@@ -1,17 +1,17 @@
 'use client'
 
 import { useAuth } from '@/lib/auth/auth-context'
-import { LoadingError } from '@/components/ui/loading-error'
+import { AuthGuard } from '@/components/auth/auth-guard'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { PlusCircle, Calendar, BookOpen, TrendingUp, Clock } from 'lucide-react'
 
 export default function DashboardPage() {
-  const { user, loading, error } = useAuth()
+  const { user } = useAuth()
 
   return (
-    <LoadingError loading={loading} error={error}>
+    <AuthGuard>
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
@@ -143,6 +143,6 @@ export default function DashboardPage() {
           </Card>
         </div>
       </div>
-    </LoadingError>
+    </AuthGuard>
   )
 }

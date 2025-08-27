@@ -66,7 +66,7 @@ export const postService = {
     if (postsError) throw new DatabaseError('Failed to fetch posts', postsError)
 
     // 如果需要按分类或标签过滤
-    let filteredPosts: any[] = posts || []
+    let filteredPosts = posts || []
     if (categoryId || tagId) {
       let postIds: string[] = []
       
@@ -144,11 +144,11 @@ export const postService = {
 
     // 获取分类和标签数据
     const [categories, tags] = await Promise.all([
-      categoryIds.length > 0 
-        ? supabase.from('categories').select('*').in('id', categoryIds).then((res: any) => res.data)
+      categoryIds.length > 0
+        ? supabase.from('categories').select('*').in('id', categoryIds).then(res => res.data)
         : Promise.resolve([]),
-      tagIds.length > 0 
-        ? supabase.from('tags').select('*').in('id', tagIds).then((res: any) => res.data)
+      tagIds.length > 0
+        ? supabase.from('tags').select('*').in('id', tagIds).then(res => res.data)
         : Promise.resolve([])
     ])
 
@@ -437,7 +437,7 @@ export const postService = {
     // Create the post first
     const { data: createdPost, error: postError } = await supabase
       .from('posts')
-      .insert(postData as any)
+      .insert(postData)
       .select()
       .single()
 
@@ -523,7 +523,7 @@ export const postService = {
     // Update the post data
     const { data: updatedPost, error: postError } = await supabase
       .from('posts')
-      .update(postUpdates as any)
+      .update(postUpdates)
       .eq('id', id)
       .select()
       .single()
@@ -598,7 +598,7 @@ export const postService = {
       // 2. Update daily_summaries to remove references to this post
       await supabase
         .from('daily_summaries')
-        .update({ generated_post_id: null } as any)
+        .update({ generated_post_id: null })
         .eq('generated_post_id', id)
       
       // 3. Delete the post
@@ -626,7 +626,7 @@ export const postService = {
     if (currentPost) {
       const { error } = await supabase
         .from('posts')
-        .update({ view_count: (currentPost.view_count || 0) + 1 } as any)
+        .update({ view_count: (currentPost.view_count || 0) + 1 })
         .eq('id', id)
 
       if (error) {

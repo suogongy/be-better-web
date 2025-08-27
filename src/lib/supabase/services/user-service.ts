@@ -5,7 +5,7 @@ import type { User } from '@/types/database'
 // User operations
 export const userService = {
   async getProfile(userId: string): Promise<User | null> {
-    const { data, error } = await supabase
+    const { data, error } = await supabase!
       .from('users')
       .select('*')
       .eq('id', userId)
@@ -19,7 +19,7 @@ export const userService = {
     return data
   },
 
-  async updateProfile(userId: string, updates: any): Promise<User> {
+  async updateProfile(userId: string, updates: Partial<Omit<User, 'id' | 'created_at' | 'updated_at'>>): Promise<User> {
     const { data, error } = await supabase
       .from('users')
       .update(updates as Partial<User>)
@@ -57,7 +57,7 @@ export const userService = {
     return data
   },
 
-  async createUserFromAuth(authUser: any): Promise<User> {
+  async createUserFromAuth(authUser: { id: string; email?: string; user_metadata?: { name?: string } }): Promise<User> {
     console.log('🔍 createUserFromAuth called with user:', authUser.id)
     
     // Helper function to create user profile when user registers
@@ -78,7 +78,7 @@ export const userService = {
       
       const { data, error } = await supabase
         .from('users')
-        .upsert(userData as any)
+        .upsert(userData)
         .select()
         .single()
       

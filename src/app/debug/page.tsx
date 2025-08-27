@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client'
+import { NetworkDiagnostics } from '@/lib/utils/network-diagnostics'
+import { EnvChecker } from '@/lib/utils/env-checker'
 import { 
   CheckCircle, 
   XCircle, 
@@ -13,7 +15,9 @@ import {
   ExternalLink,
   Database,
   Globe,
-  Settings
+  Settings,
+  Wifi,
+  WifiOff
 } from 'lucide-react'
 
 interface TestResult {
@@ -31,12 +35,7 @@ export default function DebugPage() {
 
   // 获取环境变量信息
   useEffect(() => {
-    const vars = {
-      'NEXT_PUBLIC_SUPABASE_URL': process.env.NEXT_PUBLIC_SUPABASE_URL || '未设置',
-      'NEXT_PUBLIC_SUPABASE_ANON_KEY': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 
-        `${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY.substring(0, 20)}...` : '未设置',
-      'NODE_ENV': process.env.NODE_ENV || '未设置'
-    }
+    const vars = EnvChecker.getEnvSummary()
     setEnvVars(vars)
   }, [])
 
@@ -50,7 +49,8 @@ export default function DebugPage() {
       testNetworkConnectivity,
       testSupabaseConfiguration,
       testSupabaseConnection,
-      testDatabaseAccess
+      testDatabaseAccess,
+      testAdvancedNetworkDiagnostics
     ]
 
     for (const test of tests) {
@@ -65,33 +65,23 @@ export default function DebugPage() {
 
   // 测试环境变量
   const testEnvironmentVariables = async (): Promise<TestResult> => {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-    if (!url || url === 'https://your-project.supabase.co') {
+    const check = EnvChecker.checkSupabaseConfig()
+    
+    if (!check.isValid) {
       return {
         name: '环境变量配置',
         status: 'error',
-        message: 'Supabase URL 未正确配置',
-        details: '请在 .env.local 文件中设置 NEXT_PUBLIC_SUPABASE_URL'
+        message: '环境变量配置存在问题',
+        details: check.issues.join(', ')
       }
     }
 
-    if (!key || key === 'your-anon-key-here') {
-      return {
-        name: '环境变量配置',
-        status: 'error',
-        message: 'Supabase 密钥未正确配置',
-        details: '请在 .env.local 文件中设置 NEXT_PUBLIC_SUPABASE_ANON_KEY'
-      }
-    }
-
-    if (!url.includes('.supabase.co')) {
+    if (check.warnings.length > 0) {
       return {
         name: '环境变量配置',
         status: 'warning',
-        message: 'Supabase URL 格式可能不正确',
-        details: `当前 URL: ${url}`
+        message: '环境变量配置有警告',
+        details: check.warnings.join(', ')
       }
     }
 
@@ -99,45 +89,36 @@ export default function DebugPage() {
       name: '环境变量配置',
       status: 'success',
       message: '环境变量配置正确',
-      details: `URL: ${url}`
+      details: '所有必需的环境变量都已正确设置'
     }
   }
 
   // 测试网络连接
   const testNetworkConnectivity = async (): Promise<TestResult> => {
-    const startTime = Date.now()
-    
     try {
-      const response = await fetch('https://httpbin.org/get', {
-        method: 'GET',
-        mode: 'cors',
-        cache: 'no-cache'
-      })
-      const endTime = Date.now()
-      const responseTime = endTime - startTime
-
-      if (response.ok) {
+      const result = await NetworkDiagnostics.testBasicConnectivity()
+      
+      if (result.success) {
         return {
           name: '网络连接',
           status: 'success',
           message: '网络连接正常',
-          details: `响应时间: ${responseTime}ms`,
-          responseTime
+          details: `响应时间: ${result.responseTime}ms`,
+          responseTime: result.responseTime
         }
       } else {
         return {
           name: '网络连接',
           status: 'error',
-          message: '网络连接异常',
-          details: `HTTP 状态码: ${response.status}`,
-          responseTime
+          message: '网络连接失败',
+          details: result.error || result.details || '未知错误'
         }
       }
     } catch (error: any) {
       return {
         name: '网络连接',
         status: 'error',
-        message: '网络连接失败',
+        message: '网络连接测试异常',
         details: error.message
       }
     }
@@ -166,36 +147,42 @@ export default function DebugPage() {
 
   // 测试 Supabase 连接
   const testSupabaseConnection = async (): Promise<TestResult> => {
-    const startTime = Date.now()
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    
+    if (!supabaseUrl) {
+      return {
+        name: 'Supabase 连接',
+        status: 'error',
+        message: 'Supabase URL 未配置',
+        details: '请在环境变量中设置 NEXT_PUBLIC_SUPABASE_URL'
+      }
+    }
     
     try {
-      const supabase = createClient()
-      const { data, error } = await supabase.auth.getSession()
-      const endTime = Date.now()
-      const responseTime = endTime - startTime
-
-      if (error) {
+      const result = await NetworkDiagnostics.testSupabaseConnection(supabaseUrl)
+      
+      if (result.success) {
+        return {
+          name: 'Supabase 连接',
+          status: 'success',
+          message: 'Supabase 服务可访问',
+          details: `响应时间: ${result.responseTime}ms`,
+          responseTime: result.responseTime
+        }
+      } else {
         return {
           name: 'Supabase 连接',
           status: 'error',
           message: 'Supabase 连接失败',
-          details: error.message,
-          responseTime
+          details: result.error || result.details || '未知错误',
+          responseTime: result.responseTime
         }
-      }
-
-      return {
-        name: 'Supabase 连接',
-        status: 'success',
-        message: 'Supabase 连接成功',
-        details: `响应时间: ${responseTime}ms`,
-        responseTime
       }
     } catch (error: any) {
       return {
         name: 'Supabase 连接',
         status: 'error',
-        message: 'Supabase 连接异常',
+        message: 'Supabase 连接测试异常',
         details: error.message
       }
     }
@@ -248,6 +235,49 @@ export default function DebugPage() {
         name: '数据库访问',
         status: 'error',
         message: '数据库访问异常',
+        details: error.message
+      }
+    }
+  }
+
+  // 高级网络诊断测试
+  const testAdvancedNetworkDiagnostics = async (): Promise<TestResult> => {
+    try {
+      const results = await NetworkDiagnostics.testMultipleEndpoints()
+      const successCount = results.filter(r => r.success).length
+      const totalCount = results.length
+      const avgResponseTime = results.reduce((sum, r) => sum + r.responseTime, 0) / totalCount
+      
+      if (successCount === totalCount) {
+        return {
+          name: '高级网络诊断',
+          status: 'success',
+          message: '所有网络端点连接正常',
+          details: `成功率: ${successCount}/${totalCount}, 平均响应时间: ${Math.round(avgResponseTime)}ms`,
+          responseTime: avgResponseTime
+        }
+      } else if (successCount > 0) {
+        return {
+          name: '高级网络诊断',
+          status: 'warning',
+          message: '部分网络端点连接异常',
+          details: `成功率: ${successCount}/${totalCount}, 可能存在网络问题`,
+          responseTime: avgResponseTime
+        }
+      } else {
+        return {
+          name: '高级网络诊断',
+          status: 'error',
+          message: '所有网络端点连接失败',
+          details: '网络连接存在严重问题，请检查网络设置',
+          responseTime: 0
+        }
+      }
+    } catch (error: any) {
+      return {
+        name: '高级网络诊断',
+        status: 'error',
+        message: '网络诊断测试异常',
         details: error.message
       }
     }

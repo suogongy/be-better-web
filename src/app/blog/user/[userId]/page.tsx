@@ -150,7 +150,7 @@ export default async function UserBlogPage({ params }: PageProps) {
         </Card>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {posts.map((post: any) => {
+          {posts.map((post) => {
             const readingTime = estimateReadingTime(post.content || '')
             return (
               <Card key={post.id} className="flex flex-col hover:shadow-md transition-shadow">

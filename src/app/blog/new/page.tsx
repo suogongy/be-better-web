@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { postService } from '@/lib/supabase/services/index'
-import { useAuth } from '@/lib/auth/useAuth'
+import { useAuth } from '@/lib/auth/auth-context'
 import { useToast } from '@/components/ui/toast-provider'
 import { Button } from '@/components/ui/button'
 import { BlogPostForm } from '@/components/blog/blog-post-form'
@@ -66,11 +66,11 @@ export default function NewBlogPostPage() {
       })
       
       router.push(`/blog/${result.slug}`)
-    } catch (error: any) {
+    } catch (error) {
       console.error('创建文章失败:', error)
       addToast({
         title: "错误",
-        description: error.message || "创建文章失败",
+        description: error instanceof Error ? error.message : "创建文章失败",
         variant: "destructive"
       })
     } finally {

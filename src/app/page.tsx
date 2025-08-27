@@ -5,10 +5,12 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Loading } from '@/components/ui/loading'
 import Link from 'next/link'
-import { CheckCircle, Calendar, BookOpen, TrendingUp, AlertCircle } from 'lucide-react'
+import { CheckCircle, Calendar, BookOpen, TrendingUp, AlertCircle, RotateCcw } from 'lucide-react'
+import { useState, useEffect } from 'react'
 
 export default function Home() {
   const { user, loading, error } = useAuth()
+  const [retryCount, setRetryCount] = useState(0)
 
   // 如果认证服务未配置，显示配置提示
   if (error && error.includes('未配置')) {
@@ -33,17 +35,21 @@ export default function Home() {
   }
 
   // 如果认证服务连接超时，显示网络错误
-  if (error && error.includes('超时')) {
+  if (error && (error.includes('超时') || error.includes('连接失败'))) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
         <Card className="w-full max-w-md mx-4">
           <CardContent className="text-center py-8">
             <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold mb-4">连接超时</h1>
+            <h1 className="text-2xl font-bold mb-4">连接问题</h1>
             <p className="text-gray-600 dark:text-gray-300 mb-4">
-              认证服务连接超时，请检查您的网络连接。
+              {error}
             </p>
-            <Button onClick={() => window.location.reload()}>
+            <Button onClick={() => {
+              setRetryCount(prev => prev + 1)
+              window.location.reload()
+            }}>
+              <RotateCcw className="mr-2 h-4 w-4" />
               重新加载
             </Button>
           </CardContent>
@@ -52,11 +58,30 @@ export default function Home() {
     )
   }
 
-  // 如果正在加载，显示加载状态
+  // 如果正在加载且超过一定时间，显示加载状态和重试选项
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-        <Loading text="加载中..." />
+        <div className="text-center">
+          <Loading text="加载中..." />
+          <p className="mt-4 text-gray-600 dark:text-gray-300">正在检查认证状态...</p>
+          {retryCount > 0 && (
+            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+              重试次数: {retryCount}
+            </p>
+          )}
+          <Button 
+            variant="outline" 
+            className="mt-4"
+            onClick={() => {
+              setRetryCount(prev => prev + 1)
+              window.location.reload()
+            }}
+          >
+            <RotateCcw className="mr-2 h-4 w-4" />
+            重新加载
+          </Button>
+        </div>
       </div>
     )
   }
@@ -92,6 +117,15 @@ export default function Home() {
               </Link>
             </div>
           )}
+          {user && (
+            <div className="mt-8">
+              <Link href="/dashboard">
+                <Button size="lg">
+                  进入仪表板
+                </Button>
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 
@@ -99,83 +133,45 @@ export default function Home() {
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-3xl font-bold text-center text-gray-900 dark:text-white mb-12">
-            一站式解决方案
+            功能特性
           </h2>
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-            <Card className="text-center">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <Card>
               <CardHeader>
-                <BookOpen className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+                <BookOpen className="h-8 w-8 text-blue-600 dark:text-blue-400 mb-2" />
                 <CardTitle>博客管理</CardTitle>
               </CardHeader>
               <CardContent>
-                <CardDescription>
-                  使用富文本编辑器创建、编辑和组织您的博客文章。
-                  支持分类、标签和SEO优化。
-                </CardDescription>
+                <p className="text-gray-600 dark:text-gray-300">
+                  创建、编辑和管理您的个人博客文章，支持富文本编辑和标签分类。
+                </p>
               </CardContent>
             </Card>
-
-            <Card className="text-center">
+            <Card>
               <CardHeader>
-                <Calendar className="h-12 w-12 text-green-600 mx-auto mb-4" />
+                <Calendar className="h-8 w-8 text-green-600 dark:text-green-400 mb-2" />
                 <CardTitle>日程规划</CardTitle>
               </CardHeader>
               <CardContent>
-                <CardDescription>
-                  通过优先级、截止日期和进度跟踪来组织您的日常任务。
-                  培养更好的习惯并实现您的目标。
-                </CardDescription>
+                <p className="text-gray-600 dark:text-gray-300">
+                  制定每日、每周计划，跟踪任务完成情况，提高工作效率。
+                </p>
               </CardContent>
             </Card>
-
-            <Card className="text-center">
+            <Card>
               <CardHeader>
-                <TrendingUp className="h-12 w-12 text-purple-600 mx-auto mb-4" />
-                <CardTitle>数据分析</CardTitle>
+                <TrendingUp className="h-8 w-8 text-purple-600 dark:text-purple-400 mb-2" />
+                <CardTitle>生产力分析</CardTitle>
               </CardHeader>
               <CardContent>
-                <CardDescription>
-                  通过详细的分析和洞察跟踪您的生产力。
-                  监控您的进度并识别改进领域。
-                </CardDescription>
-              </CardContent>
-            </Card>
-
-            <Card className="text-center">
-              <CardHeader>
-                <CheckCircle className="h-12 w-12 text-orange-600 mx-auto mb-4" />
-                <CardTitle>自动博客</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription>
-                  从您的每日总结自动生成博客文章。
-                  与他人分享您的生产力之旅。
-                </CardDescription>
+                <p className="text-gray-600 dark:text-gray-300">
+                  可视化展示您的生产力数据，生成周报和月报，帮助您持续改进。
+                </p>
               </CardContent>
             </Card>
           </div>
         </div>
       </section>
-
-      {/* CTA Section */}
-      {!user && (
-        <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white/50 dark:bg-gray-800/50">
-          <div className="max-w-4xl mx-auto text-center">
-            <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-              准备好变得更好了吗？
-            </h3>
-            <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
-              加入成千上万通过博客掌控自己的生产力
-              并分享自己旅程的人们。
-            </p>
-            <Link href="/auth/register">
-              <Button size="lg">
-                创建您的免费账户
-              </Button>
-            </Link>
-          </div>
-        </section>
-      )}
     </div>
   )
 }

@@ -98,7 +98,7 @@ export const taskService = {
       throw new DatabaseError('Failed to fetch task categories', error)
     }
 
-    const categories = [...new Set(data?.map((item: any) => item.category).filter(Boolean) || [])] as string[]
+    const categories = [...new Set(data?.map((item: { category: string }) => item.category).filter(Boolean) || [])]
     return categories
   },
 
@@ -128,7 +128,19 @@ export const taskService = {
       throw new DatabaseError('Failed to fetch task statistics', error)
     }
 
-    const stats = data?.reduce((acc: any, task: any) => {
+    const stats = data?.reduce((acc: {
+      total: number;
+      completed: number;
+      pending: number;
+      inProgress: number;
+      cancelled: number;
+      totalTime: number;
+      completedWithTime: number;
+    }, task: {
+      status: string;
+      actual_minutes?: number;
+      completed_at?: string;
+    }) => {
       acc.total++
       switch (task.status) {
         case 'completed':
@@ -202,7 +214,7 @@ export const taskService = {
 
     const { data, error } = await supabase
       .from('tasks')
-      .insert(taskData as any)
+      .insert(taskData)
       .select()
       .single()
 
@@ -227,7 +239,20 @@ export const taskService = {
     completion_notes?: string
     completed_at?: string
   }): Promise<Task> {
-    const updateData: any = { ...updates }
+    const updateData: Partial<{
+      title?: string;
+      description?: string;
+      category?: string;
+      priority?: 'low' | 'medium' | 'high';
+      status?: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+      progress?: number;
+      estimated_minutes?: number;
+      actual_minutes?: number;
+      due_date?: string;
+      due_time?: string;
+      completion_notes?: string;
+      completed_at?: string;
+    }> = { ...updates }
 
     // Auto-set completed_at when marking as completed
     if (updates.status === 'completed' && !updateData.completed_at) {
@@ -301,7 +326,7 @@ export const taskService = {
       progress: 0,
       actual_minutes: undefined,
       completion_notes: undefined
-    } as any)
+    })
   },
 
   async generateRecurringTasks(userId: string, baseTask: Task, pattern: any, endDate?: Date): Promise<Task[]> {
@@ -332,7 +357,7 @@ export const taskService = {
           completed_at: undefined,
           is_recurring: false, // Individual instances are not recurring
           recurrence_pattern: undefined
-        } as any)
+        })
         tasks.push(newTask)
       }
 

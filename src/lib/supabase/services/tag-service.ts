@@ -21,7 +21,7 @@ export const tagService = {
   async createTag(tag: { name: string; slug: string }): Promise<Tag> {
     const { data, error } = await supabase
       .from('tags')
-      .insert(tag as any)
+      .insert(tag)
       .select()
       .single()
 
@@ -32,7 +32,7 @@ export const tagService = {
     return data
   },
 
-  async updateTag(id: string, updates: any): Promise<Tag> {
+  async updateTag(id: string, updates: Partial<Omit<Tag, 'id' | 'created_at' | 'updated_at'>>): Promise<Tag> {
     const { data, error } = await supabase
       .from('tags')
       .update(updates)

@@ -1,78 +1,78 @@
-# Personal Website Technical Design Document
+# 个人网站技术设计文档
 
-## 1. Technology Stack
+## 1. 技术栈
 
-### 1.1 Frontend Framework
-- **Next.js 15.5.0**: React-based framework with App Router
-- **React 19.1.0**: Latest React version with concurrent features
-- **TypeScript 5+**: Type-safe development with latest TS features
-- **Tailwind CSS v4**: Utility-first CSS framework for rapid styling
+### 1.1 前端框架
+- **Next.js 15.5.0**：带有App Router的React框架
+- **React 19.1.0**：最新React版本，具有并发功能
+- **TypeScript 5+**：具有最新TS功能的类型安全开发
+- **Tailwind CSS v4**：用于快速样式的实用优先CSS框架
 
-### 1.2 Backend & Database
-- **Supabase**: Backend-as-a-Service with PostgreSQL database
-- **Supabase Auth**: Authentication and user management
-- **Supabase Storage**: File and media storage
-- **Supabase Edge Functions**: Serverless functions for custom logic
+### 1.2 后端和数据库
+- **Supabase**：带有PostgreSQL数据库的后端即服务
+- **Supabase Auth**：认证和用户管理
+- **Supabase Storage**：文件和媒体存储
+- **Supabase Edge Functions**：用于自定义逻辑的无服务器函数
 
-### 1.3 Development Tools
-- **ESLint 9+**: Code linting and quality assurance
-- **Turbopack**: Fast bundler for development and production builds
-- **PostCSS**: CSS processing and optimization
-- **Prettier**: Code formatting (recommended addition)
+### 1.3 开发工具
+- **ESLint 9+**：代码检查和质量保证
+- **Turbopack**：用于开发和生产构建的快速打包器
+- **PostCSS**：CSS处理和优化
+- **Prettier**：代码格式化（推荐添加）
 
-### 1.4 Additional Libraries
-- **@supabase/supabase-js**: Supabase client library
-- **@tiptap/react**: Rich text editor for blog posts
-- **react-hook-form**: Form handling and validation
-- **zod**: Schema validation library
-- **date-fns**: Date manipulation and formatting
-- **framer-motion**: Animation library
-- **react-hot-toast**: Toast notifications
-- **lucide-react**: Icon library
+### 1.4 附加库
+- **@supabase/supabase-js**：Supabase客户端库
+- **@tiptap/react**：博客文章的富文本编辑器
+- **react-hook-form**：表单处理和验证
+- **zod**：模式验证库
+- **date-fns**：日期操作和格式化
+- **framer-motion**：动画库
+- **react-hot-toast**：吐司通知
+- **lucide-react**：图标库
 
-## 2. Architecture Design
+## 2. 架构设计
 
-### 2.1 Project Structure
+### 2.1 项目结构
 ```
 src/
 ├── app/                          # Next.js App Router
-│   ├── (auth)/                   # Auth routes group
+│   ├── (auth)/                   # 认证路由组
 │   │   ├── login/
 │   │   └── register/
-│   ├── (dashboard)/              # Protected admin routes
+│   ├── (dashboard)/              # 受保护的管理路由
 │   │   ├── admin/
 │   │   ├── blog/
 │   │   └── schedule/
-│   ├── blog/                     # Public blog routes
+│   ├── blog/                     # 公共博客路由
 │   │   ├── [slug]/
 │   │   └── category/[name]/
-│   ├── api/                      # API routes
+│   ├── api/                      # API路由
 │   │   ├── auth/
 │   │   ├── blog/
 │   │   └── schedule/
 │   ├── globals.css
 │   ├── layout.tsx
 │   └── page.tsx
-├── components/                   # Reusable components
-│   ├── ui/                       # Base UI components
-│   ├── blog/                     # Blog-specific components
-│   ├── schedule/                 # Schedule-specific components
-│   ├── forms/                    # Form components
-│   └── layout/                   # Layout components
-├── lib/                          # Utility libraries
-│   ├── supabase/                 # Supabase configuration
-│   ├── auth/                     # Authentication utilities
-│   ├── validation/               # Zod schemas
-│   ├── utils/                    # General utilities
-│   └── hooks/                    # Custom React hooks
-├── types/                        # TypeScript type definitions
-├── styles/                       # Additional styles
-└── constants/                    # Application constants
+├── components/                   # 可重用组件
+│   ├── ui/                       # 基础UI组件
+│   ├── blog/                     # 博客特定组件
+│   ├── schedule/                 # 日程特定组件
+│   ├── forms/                    # 表单组件
+│   └── layout/                   # 布局组件
+├── lib/                          # 实用库
+│   ├── supabase/                 # Supabase配置
+│   ├── auth/                     # 认证实用程序
+│   ├── validation/               # Zod模式
+│   ├── utils/                    # 通用实用程序
+│   └── hooks/                    # 自定义React hooks
+├── types/                        # TypeScript类型定义
+├── styles/                       # 附加样式
+└── constants/                    # 应用程序常量
 ```
 
-### 2.2 Database Schema
+### 2.2 数据库模式
 
-#### 2.2.1 Users Table
+#### 2.2.1 用户表
 ```sql
 CREATE TABLE users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -88,7 +88,7 @@ CREATE TABLE users (
 );
 ```
 
-#### 2.2.2 Blog Posts Table
+#### 2.2.2 博客文章表
 ```sql
 CREATE TABLE posts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -99,7 +99,7 @@ CREATE TABLE posts (
   excerpt TEXT,
   featured_image TEXT,
   status VARCHAR(20) DEFAULT 'draft',
-  type VARCHAR(20) DEFAULT 'manual', -- 'manual' or 'schedule_generated'
+  type VARCHAR(20) DEFAULT 'manual', -- 'manual' 或 'schedule_generated'
   meta_title VARCHAR(255),
   meta_description TEXT,
   published_at TIMESTAMP WITH TIME ZONE,
@@ -109,19 +109,19 @@ CREATE TABLE posts (
 );
 ```
 
-#### 2.2.3 Categories Table
+#### 2.2.3 分类表
 ```sql
 CREATE TABLE categories (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(100) UNIQUE NOT NULL,
   slug VARCHAR(100) UNIQUE NOT NULL,
   description TEXT,
-  color VARCHAR(7), -- Hex color code
+  color VARCHAR(7), -- 十六进制颜色代码
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 ```
 
-#### 2.2.4 Tags Table
+#### 2.2.4 标签表
 ```sql
 CREATE TABLE tags (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -131,7 +131,7 @@ CREATE TABLE tags (
 );
 ```
 
-#### 2.2.5 Post-Category Junction
+#### 2.2.5 文章-分类连接表
 ```sql
 CREATE TABLE post_categories (
   post_id UUID REFERENCES posts(id) ON DELETE CASCADE,
@@ -140,7 +140,7 @@ CREATE TABLE post_categories (
 );
 ```
 
-#### 2.2.6 Post-Tag Junction
+#### 2.2.6 文章-标签连接表
 ```sql
 CREATE TABLE post_tags (
   post_id UUID REFERENCES posts(id) ON DELETE CASCADE,
@@ -149,7 +149,7 @@ CREATE TABLE post_tags (
 );
 ```
 
-#### 2.2.7 Comments Table
+#### 2.2.7 评论表
 ```sql
 CREATE TABLE comments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -166,7 +166,7 @@ CREATE TABLE comments (
 );
 ```
 
-#### 2.2.8 Tasks Table
+#### 2.2.8 任务表
 ```sql
 CREATE TABLE tasks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -182,7 +182,7 @@ CREATE TABLE tasks (
   due_date DATE,
   due_time TIME,
   is_recurring BOOLEAN DEFAULT FALSE,
-  recurrence_pattern JSONB, -- Stores recurrence rules
+  recurrence_pattern JSONB, -- 存储重复规则
   completion_notes TEXT,
   completed_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -190,7 +190,7 @@ CREATE TABLE tasks (
 );
 ```
 
-#### 2.2.9 Daily Summaries Table
+#### 2.2.9 每日摘要表
 ```sql
 CREATE TABLE daily_summaries (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -199,11 +199,11 @@ CREATE TABLE daily_summaries (
   total_tasks INTEGER DEFAULT 0,
   completed_tasks INTEGER DEFAULT 0,
   completion_rate DECIMAL(5,2),
-  total_planned_time INTEGER, -- in minutes
-  total_actual_time INTEGER, -- in minutes
+  total_planned_time INTEGER, -- 分钟
+  total_actual_time INTEGER, -- 分钟
   productivity_score DECIMAL(5,2),
-  mood_rating INTEGER, -- 1-5 scale
-  energy_rating INTEGER, -- 1-5 scale
+  mood_rating INTEGER, -- 1-5分级
+  energy_rating INTEGER, -- 1-5分级
   notes TEXT,
   achievements JSONB,
   challenges JSONB,
@@ -216,12 +216,12 @@ CREATE TABLE daily_summaries (
 );
 ```
 
-### 2.3 API Design
+### 2.3 API设计
 
-#### 2.3.1 Authentication Endpoints
+#### 2.3.1 认证端点
 ```typescript
-// Supabase Auth handles most auth operations
-// Custom API routes for additional functionality
+// Supabase Auth处理大部分认证操作
+// 自定义API路由用于附加功能
 
 // POST /api/auth/profile
 interface UpdateProfileRequest {
@@ -241,7 +241,7 @@ interface UserPreferences {
 }
 ```
 
-#### 2.3.2 Blog Endpoints
+#### 2.3.2 博客端点
 ```typescript
 // GET /api/blog/posts
 interface GetPostsQuery {
@@ -293,7 +293,7 @@ interface CreateCommentRequest {
 }
 ```
 
-#### 2.3.3 Schedule Endpoints
+#### 2.3.3 日程端点
 ```typescript
 // GET /api/schedule/tasks
 interface GetTasksQuery {
@@ -344,11 +344,11 @@ interface GenerateBlogRequest {
 }
 ```
 
-### 2.4 Component Architecture
+### 2.4 组件架构
 
-#### 2.4.1 UI Components (src/components/ui/)
+#### 2.4.1 UI组件（src/components/ui/）
 ```typescript
-// Base components using Tailwind CSS
+// 使用Tailwind CSS的基础组件
 - Button
 - Input
 - Textarea
@@ -369,7 +369,7 @@ interface GenerateBlogRequest {
 - Accordion
 ```
 
-#### 2.4.2 Blog Components (src/components/blog/)
+#### 2.4.2 博客组件（src/components/blog/）
 ```typescript
 // BlogPostCard.tsx
 interface BlogPostCardProps {
@@ -405,7 +405,7 @@ interface CommentSectionProps {
 // RelatedPosts.tsx
 ```
 
-#### 2.4.3 Schedule Components (src/components/schedule/)
+#### 2.4.3 日程组件（src/components/schedule/）
 ```typescript
 // TaskList.tsx
 interface TaskListProps {
@@ -436,14 +436,14 @@ interface DailySummaryProps {
 // HabitTracker.tsx
 ```
 
-### 2.5 State Management
+### 2.5 状态管理
 
-#### 2.5.1 Client-Side State
+#### 2.5.1 客户端状态
 ```typescript
-// Use React's built-in state management
-// Context for global state (auth, theme, notifications)
-// React Hook Form for form state
-// SWR or React Query for server state
+// 使用React内置状态管理
+// Context用于全局状态（认证、主题、通知）
+// React Hook Form用于表单状态
+// SWR或React Query用于服务器状态
 
 // AuthContext.tsx
 interface AuthContextType {
@@ -462,9 +462,9 @@ interface ThemeContextType {
 }
 ```
 
-#### 2.5.2 Server State
+#### 2.5.2 服务器状态
 ```typescript
-// Custom hooks for API calls
+// API调用的自定义hooks
 // useBlogPosts.ts
 export function useBlogPosts(params?: GetPostsQuery) {
   return useSWR(['posts', params], () => fetchPosts(params));
@@ -481,26 +481,26 @@ export function useComments(postId: string) {
 }
 ```
 
-## 3. Implementation Plan
+## 3. 实施计划
 
-### 3.1 Phase 1: Foundation (Week 1-2)
-1. **Project Setup**
-   - Initialize Supabase project
-   - Set up database schema and RLS policies
-   - Configure authentication
-   - Set up basic project structure
+### 3.1 第一阶段：基础（第1-2周）
+1. **项目设置**
+   - 初始化Supabase项目
+   - 设置数据库模式和RLS策略
+   - 配置认证
+   - 设置基本项目结构
 
-2. **Core UI Components**
-   - Implement base UI component library
-   - Set up layout components
-   - Create responsive navigation
-   - Implement theme system
+2. **核心UI组件**
+   - 实现基础UI组件库
+   - 设置布局组件
+   - 创建响应式导航
+   - 实现主题系统
 
-3. **Authentication System**
-   - Implement login/register pages
-   - Set up protected routes
-   - Create auth context and hooks
-   - Basic profile management
+3. **认证系统**
+   - 实现登录/注册页面
+   - 设置受保护路由
+   - 创建认证上下文和hooks
+   - 基本个人资料管理
 
 ### 3.2 Phase 2: Blog System (Week 3-4)
 1. **Blog Core Features**
@@ -680,3 +680,417 @@ NEXTAUTH_URL=http://localhost:3000
 - Cross-browser compatibility
 
 This technical design provides a comprehensive blueprint for implementing the personal website with blog and schedule management features using modern web technologies and best practices.
+
+## 8. Vercel 部署实施指南
+
+### 8.1 部署准备
+
+#### 8.1.1 环境配置优化
+```typescript
+// next.config.ts - Vercel优化配置
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  // 性能优化
+  experimental: {
+    optimizePackageImports: ['lucide-react', '@supabase/supabase-js'],
+  },
+
+  // 图片优化配置
+  images: {
+    domains: ['your-domain.com'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+    ],
+    formats: ['image/webp', 'image/avif'],
+  },
+
+  // 压缩和优化
+  compress: true,
+
+  // 安全头配置
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'origin-when-cross-origin',
+          },
+        ],
+      },
+    ]
+  },
+}
+
+module.exports = nextConfig
+```
+
+#### 8.1.2 构建脚本配置
+```json
+// package.json
+{
+  "scripts": {
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit",
+    "preview": "next build && next start"
+  }
+}
+```
+
+### 8.2 Vercel 项目配置
+
+#### 8.2.1 vercel.json 配置
+```json
+{
+  "functions": {
+    "src/app/api/**/*.ts": {
+      "maxDuration": 10
+    }
+  },
+  "regions": ["fra1"],
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "framework": "nextjs",
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    }
+  ]
+}
+```
+
+#### 8.2.2 环境变量设置
+在Vercel控制台中设置以下环境变量：
+```env
+# Supabase 配置
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+# NextAuth 配置（如果使用）
+NEXTAUTH_SECRET=your-nextauth-secret
+NEXTAUTH_URL=https://your-domain.vercel.app
+
+# 生产环境标识
+NODE_ENV=production
+
+# 站点配置
+NEXT_PUBLIC_SITE_URL=https://your-domain.com
+
+# 分析工具（可选）
+NEXT_PUBLIC_GA_ID=GA-TRACKING-ID
+NEXT_PUBLIC_SENTRY_DSN=your-sentry-dsn
+```
+
+### 8.3 部署流程
+
+#### 步骤1：代码准备
+```bash
+# 1. 确保所有更改已提交
+git add .
+git commit -m "Prepare for production deployment"
+git push origin main
+
+# 2. 创建生产标签（推荐）
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+#### 步骤2：Vercel部署
+1. 访问 [Vercel Dashboard](https://vercel.com/dashboard)
+2. 点击 "Import Project"
+3. 连接GitHub仓库并选择项目
+4. Vercel会自动检测Next.js配置
+5. 设置环境变量
+6. 点击 "Deploy"
+
+#### 步骤3：域名配置
+```bash
+# 在Vercel项目设置中：
+# 1. 进入 Settings > Domains
+# 2. 添加自定义域名
+# 3. 配置DNS记录指向Vercel
+```
+
+### 8.4 Supabase 生产配置
+
+#### 8.4.1 生产数据库设置
+```sql
+-- 在Supabase生产环境中运行：
+
+-- 1. 启用必要的扩展
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- 2. 设置生产级RLS策略
+-- 确保所有表都有适当的行级安全策略
+
+-- 3. 配置生产环境变量
+-- 更新回调URL为生产域名
+```
+
+#### 8.4.2 备份策略
+```bash
+# 设置自动备份
+# Supabase > Settings > Database > Backups
+# 启用每日备份
+```
+
+### 8.5 性能优化
+
+#### 8.5.1 静态资源优化
+```typescript
+// src/app/layout.tsx
+import { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Your Website Title',
+  description: 'Your website description',
+  openGraph: {
+    title: 'Your Website Title',
+    description: 'Your website description',
+    url: 'https://your-domain.com',
+    siteName: 'Your Site Name',
+    images: [
+      {
+        url: 'https://your-domain.com/og-image.jpg',
+        width: 1200,
+        height: 630,
+      },
+    ],
+    locale: 'zh_CN',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Your Website Title',
+    description: 'Your website description',
+    images: ['https://your-domain.com/twitter-image.jpg'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+}
+```
+
+#### 8.5.2 缓存策略
+```typescript
+// src/app/api/revalidate/route.ts
+import { revalidatePath, revalidateTag } from 'next/cache'
+import { NextRequest } from 'next/server'
+
+export async function POST(request: NextRequest) {
+  const { path, tag } = await request.json()
+
+  if (path) {
+    revalidatePath(path)
+  }
+
+  if (tag) {
+    revalidateTag(tag)
+  }
+
+  return Response.json({ revalidated: true, now: Date.now() })
+}
+```
+
+### 8.6 监控和维护
+
+#### 8.6.1 Vercel Analytics
+Vercel内置分析提供：
+- 实时性能指标
+- 错误跟踪和日志
+- 用户行为分析
+- 地理位置统计
+- Core Web Vitals监控
+
+#### 8.6.2 外部监控设置
+```typescript
+// src/lib/sentry.ts
+import * as Sentry from "@sentry/nextjs"
+
+Sentry.init({
+  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+  tracesSampleRate: 1.0,
+  environment: process.env.NODE_ENV,
+  integrations: [
+    new Sentry.BrowserTracing({
+      tracePropagationTargets: ["localhost", "https://your-domain.com"],
+    }),
+  ],
+})
+```
+
+#### 8.6.3 运行状态监控
+```typescript
+// src/app/api/health/route.ts
+import { NextResponse } from 'next/server'
+
+export async function GET() {
+  try {
+    // 检查Supabase连接
+    const { createClient } = await import('@supabase/supabase-js')
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+
+    const { data, error } = await supabase
+      .from('users')
+      .select('count')
+      .limit(1)
+
+    if (error) {
+      throw error
+    }
+
+    return NextResponse.json({
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      services: {
+        database: 'connected',
+        nextjs: 'running'
+      }
+    })
+  } catch (error) {
+    return NextResponse.json({
+      status: 'unhealthy',
+      timestamp: new Date().toISOString(),
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
+  }
+}
+```
+
+### 8.7 SEO 和性能优化
+
+#### 8.7.1 XML站点地图
+```typescript
+// src/app/sitemap.ts
+import { MetadataRoute } from 'next'
+
+export default function sitemap(): MetadataRoute.Sitemap {
+  return [
+    {
+      url: 'https://your-domain.com',
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 1,
+    },
+    {
+      url: 'https://your-domain.com/blog',
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.8,
+    },
+    {
+      url: 'https://your-domain.com/schedule',
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.6,
+    },
+  ]
+}
+```
+
+#### 8.7.2 robots.txt
+```typescript
+// src/app/robots.ts
+import { MetadataRoute } from 'next'
+
+export default function robots(): MetadataRoute.Robots {
+  return {
+    rules: {
+      userAgent: '*',
+      allow: '/',
+      disallow: ['/api/', '/admin/', '/_next/'],
+    },
+    sitemap: 'https://your-domain.com/sitemap.xml',
+  }
+}
+```
+
+### 8.8 故障排除
+
+#### 常见部署问题
+1. **构建失败**
+   ```bash
+   # 检查本地构建
+   npm run build
+
+   # 检查TypeScript错误
+   npm run type-check
+
+   # 检查依赖
+   rm -rf node_modules package-lock.json
+   npm install
+   ```
+
+2. **环境变量问题**
+   - 确保所有必需的环境变量已设置
+   - 检查变量名称拼写
+   - 验证Supabase密钥有效性
+
+3. **数据库连接问题**
+   - 检查生产数据库URL和密钥
+   - 验证RLS策略配置
+   - 确保防火墙设置正确
+
+4. **性能问题**
+   - 监控Core Web Vitals
+   - 检查图片优化
+   - 验证缓存策略
+   - 分析包大小
+
+### 8.9 部署清单
+
+#### 预部署检查
+- [ ] 所有功能在本地测试通过
+- [ ] 生产环境变量配置正确
+- [ ] Supabase生产数据库设置完成
+- [ ] 自定义域名DNS配置正确
+- [ ] SEO设置完成
+
+#### 部署执行
+- [ ] 代码推送到Git仓库
+- [ ] Vercel项目创建成功
+- [ ] 环境变量设置完成
+- [ ] 构建和部署成功
+
+#### 部署后验证
+- [ ] 网站正常加载
+- [ ] 所有核心功能工作正常
+- [ ] 性能指标达标
+- [ ] SEO设置正确
+- [ ] 监控工具正常运行
+
+#### 维护设置
+- [ ] 备份策略实施
+- [ ] 监控警报配置
+- [ ] 定期性能测试
+- [ ] 用户反馈收集机制
+
+此技术设计文档为使用现代Web技术和最佳实践实施具有博客和日程管理功能的个人网站提供了全面的蓝图。Vercel部署指南确保了项目的顺利上线和稳定运行。

@@ -36,8 +36,8 @@ export function LoadingError({ loading, error, onRetry, children }: LoadingError
       } else {
         setConnectionStatus(`网络连接异常 (状态码: ${response.status})`)
       }
-    } catch (error: any) {
-      setConnectionStatus(`网络连接失败: ${error.message}`)
+    } catch (error) {
+      setConnectionStatus(`网络连接失败: ${error instanceof Error ? error.message : '未知错误'}`)
     } finally {
       setIsTestingConnection(false)
     }

@@ -31,7 +31,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       limit: 1000
     })
 
-    const blogRoutes = posts.data.map((post: any) => ({
+    const blogRoutes = posts.data.map((post: { slug: string; updated_at: string }) => ({
       url: `${baseUrl}/blog/${post.slug}`,
       lastModified: new Date(post.updated_at),
       changeFrequency: 'monthly' as const,

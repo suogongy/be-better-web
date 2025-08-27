@@ -25,7 +25,14 @@ interface TaskFiltersProps {
     sortOrder?: 'asc' | 'desc'
   }
   categories: string[]
-  onFiltersChange: (filters: any) => void
+  onFiltersChange: (filters: {
+    status?: string
+    category?: string
+    priority?: string
+    search?: string
+    sortBy?: string
+    sortOrder?: 'asc' | 'desc'
+  }) => void
   className?: string
 }
 

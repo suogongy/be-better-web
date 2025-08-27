@@ -236,7 +236,7 @@ export function BlogPostForm({
                 <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <h4 className="text-sm font-medium text-blue-800 mb-1">什么是URL链接(Slug)？</h4>
                   <p className="text-xs text-blue-700 mb-2">
-                    URL链接是文章网址的最后部分，用于唯一标识这篇文章。例如文章"我的第一篇博客"的链接可能是"my-first-blog"
+                    URL链接是文章网址的最后部分，用于唯一标识这篇文章。例如文章&quot;我的第一篇博客&quot;的链接可能是&quot;my-first-blog&quot;
                   </p>
                   <div className="text-xs text-blue-600">
                     <strong>规则：</strong>

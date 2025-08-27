@@ -5,7 +5,11 @@ import type { DataExport, Post } from '@/types/database'
 
 // Data export operations
 export const exportService = {
-  async createExport(userId: string, options: any): Promise<any> {
+  async createExport(userId: string, options: {
+    type: string;
+    format: string;
+    dateRange: { start: string; end: string };
+  }): Promise<DataExport> {
     // 检查表是否存在，如果不存在则使用posts表
     const tableName = 'data_exports';
     
@@ -18,7 +22,7 @@ export const exportService = {
         date_range_start: options.dateRange.start,
         date_range_end: options.dateRange.end,
         status: 'pending'
-      } as any)
+      })
       .select()
       .single()
 
@@ -48,7 +52,10 @@ export const exportService = {
   },
 
   async updateExportStatus(id: string, status: string, downloadUrl?: string): Promise<DataExport> {
-    const updates: any = { status }
+    const updates: {
+      status: string;
+      download_url?: string;
+    } = { status }
     if (downloadUrl) {
       updates.download_url = downloadUrl
     }
@@ -67,7 +74,7 @@ export const exportService = {
     return data
   },
 
-  async getExports(userId: string): Promise<any[]> {
+  async getExports(userId: string): Promise<DataExport[]> {
     const { data, error } = await supabase
       .from('data_exports')
       .select('*')

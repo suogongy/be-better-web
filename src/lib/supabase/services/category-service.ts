@@ -18,10 +18,10 @@ export const categoryService = {
     return data || []
   },
 
-  async createCategory(category: any): Promise<Category> {
+  async createCategory(category: Omit<Category, 'id' | 'created_at' | 'updated_at'>): Promise<Category> {
     const { data, error } = await supabase
       .from('categories')
-      .insert(category as any)
+      .insert(category)
       .select()
       .single()
 
@@ -32,7 +32,7 @@ export const categoryService = {
     return data
   },
 
-  async updateCategory(id: string, updates: any): Promise<Category> {
+  async updateCategory(id: string, updates: Partial<Omit<Category, 'id' | 'created_at' | 'updated_at'>>): Promise<Category> {
     const { data, error } = await supabase
       .from('categories')
       .update(updates)

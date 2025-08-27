@@ -1,60 +1,117 @@
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { Database } from '@/types/database'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://your-project.supabase.co'
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'your-anon-key-here'
+// 环境变量配置
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-// Check if we have valid Supabase configuration
-const hasValidConfig = supabaseUrl !== 'https://your-project.supabase.co' && 
-  supabaseAnonKey !== 'your-anon-key-here' &&
-  supabaseUrl.includes('.supabase.co') &&
-  supabaseAnonKey.length > 20
+// 配置验证
+const isConfigValid = (): boolean => {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return false
+  }
+  
+  // 检查 URL 格式
+  try {
+    const url = new URL(supabaseUrl)
+    return url.hostname.includes('.supabase.co')
+  } catch {
+    return false
+  }
 
-if (!hasValidConfig && typeof window !== 'undefined') {
-  console.warn('⚠️  Supabase not configured. Please add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to your .env.local file.')
+  console.log('supabaseUrl', supabaseUrl)
+  console.log('supabaseAnonKey', supabaseAnonKey)
 }
 
-export const supabase = createSupabaseClient<Database>(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: hasValidConfig,
-    autoRefreshToken: hasValidConfig,
-    detectSessionInUrl: false, // 禁用 URL 中的会话检测，提高性能
-  },
-  global: {
-    headers: {
-      'X-Client-Info': 'be-better-web',
-    },
-  },
-  db: {
-    schema: 'public',
-  },
-  // 修复类型推断问题
-  realtime: {
-    params: {
-      eventsPerSecond: 10,
-    },
-  },
-}) as any
+// 客户端实例缓存
+let supabaseClient: ReturnType<typeof createSupabaseClient<Database>> | null = null
+let supabaseAdminClient: ReturnType<typeof createSupabaseClient<Database>> | null = null
 
-// Server-side client with service role key (for admin operations)
-export const supabaseAdmin = hasValidConfig && process.env.SUPABASE_SERVICE_ROLE_KEY ? 
-  createSupabaseClient<Database>(
-    supabaseUrl,
-    process.env.SUPABASE_SERVICE_ROLE_KEY,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
+/**
+ * 创建 Supabase 客户端
+ * @returns Supabase 客户端实例
+ * @throws 如果配置无效则抛出错误
+ */
+export function createClient(): ReturnType<typeof createSupabaseClient<Database>> {
+  if (!isConfigValid()) {
+    throw new Error('Supabase 配置无效。请检查 NEXT_PUBLIC_SUPABASE_URL 和 NEXT_PUBLIC_SUPABASE_ANON_KEY 环境变量。')
+  }
+
+  // 返回缓存的客户端实例
+  if (supabaseClient) {
+    return supabaseClient
+  }
+
+  // 创建新的客户端实例
+  supabaseClient = createSupabaseClient<Database>(supabaseUrl!, supabaseAnonKey!, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      flowType: 'pkce',
+    },
+    global: {
+      headers: {
+        'X-Client-Info': 'be-better-web',
       },
-    }
-  ) : null
+    },
+    db: {
+      schema: 'public',
+    },
+    realtime: {
+      params: {
+        eventsPerSecond: 10,
+      },
+    },
+  })
 
-// Function to create a new client instance
-export function createClient() {
-  return supabase
+  return supabaseClient
 }
 
-// Helper to check if Supabase is properly configured
+/**
+ * 创建管理员客户端（用于服务器端操作）
+ * @returns 管理员客户端实例或 null
+ */
+export function createAdminClient(): ReturnType<typeof createSupabaseClient<Database>> | null {
+  if (!isConfigValid() || !serviceRoleKey) {
+    return null
+  }
+
+  if (supabaseAdminClient) {
+    return supabaseAdminClient
+  }
+
+  supabaseAdminClient = createSupabaseClient<Database>(supabaseUrl!, serviceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  })
+
+  return supabaseAdminClient
+}
+
+/**
+ * 检查 Supabase 是否已正确配置
+ * @returns 配置是否有效
+ */
 export function isSupabaseConfigured(): boolean {
-  return hasValidConfig
+  return isConfigValid()
 }
+
+/**
+ * 获取配置状态信息
+ * @returns 配置状态对象
+ */
+export function getConfigStatus() {
+  return {
+    hasUrl: !!supabaseUrl,
+    hasAnonKey: !!supabaseAnonKey,
+    hasServiceKey: !!serviceRoleKey,
+    isValid: isConfigValid(),
+  }
+}
+
+// 向后兼容的导出
+export const supabase = isConfigValid() ? createClient() : null
+export const supabaseAdmin = createAdminClient()

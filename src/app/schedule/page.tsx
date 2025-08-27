@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/lib/auth/useAuth'
+import { useAuth } from '@/lib/auth/auth-context'
 import { useToast } from '@/components/ui/toast-provider'
 import { taskService } from '@/lib/supabase/services/index'
 import { TaskList } from '@/components/tasks/task-list'

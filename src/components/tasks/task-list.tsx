@@ -24,8 +24,11 @@ interface TaskListProps {
   tasks: Task[]
   onEdit: (task: Task) => void
   onDelete: (taskId: string) => void
-  onComplete: (taskId: string, completionData?: any) => void
-  onUpdate: (taskId: string, updates: any) => void
+  onComplete: (taskId: string, completionData?: {
+    actual_minutes?: number
+    completion_notes?: string
+  }) => void
+  onUpdate: (taskId: string, updates: Partial<Task>) => void
 }
 
 export function TaskList({ tasks, onEdit, onDelete, onComplete, onUpdate }: TaskListProps) {

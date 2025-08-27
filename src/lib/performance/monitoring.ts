@@ -94,7 +94,7 @@ export class PerformanceMonitor {
       try {
         const clsObserver = new PerformanceObserver((list) => {
           let clsValue = 0
-          list.getEntries().forEach((entry: any) => {
+          list.getEntries().forEach((entry) => {
             if (!entry.hadRecentInput) {
               clsValue += entry.value
             }

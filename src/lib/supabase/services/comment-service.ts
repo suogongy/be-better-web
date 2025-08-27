@@ -82,7 +82,7 @@ export const commentService = {
       .insert({
         ...comment,
         status,
-      } as any)
+      })
       .select()
       .single()
 
@@ -185,7 +185,7 @@ export const commentService = {
       rejected: 0,
     }
 
-    data?.forEach((comment: any) => {
+    data?.forEach((comment: { status: string }) => {
       stats[comment.status as keyof typeof stats]++
     })
 

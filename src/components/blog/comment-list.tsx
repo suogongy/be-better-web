@@ -70,7 +70,7 @@ export function CommentList({ postId, showModeration = false }: CommentListProps
       )
 
       setComments(commentsWithReplies)
-    } catch (error: any) {
+    } catch (error) {
       console.error('加载评论失败:', error)
       addToast({
         title: '错误',

@@ -12,7 +12,7 @@ import { WeeklyInsights } from '@/components/summary/weekly-insights'
 import { SummaryForm } from '@/components/summary/summary-form'
 import { BlogGenerationForm } from '@/components/summary/blog-generation-form'
 import { summaryService } from '@/lib/supabase/services/index'
-import { useAuth } from '@/lib/auth/useAuth'
+import { useAuth } from '@/lib/auth/auth-context'
 import { isSupabaseConfigured } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -27,8 +27,8 @@ export default function SummaryPage() {
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [currentSummary, setCurrentSummary] = useState<DailySummary | null>(null)
   const [recentSummaries, setRecentSummaries] = useState<DailySummary[]>([])
-  const [productivityTrends, setProductivityTrends] = useState<any>(null)
-  const [weeklyInsights, setWeeklyInsights] = useState<any>(null)
+  const [productivityTrends, setProductivityTrends] = useState<unknown>(null)
+  const [weeklyInsights, setWeeklyInsights] = useState<unknown>(null)
   const [loading, setLoading] = useState(true)
   const [showSummaryForm, setShowSummaryForm] = useState(false)
   const [showBlogForm, setShowBlogForm] = useState(false)

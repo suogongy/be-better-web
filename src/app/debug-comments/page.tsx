@@ -8,10 +8,29 @@ import { isSupabaseConfigured } from '@/lib/supabase/client'
 import { format } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { MessageCircle, Check, X as XIcon, AlertTriangle } from 'lucide-react'
-import { supabase } from '@/lib/supabase/client'
+import { postService } from '@/lib/supabase/services/index'
 
 export default function DebugComments() {
-  const [debugInfo, setDebugInfo] = useState<any>(null)
+  const [debugInfo, setDebugInfo] = useState<{
+    postId: string;
+    timestamp: string;
+    post: unknown;
+    postError: unknown;
+    allComments: unknown[];
+    allCommentsError: unknown;
+    totalComments: number;
+    serviceComments: unknown[];
+    serviceCommentsCount: number;
+    serviceError: unknown;
+    approvedComments: unknown[];
+    approvedCommentsError: unknown;
+    approvedCount: number;
+    statusStats: Record<string, number>;
+    topLevelCount: number;
+    repliesCount: number;
+    topLevelComments: unknown[];
+    replies: unknown[];
+  } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   
@@ -23,23 +42,26 @@ export default function DebugComments() {
         setLoading(true)
         setError(null)
         
-        const info: any = {
+        const info = {
           postId: targetPostId,
           timestamp: new Date().toISOString()
         }
 
         // 1. 检查文章是否存在
         console.log('🔍 检查文章存在性...')
-        const { data: post, error: postError } = await supabase
-          .from('posts')
-          .select('id, title, slug')
-          .eq('id', targetPostId)
-          .single()
-        
-        info.post = post || null
-        info.postError = postError || null
-        
-        if (postError || !post) {
+        try {
+          const post = await postService.getPost(targetPostId)
+          info.post = post || null
+          info.postError = null
+
+          if (!post) {
+            setDebugInfo(info)
+            setError('文章不存在或查询失败')
+            return
+          }
+        } catch (postError) {
+          info.post = null
+          info.postError = postError
           setDebugInfo(info)
           setError('文章不存在或查询失败')
           return
@@ -47,15 +69,18 @@ export default function DebugComments() {
 
         // 2. 查询所有评论(不过滤状态)
         console.log('🔍 查询所有评论...')
-        const { data: allComments, error: allError } = await supabase
-          .from('comments')
-          .select('*')
-          .eq('post_id', targetPostId)
-          .order('created_at', { ascending: true })
-        
-        info.allComments = allComments || []
-        info.allCommentsError = allError || null
-        info.totalComments = allComments?.length || 0
+        try {
+          const allComments = await commentService.getComments(targetPostId, {
+            includeReplies: true
+          })
+          info.allComments = allComments || []
+          info.allCommentsError = null
+          info.totalComments = allComments?.length || 0
+        } catch (allError) {
+          info.allComments = []
+          info.allCommentsError = allError
+          info.totalComments = 0
+        }
 
         // 3. 测试 commentService.getComments 方法
         console.log('🔍 测试 commentService.getComments...')
@@ -72,28 +97,30 @@ export default function DebugComments() {
 
         // 4. 查询已批准的顶级评论
         console.log('🔍 查询已批准的顶级评论...')
-        const { data: approvedComments, error: approvedError } = await supabase
-          .from('comments')
-          .select('*')
-          .eq('post_id', targetPostId)
-          .eq('status', 'approved')
-          .is('parent_id', null)
-          .order('created_at', { ascending: true })
-        
-        info.approvedComments = approvedComments || []
-        info.approvedCommentsError = approvedError || null
-        info.approvedCount = approvedComments?.length || 0
+        try {
+          const approvedComments = await commentService.getComments(targetPostId, {
+            status: 'approved',
+            includeReplies: false
+          })
+          info.approvedComments = approvedComments || []
+          info.approvedCommentsError = null
+          info.approvedCount = approvedComments?.length || 0
+        } catch (approvedError) {
+          info.approvedComments = []
+          info.approvedCommentsError = approvedError
+          info.approvedCount = 0
+        }
 
         // 5. 统计各状态评论数量
-        const statusStats: any = {}
-        allComments?.forEach((comment: any) => {
+        const statusStats: Record<string, number> = {}
+        info.allComments?.forEach((comment) => {
           statusStats[comment.status] = (statusStats[comment.status] || 0) + 1
         })
         info.statusStats = statusStats
 
         // 6. 分析顶级评论和回复
-        const topLevel = allComments?.filter((c: any) => !c.parent_id) || []
-        const replies = allComments?.filter((c: any) => c.parent_id) || []
+        const topLevel = info.allComments?.filter((c) => !c.parent_id) || []
+        const replies = info.allComments?.filter((c) => c.parent_id) || []
         
         info.topLevelCount = topLevel.length
         info.repliesCount = replies.length
@@ -103,9 +130,9 @@ export default function DebugComments() {
         setDebugInfo(info)
         console.log('✅ 调试信息收集完成', info)
         
-      } catch (err: any) {
+      } catch (err) {
         console.error('💥 调试过程出错:', err)
-        setError(err.message)
+        setError(err instanceof Error ? err.message : 'Unknown error')
       } finally {
         setLoading(false)
       }
@@ -187,7 +214,7 @@ export default function DebugComments() {
                 <div className="mt-4">
                   <p className="text-sm font-medium mb-2">各状态评论数量:</p>
                   <div className="flex flex-wrap gap-2">
-                    {Object.entries(debugInfo.statusStats).map(([status, count]: [string, any]) => (
+                    {Object.entries(debugInfo.statusStats).map(([status, count]) => (
                       <span key={status} className="px-2 py-1 bg-gray-200 rounded text-sm">
                         {status}: {count}
                       </span>
@@ -212,7 +239,7 @@ export default function DebugComments() {
                     <div className="mt-2">
                       <p className="text-sm font-medium">返回的评论:</p>
                       <ul className="text-sm mt-1 space-y-1">
-                        {debugInfo.serviceComments.map((comment: any) => (
+                        {debugInfo.serviceComments.map((comment) => (
                           <li key={comment.id} className="pl-2 border-l-2 border-gray-300">
                             <strong>{comment.author_name}:</strong> {comment.content.substring(0, 100)}...
                           </li>
@@ -229,7 +256,7 @@ export default function DebugComments() {
               <div className="bg-gray-50 p-4 rounded-lg">
                 <h2 className="font-semibold mb-2">📝 所有评论详情</h2>
                 <div className="space-y-3">
-                  {debugInfo.allComments.map((comment: any, index: number) => (
+                  {debugInfo.allComments.map((comment, index: number) => (
                     <div key={comment.id} className="bg-white p-3 rounded border">
                       <div className="flex justify-between items-start mb-2">
                         <span className="font-medium">{index + 1}. {comment.author_name}</span>

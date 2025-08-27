@@ -85,7 +85,7 @@ export default function BlogPage() {
       })
 
       // 获取评论数量
-      const postsWithComments = (postsData.data || []).map((post: any) => ({
+      const postsWithComments = (postsData.data || []).map((post) => ({
         ...post,
         comment_count: post.comment_count || 0
       }))

@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { useToast } from '@/components/ui/use-toast'
+import { useToast } from '@/components/ui/toast-provider'
 import { Plus, Edit, Trash2, Save, X } from 'lucide-react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'

@@ -10,7 +10,7 @@ export interface Database {
           bio?: string
           website?: string
           social_links?: Record<string, string>
-          preferences?: Record<string, any>
+          preferences?: Record<string, unknown>
           created_at: string
           updated_at: string
         }
@@ -22,7 +22,7 @@ export interface Database {
           bio?: string
           website?: string
           social_links?: Record<string, string>
-          preferences?: Record<string, any>
+          preferences?: Record<string, unknown>
           created_at?: string
           updated_at?: string
         }
@@ -34,7 +34,7 @@ export interface Database {
           bio?: string
           website?: string
           social_links?: Record<string, string>
-          preferences?: Record<string, any>
+          preferences?: Record<string, unknown>
           created_at?: string
           updated_at?: string
         }
@@ -222,7 +222,7 @@ export interface Database {
           due_date?: string
           due_time?: string
           is_recurring: boolean
-          recurrence_pattern?: Record<string, any>
+          recurrence_pattern?: Record<string, unknown>
           completion_notes?: string
           completed_at?: string
           created_at: string
@@ -242,7 +242,7 @@ export interface Database {
           due_date?: string
           due_time?: string
           is_recurring?: boolean
-          recurrence_pattern?: Record<string, any>
+          recurrence_pattern?: Record<string, unknown>
           completion_notes?: string
           completed_at?: string
           created_at?: string
@@ -262,7 +262,7 @@ export interface Database {
           due_date?: string
           due_time?: string
           is_recurring?: boolean
-          recurrence_pattern?: Record<string, any>
+          recurrence_pattern?: Record<string, unknown>
           completion_notes?: string
           completed_at?: string
           created_at?: string

@@ -120,14 +120,14 @@ export const summaryService = {
     mood_rating?: number
     energy_rating?: number
     notes?: string
-    achievements?: any[]
-    challenges?: any[]
-    tomorrow_goals?: any[]
+    achievements?: unknown[]
+    challenges?: unknown[]
+    tomorrow_goals?: unknown[]
     auto_blog_generated?: boolean
   }): Promise<DailySummary> {
     const { data, error } = await supabase
       .from('daily_summaries')
-      .insert(summary as any)
+      .insert(summary)
       .select()
       .single()
 
@@ -148,9 +148,9 @@ export const summaryService = {
     mood_rating?: number
     energy_rating?: number
     notes?: string
-    achievements?: any[]
-    challenges?: any[]
-    tomorrow_goals?: any[]
+    achievements?: unknown[]
+    challenges?: unknown[]
+    tomorrow_goals?: unknown[]
     auto_blog_generated?: boolean
     generated_post_id?: string
   }): Promise<DailySummary> {
@@ -363,7 +363,7 @@ export const summaryService = {
     }
   },
 
-  async generateDailyBlogPost(summary: DailySummary, tasks: any[]): Promise<{
+  async generateDailyBlogPost(summary: DailySummary, tasks: unknown[]): Promise<{
     title: string
     content: string
     excerpt: string

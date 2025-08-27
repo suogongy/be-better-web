@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from '@/lib/auth/auth-context'
 import { ThemeProvider } from '@/lib/theme/theme-context'
 import { ToastProvider } from '@/components/ui/toast-provider'
+import { AuthStatus } from '@/components/auth/auth-status'
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
 
@@ -42,13 +43,15 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             <ToastProvider>
-              <div className="min-h-screen flex flex-col">
-                <Header />
-                <main className="flex-1">
-                  {children}
-                </main>
-                <Footer />
-              </div>
+              <AuthStatus>
+                <div className="min-h-screen flex flex-col">
+                  <Header />
+                  <main className="flex-1">
+                    {children}
+                  </main>
+                  <Footer />
+                </div>
+              </AuthStatus>
             </ToastProvider>
           </AuthProvider>
         </ThemeProvider>
