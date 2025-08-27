@@ -1,7 +1,6 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { postService, userService } from '@/lib/supabase/services/index'
-import { isSupabaseConfigured } from '@/lib/supabase/client'
 import { formatDate } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -73,24 +72,6 @@ const POSTS_PER_PAGE = 6
 
 export default async function UserBlogPage({ params }: PageProps) {
   const { userId } = await params
-  
-  // 检查Supabase配置
-  if (!isSupabaseConfigured()) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto text-center">
-          <AlertCircle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold mb-2">功能受限</h1>
-          <p className="text-muted-foreground mb-4">
-            此功能需要数据库支持。请配置Supabase以启用完整功能。
-          </p>
-          <Button asChild>
-            <Link href="/blog">返回博客列表</Link>
-          </Button>
-        </div>
-      </div>
-    )
-  }
 
   const user = await userService.getProfile(userId)
 

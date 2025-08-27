@@ -3,7 +3,6 @@ import { notFound } from 'next/navigation'
 import { postService, userService } from '@/lib/supabase/services/index'
 import { formatDate } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { isSupabaseConfigured } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { Calendar, Clock, Eye, MessageCircle, ArrowLeft, User } from 'lucide-react'
 import { CommentList } from '@/components/blog/comment-list'
@@ -80,19 +79,6 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
 }
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
-  // 检查Supabase配置
-  if (!isSupabaseConfigured()) {
-    return (
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">功能受限</h1>
-          <p className="text-muted-foreground">
-            此功能需要数据库支持。请配置Supabase以启用完整功能。
-          </p>
-        </div>
-      </div>
-    )
-  }
 
   // @ts-ignore
   const post = await postService.getPostBySlugWithRelations(params.slug)
@@ -111,7 +97,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
   // 获取作者信息
   let author = null
-  if (post.user_id && isSupabaseConfigured()) {
+  if (post.user_id) {
     try {
       author = await userService.getUserById(post.user_id)
     } catch (error) {

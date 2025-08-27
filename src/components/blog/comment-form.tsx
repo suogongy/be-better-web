@@ -10,7 +10,6 @@ import { useToast } from '@/components/ui/toast-provider'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { isSupabaseConfigured } from '@/lib/supabase/client'
 import { MessageCircle, Send } from 'lucide-react'
 
 const commentSchema = z.object({

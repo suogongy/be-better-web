@@ -13,12 +13,10 @@ import { SummaryForm } from '@/components/summary/summary-form'
 import { BlogGenerationForm } from '@/components/summary/blog-generation-form'
 import { summaryService } from '@/lib/supabase/services/index'
 import { useAuth } from '@/lib/auth/auth-context'
-import { isSupabaseConfigured } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { addDays, subDays } from 'date-fns'
 import { DailySummary } from '@/types/database'
-import { DatePicker } from '@/components/tasks/date-picker'
 
 export default function SummaryPage() {
   const { user, loading: authLoading, error: authError } = useAuth()

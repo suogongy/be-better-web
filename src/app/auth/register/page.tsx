@@ -8,7 +8,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useAuth } from '@/lib/auth/auth-context'
 import { useToast } from '@/components/ui/toast-provider'
-import { isSupabaseConfigured } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -34,7 +33,6 @@ export default function RegisterPage() {
   const { signUp } = useAuth()
   const { addToast } = useToast()
   const router = useRouter()
-  const isConfigured = isSupabaseConfigured()
 
   const {
     register,
@@ -88,20 +86,6 @@ export default function RegisterPage() {
             </Link>
           </p>
         </div>
-
-        {!isConfigured && (
-          <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
-            <div className="flex items-start">
-              <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5 mr-3 flex-shrink-0" />
-              <div className="text-sm">
-                <h3 className="font-medium text-yellow-800 dark:text-yellow-200">演示模式</h3>
-                <p className="mt-1 text-yellow-700 dark:text-yellow-300">
-                  身份验证未配置。要启用用户注册，请在环境文件中设置 Supabase 凭据。
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
 
         <Card>
           <CardHeader>

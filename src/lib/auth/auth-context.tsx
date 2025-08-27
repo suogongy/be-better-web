@@ -4,7 +4,6 @@ import { createContext, useContext, useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { userService } from '@/lib/supabase/services/index'
 import { User } from '@/types/database'
-import { isSupabaseConfigured } from '@/lib/supabase/client'
 import { AuthError, Session, User as SupabaseUser } from '@supabase/supabase-js'
 import { getErrorMessage, getErrorName, isNetworkError, isTimeoutError } from '@/lib/utils/error-handler'
 
@@ -33,7 +32,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const supabase = createClient()
-  const isConfigured = isSupabaseConfigured()
   const mountedRef = useRef(false)
 
   // 将Supabase User转换为我们的User类型
@@ -98,14 +96,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     mountedRef.current = true
-    
-    // If Supabase is not configured, set loading to false immediately
-    if (!isConfigured) {
-      console.warn('⚠️ Supabase 未配置 - 跳过认证检查')
-      setLoading(false)
-      setError('认证服务未配置，请检查环境设置')
-      return
-    }
 
     // Check if we're in browser environment
     if (typeof window === 'undefined') {
@@ -242,12 +232,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         subscription.unsubscribe()
       }
     }
-  }, [supabase, isConfigured])
+  }, [supabase])
 
   const signIn = async (email: string, password: string) => {
-    if (!isConfigured) {
-      return { error: { message: 'Authentication service not configured. Please check your environment settings.' } as AuthError }
-    }
 
     try {
       console.log(`🔐 尝试登录用户: ${email}`)
@@ -285,9 +272,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signUp = async (email: string, password: string, metadata?: { name?: string }) => {
-    if (!isConfigured) {
-      return { error: { message: 'Authentication service not configured. Please check your environment settings.' } as AuthError }
-    }
     
     if (!supabase) {
       return { error: { message: 'Supabase client is not available.' } as AuthError }
@@ -316,9 +300,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = async () => {
-    if (!isConfigured) {
-      return { error: { message: 'Authentication service not configured. Please check your environment settings.' } as AuthError }
-    }
     
     if (!supabase) {
       return { error: { message: 'Supabase client is not available.' } as AuthError }
@@ -341,9 +322,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const resetPassword = async (email: string) => {
-    if (!isConfigured) {
-      return { error: { message: 'Authentication service not configured. Please check your environment settings.' } as AuthError }
-    }
     
     if (!supabase) {
       return { error: { message: 'Supabase client is not available.' } as AuthError }

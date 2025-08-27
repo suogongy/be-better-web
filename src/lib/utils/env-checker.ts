@@ -14,8 +14,8 @@ export class EnvChecker {
     const warnings: string[] = []
     const suggestions: string[] = []
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
     // 检查 URL 配置
     if (!supabaseUrl) {
@@ -73,23 +73,6 @@ export class EnvChecker {
         `${process.env.SUPABASE_SERVICE_ROLE_KEY.substring(0, 20)}...` : '未设置',
       'NODE_ENV': process.env.NODE_ENV || '未设置'
     }
-  }
-
-  /**
-   * 验证 Supabase 配置是否有效
-   */
-  static isSupabaseConfigured(): boolean {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-    return !!(
-      url && 
-      key && 
-      url !== 'https://your-project.supabase.co' && 
-      key !== 'your-anon-key-here' &&
-      url.includes('.supabase.co') &&
-      key.length > 20
-    )
   }
 
   /**

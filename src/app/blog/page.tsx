@@ -6,7 +6,6 @@ import { postService,categoryService,tagService } from '@/lib/supabase/services/
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { isSupabaseConfigured } from '@/lib/supabase/client'
 import { Post } from '@/types/database'
 import { Badge } from '@/components/ui/badge'
 import { 
@@ -66,11 +65,7 @@ export default function BlogPage() {
   // 展开状态
   const [showFilters, setShowFilters] = useState(false)
 
-  // 检查Supabase配置
-  const isConfigured = isSupabaseConfigured()
-
   const loadPosts = async () => {
-    if (!isConfigured) return
     
     try {
       setLoading(true)
@@ -150,23 +145,6 @@ export default function BlogPage() {
       month: '2-digit',
       day: '2-digit'
     })
-  }
-
-  if (!isConfigured) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto text-center">
-          <AlertCircle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold mb-2">功能受限</h1>
-          <p className="text-muted-foreground mb-4">
-            此功能需要数据库支持。请配置Supabase以启用完整功能。
-          </p>
-          <Button asChild>
-            <Link href="/">返回首页</Link>
-          </Button>
-        </div>
-      </div>
-    )
   }
 
   return (
