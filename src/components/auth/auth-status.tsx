@@ -16,38 +16,7 @@ interface AuthStatusProps {
  * 用于在应用启动时显示认证状态和错误信息
  */
 export function AuthStatus({ children, showLoading = true }: AuthStatusProps) {
-  const { loading, error, isConfigured } = useAuth()
-
-  // 如果未配置，显示配置错误
-  if (!isConfigured) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
-        <div className="max-w-md w-full">
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              <div className="text-center">
-                <h3 className="text-lg font-semibold mb-2">配置错误</h3>
-                <p className="text-sm mb-4">
-                  Supabase 认证服务未正确配置。请检查环境变量设置。
-                </p>
-                <div className="space-y-2">
-                  <Link href="/debug">
-                    <Button variant="outline" size="sm" className="w-full">
-                      查看诊断信息
-                    </Button>
-                  </Link>
-                  <p className="text-xs text-muted-foreground">
-                    请确保已创建 .env.local 文件并配置了正确的 Supabase 凭据
-                  </p>
-                </div>
-              </div>
-            </AlertDescription>
-          </Alert>
-        </div>
-      </div>
-    )
-  }
+  const { loading, error } = useAuth()
 
   // 如果正在加载且需要显示加载状态
   if (loading && showLoading) {

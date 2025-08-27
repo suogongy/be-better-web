@@ -25,7 +25,7 @@ type LoginFormData = z.infer<typeof loginSchema>
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const { signIn, loading: authLoading, error: authError, clearError } = useAuth()
+  const { signIn, loading: authLoading } = useAuth()
   const { addToast } = useToast()
   const router = useRouter()
 
@@ -39,13 +39,6 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
     mode: 'onChange',
   })
-
-  // 清除认证错误
-  useEffect(() => {
-    if (authError) {
-      clearError()
-    }
-  }, [authError, clearError])
 
   // 处理表单提交
   const onSubmit = async (data: LoginFormData) => {
@@ -98,31 +91,6 @@ export default function LoginPage() {
     } finally {
       setIsSubmitting(false)
     }
-  }
-
-  // 显示配置错误
-  if (authError && authError.includes('认证服务未配置')) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full">
-          <Alert variant="destructive">
-            <AlertDescription>
-              <div className="text-center">
-                <h3 className="text-lg font-semibold mb-2">配置错误</h3>
-                <p className="text-sm mb-4">
-                  Supabase 认证服务未正确配置。请检查环境变量设置。
-                </p>
-                <Link href="/debug">
-                  <Button variant="outline" size="sm">
-                    查看诊断信息
-                  </Button>
-                </Link>
-              </div>
-            </AlertDescription>
-          </Alert>
-        </div>
-      </div>
-    )
   }
 
   return (
