@@ -23,18 +23,16 @@ export function AuthGuard({
   fallback,
   redirectTo = '/auth/login' 
 }: AuthGuardProps) {
-  const { user, loading, isConfigured } = useAuth()
+  const { user, loading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
-    // 如果配置无效，不进行重定向
-    if (!isConfigured) return
 
     // 如果加载完成且用户未登录，重定向到登录页面
     if (!loading && !user) {
       router.push(redirectTo)
     }
-  }, [user, loading, isConfigured, router, redirectTo])
+  }, [user, loading, router, redirectTo])
 
   // 如果正在加载，显示加载状态
   if (loading) {
@@ -43,32 +41,6 @@ export function AuthGuard({
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
           <p className="text-sm text-muted-foreground">正在验证登录状态...</p>
-        </div>
-      </div>
-    )
-  }
-
-  // 如果配置无效，显示配置错误
-  if (!isConfigured) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
-        <div className="max-w-md w-full">
-          <Alert variant="destructive">
-            <Shield className="h-4 w-4" />
-            <AlertDescription>
-              <div className="text-center">
-                <h3 className="text-lg font-semibold mb-2">认证服务未配置</h3>
-                <p className="text-sm mb-4">
-                  无法验证用户身份，请检查系统配置。
-                </p>
-                <Link href="/debug">
-                  <Button variant="outline" size="sm">
-                    查看诊断信息
-                  </Button>
-                </Link>
-              </div>
-            </AlertDescription>
-          </Alert>
         </div>
       </div>
     )
@@ -122,10 +94,10 @@ export function OptionalAuthGuard({
   children: React.ReactNode
   guestFallback?: React.ReactNode 
 }) {
-  const { user, loading, isConfigured } = useAuth()
+  const { user, loading } = useAuth()
 
   // 如果正在加载或配置无效，显示加载状态
-  if (loading || !isConfigured) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center p-4">
         <Loader2 className="h-4 w-4 animate-spin text-primary" />

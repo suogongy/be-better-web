@@ -1,8 +1,6 @@
 import { createClient, createAdminClient } from '@/lib/supabase/client'
 import { DatabaseError } from './database-error'
 import { Post, PostInsert, PostUpdate } from '@/types/database'
-import { SupabaseClient } from '@supabase/supabase-js'
-import { Database } from '@/types/database'
 
 // 获取客户端实例
 const getClient = () => {
@@ -75,14 +73,10 @@ export const postService = {
     try {
       const supabase = getClient()
       
-      // 构建查询
+      // 构建基础查询
       let query = supabase
         .from('posts')
-        .select(`
-          *,
-          post_categories(category_id),
-          post_tags(tag_id)
-        `, { count: 'exact' })
+        .select('*', { count: 'exact' })
         .range((page - 1) * limit, page * limit - 1)
 
       // 应用过滤条件
@@ -94,14 +88,6 @@ export const postService = {
         query = query.eq('user_id', userId)
       }
       
-      if (categoryId) {
-        query = query.contains('post_categories', [{ category_id: categoryId }])
-      }
-      
-      if (tagId) {
-        query = query.contains('post_tags', [{ tag_id: tagId }])
-      }
-      
       if (search) {
         query = query.or(`title.ilike.%${search}%,content.ilike.%${search}%,excerpt.ilike.%${search}%`)
       }
@@ -109,14 +95,47 @@ export const postService = {
       // 排序
       query = query.order('created_at', { ascending: false })
 
-      const { data, error, count } = await query
+      const { data: postsData, error, count } = await query
 
       if (error) {
         throw new DatabaseError('Failed to fetch posts', error)
       }
 
+      // 如果需要按分类或标签过滤，则在应用层进行过滤
+      let filteredData = postsData || []
+      
+      // 根据分类ID过滤
+      if (categoryId) {
+        const { data: postCategories, error: postCategoriesError } = await supabase
+          .from('post_categories')
+          .select('post_id')
+          .eq('category_id', categoryId)
+        
+        if (postCategoriesError) {
+          throw new DatabaseError('Failed to fetch post categories', postCategoriesError)
+        }
+        
+        const postIdsInCategory = postCategories.map((pc: { post_id: string }) => pc.post_id)
+        filteredData = filteredData.filter((post: Post) => postIdsInCategory.includes(post.id))
+      }
+      
+      // 根据标签ID过滤
+      if (tagId) {
+        const { data: postTags, error: postTagsError } = await supabase
+          .from('post_tags')
+          .select('post_id')
+          .eq('tag_id', tagId)
+        
+        if (postTagsError) {
+          throw new DatabaseError('Failed to fetch post tags', postTagsError)
+        }
+        
+        const postIdsWithTag = postTags.map((pt: { post_id: string }) => pt.post_id)
+        filteredData = filteredData.filter((post: Post) => postIdsWithTag.includes(post.id))
+      }
+
       return {
-        data: data,
+        data: filteredData,
         total: count || 0,
         page,
         limit,
@@ -168,7 +187,7 @@ export const postService = {
       const supabase = getClient()
       const { data: post, error } = await supabase
         .from('posts')
-        .insert(data)
+        .insert([data])
         .select()
         .single()
 
@@ -176,7 +195,7 @@ export const postService = {
         throw new DatabaseError('Failed to create post', error)
       }
 
-      return post
+      return post as Post
     } catch (error) {
       if (error instanceof DatabaseError) {
         throw error
@@ -205,7 +224,7 @@ export const postService = {
         throw new DatabaseError('Failed to update post', error)
       }
 
-      return post
+      return post as Post
     } catch (error) {
       if (error instanceof DatabaseError) {
         throw error

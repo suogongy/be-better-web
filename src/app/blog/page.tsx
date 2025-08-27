@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { postService,categoryService,tagService } from '@/lib/supabase/services/index'
+import { postService, categoryService, tagService, commentService } from '@/lib/supabase/services/index'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -69,7 +69,7 @@ export default function BlogPage() {
     
     try {
       setLoading(true)
-      // @ts-ignore
+      // @ts-expect-error
       const postsData = await postService.getPosts({
         page: currentPage,
         limit: POSTS_PER_PAGE,
@@ -79,11 +79,24 @@ export default function BlogPage() {
         status: 'published'
       })
 
-      // 获取评论数量
-      const postsWithComments = (postsData.data || []).map((post) => ({
-        ...post,
-        comment_count: post.comment_count || 0
-      }))
+      // 获取每篇文章的评论数量
+      const postsWithComments: PostWithRelations[] = await Promise.all(
+        (postsData.data || []).map(async (post: Post) => {
+          try {
+            const commentCount = await commentService.getCommentCount(post.id);
+            return {
+              ...post,
+              comment_count: commentCount
+            } as PostWithRelations;
+          } catch (error) {
+            console.error('获取评论数量失败:', error);
+            return {
+              ...post,
+              comment_count: 0
+            } as PostWithRelations;
+          }
+        })
+      );
 
       setPosts(postsWithComments)
       setTotal(postsData.total)
@@ -95,10 +108,9 @@ export default function BlogPage() {
   }
 
   const loadCategoriesAndTags = async () => {
-    if (!isConfigured) return
     
     try {
-      // @ts-ignore
+      // @ts-expect-error
       const [categoriesData, tagsData] = await Promise.all([
         categoryService.getCategories(),
         tagService.getTags()
