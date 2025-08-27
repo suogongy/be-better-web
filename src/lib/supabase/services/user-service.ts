@@ -1,10 +1,11 @@
 import { supabase } from '../client'
-import { DatabaseError } from './index'
-import type { User } from '@/types/database'
+import { DatabaseError } from './database-error'
+import type { User, UserInsert, UserUpdate } from '@/types/database'
 
 // User operations
 export const userService = {
   async getProfile(userId: string): Promise<User | null> {
+    
     const { data, error } = await supabase!
       .from('users')
       .select('*')
@@ -19,10 +20,11 @@ export const userService = {
     return data
   },
 
-  async updateProfile(userId: string, updates: Partial<Omit<User, 'id' | 'created_at' | 'updated_at'>>): Promise<User> {
-    const { data, error } = await supabase
+  async updateProfile(userId: string, updates: UserUpdate): Promise<User> {
+    
+    const { data, error } = await supabase!
       .from('users')
-      .update(updates as Partial<User>)
+      .update(updates)
       .eq('id', userId)
       .select()
       .single()
@@ -34,9 +36,10 @@ export const userService = {
     return data
   },
 
-  async createProfile(user: { id: string; email: string; name?: string }): Promise<User> {
+  async createProfile(user: UserInsert): Promise<User> {
+    
     // Manual user creation without database triggers
-    const userData = {
+    const userData: UserInsert = {
       id: user.id,
       email: user.email,
       name: user.name || user.email,
@@ -44,7 +47,7 @@ export const userService = {
       updated_at: new Date().toISOString()
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await supabase!
       .from('users')
       .upsert(userData)
       .select()
@@ -58,14 +61,17 @@ export const userService = {
   },
 
   async createUserFromAuth(authUser: { id: string; email?: string; user_metadata?: { name?: string } }): Promise<User> {
+    if (!supabase) throw new DatabaseError('Supabase client is not initialized')
+    
     console.log('🔍 createUserFromAuth called with user:', authUser.id)
     
     // Helper function to create user profile when user registers
     // Call this after successful authentication signup
-    const userData = {
+    const email = authUser.email || ''
+    const userData: UserInsert = {
       id: authUser.id,
-      email: authUser.email,
-      name: authUser.user_metadata?.name || authUser.email,
+      email: email,
+      name: authUser.user_metadata?.name || email,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }
@@ -99,34 +105,16 @@ export const userService = {
   },
 
 
-  async getUserById(userId: string): Promise<User | null> {
-    const { data, error } = await supabase
+  async deleteUser(userId: string): Promise<void> {
+    if (!supabase) throw new DatabaseError('Supabase client is not initialized')
+    
+    const { error } = await supabase
       .from('users')
-      .select('*')
+      .delete()
       .eq('id', userId)
-      .single()
 
     if (error) {
-      if (error.code === 'PGRST116') return null
-      throw new DatabaseError('Failed to fetch user', error)
+      throw new DatabaseError('Failed to delete user', error)
     }
-
-    return data
-  },
-
-  async validateUserExists(userId: string): Promise<boolean> {
-    const { data, error } = await supabase
-      .from('users')
-      .select('id')
-      .eq('id', userId)
-      .single()
-
-    if (error) {
-      if (error.code === 'PGRST116') return false // No rows returned
-      throw new DatabaseError('Failed to validate user exists', error)
-    }
-
-    return !!data
-  },
+  }
 }
-

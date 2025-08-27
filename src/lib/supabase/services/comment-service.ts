@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase/client'
-import { DatabaseError } from './index'
+import { DatabaseError } from './database-error'
 
-import type { Comment } from '@/types/database'
+import type { Comment, CommentInsert, CommentUpdate } from '@/types/database'
 
 // Comment operations
 export const commentService = {
@@ -16,6 +16,8 @@ export const commentService = {
     includeReplies?: boolean
   }): Promise<Comment[]> {
     try {
+      if (!supabase) throw new DatabaseError('Supabase client is not initialized')
+      
       let query = supabase
         .from('comments')
         .select('*')
@@ -49,6 +51,8 @@ export const commentService = {
   },
 
   async getCommentReplies(parentId: string, status: string = 'approved'): Promise<Comment[]> {
+    if (!supabase) throw new DatabaseError('Supabase client is not initialized')
+    
     const { data, error } = await supabase
       .from('comments')
       .select('*')
@@ -63,26 +67,16 @@ export const commentService = {
     return data || []
   },
 
-  async createComment(comment: {
-    post_id: string
-    parent_id?: string
-    author_name: string
-    author_email: string
-    author_website?: string
-    content: string
-    ip_address?: string
-    user_agent?: string
-  }): Promise<Comment> {
+  async createComment(comment: CommentInsert): Promise<Comment> {
+    if (!supabase) throw new DatabaseError('Supabase client is not initialized')
+    
     // Basic spam detection
     const isSpam = this.detectSpam(comment)
     const status = isSpam ? 'spam' : 'pending'
 
     const { data, error } = await supabase
       .from('comments')
-      .insert({
-        ...comment,
-        status,
-      })
+      .insert(comment)
       .select()
       .single()
 
@@ -97,6 +91,8 @@ export const commentService = {
     id: string, 
     status: 'pending' | 'approved' | 'spam' | 'rejected'
   ): Promise<Comment> {
+    if (!supabase) throw new DatabaseError('Supabase client is not initialized')
+    
     const { data, error } = await supabase
       .from('comments')
       .update({ status })
@@ -111,7 +107,26 @@ export const commentService = {
     return data
   },
 
+  async updateComment(id: string, updates: CommentUpdate): Promise<Comment> {
+    if (!supabase) throw new DatabaseError('Supabase client is not initialized')
+    
+    const { data, error } = await supabase
+      .from('comments')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) {
+      throw new DatabaseError('Failed to update comment', error)
+    }
+
+    return data
+  },
+
   async deleteComment(id: string): Promise<void> {
+    if (!supabase) throw new DatabaseError('Supabase client is not initialized')
+    
     const { error } = await supabase
       .from('comments')
       .delete()
@@ -127,6 +142,8 @@ export const commentService = {
     limit?: number
     offset?: number
   }): Promise<{ data: Comment[]; total: number }> {
+    if (!supabase) throw new DatabaseError('Supabase client is not initialized')
+    
     let query = supabase
       .from('comments')
       .select('*', { count: 'exact' })
@@ -163,6 +180,8 @@ export const commentService = {
     spam: number
     rejected: number
   }> {
+    if (!supabase) throw new DatabaseError('Supabase client is not initialized')
+    
     let query = supabase
       .from('comments')
       .select('status')
@@ -186,101 +205,29 @@ export const commentService = {
     }
 
     data?.forEach((comment: { status: string }) => {
-      stats[comment.status as keyof typeof stats]++
+      const statusKey = comment.status as keyof typeof stats
+      if (statusKey in stats) {
+        stats[statusKey]++
+      }
     })
 
     return stats
   },
 
-  // Basic spam detection logic
-  detectSpam(comment: {
-    author_name: string
-    author_email: string
-    content: string
-    author_website?: string
-  }): boolean {
-    const { content, author_name, author_email, author_website } = comment
+  // Helper function to detect spam (simplified)
+  detectSpam(comment: Partial<CommentInsert>): boolean {
+    const spamKeywords = ['viagra', 'casino', 'lottery', 'money']
+    const content = comment.content?.toLowerCase() || ''
+    const name = comment.author_name?.toLowerCase() || ''
+    const email = comment.author_email?.toLowerCase() || ''
+    const website = comment.author_website?.toLowerCase() || ''
 
-    // Basic spam indicators
-    const spamKeywords = [
-      'viagra', 'casino', 'poker', 'loan', 'mortgage', 'credit',
-      'free money', 'click here', 'buy now', 'limited time',
-      'make money', 'work from home', 'earn cash'
-    ]
-
-    const contentLower = content.toLowerCase()
-    const nameLower = author_name.toLowerCase()
-    const emailLower = author_email.toLowerCase()
-    const websiteLower = author_website?.toLowerCase() || ''
-
-    // Check for spam keywords
-    const hasSpamKeywords = spamKeywords.some(keyword => 
-      contentLower.includes(keyword) || 
-      nameLower.includes(keyword) ||
-      websiteLower.includes(keyword)
+    return spamKeywords.some(keyword => 
+      content.includes(keyword) || 
+      name.includes(keyword) || 
+      email.includes(keyword) || 
+      website.includes(keyword)
     )
-
-    // Check for excessive URLs
-    const urlCount = (content.match(/https?:\/\//g) || []).length
-    const hasExcessiveUrls = urlCount > 2
-
-    // Check for suspicious patterns
-    const hasSuspiciousEmail = emailLower.includes('temp') || 
-                              emailLower.includes('throwaway') ||
-                              emailLower.includes('spam')
-
-    // Check content quality
-    const isVeryShort = content.trim().length < 10
-    const isAllCaps = content === content.toUpperCase() && content.length > 20
-    const hasExcessivePunctuation = (content.match(/[!?]{3,}/g) || []).length > 0
-
-    return hasSpamKeywords || 
-           hasExcessiveUrls || 
-           hasSuspiciousEmail || 
-           isVeryShort || 
-           isAllCaps || 
-           hasExcessivePunctuation
-  },
-
-  /**
-   * 检查内容是否为垃圾信息
-   * @param content 评论内容
-   * @param authorName 作者姓名
-   * @param authorEmail 作者邮箱
-   * @returns 是否为垃圾信息
-   */
-  isSpam(content: string, authorName: string, authorEmail: string): boolean {
-    // Check for spam keywords
-    const spamKeywords = ['viagra', 'casino', 'lottery', 'win money', '投资', '赚钱', '赌博']
-    const contentLower = content.toLowerCase()
-    const nameLower = authorName.toLowerCase()
-    const emailLower = authorEmail.toLowerCase()
-    const hasSpamKeywords = spamKeywords.some(keyword => 
-      contentLower.includes(keyword) || 
-      nameLower.includes(keyword) || 
-      emailLower.includes(keyword)
-    )
-
-    // Check for excessive URLs
-    const urlCount = (content.match(/https?:\/\//g) || []).length
-    const hasExcessiveUrls = urlCount > 3
-
-    // Check for suspicious email patterns
-    const suspiciousEmails = ['noreply', 'no-reply', 'admin']
-    const hasSuspiciousEmail = suspiciousEmails.some(pattern => emailLower.includes(pattern)) ||
-                               emailLower.includes('spam')
-
-    // Check content quality
-    const isVeryShort = content.trim().length < 10
-    const isAllCaps = content === content.toUpperCase() && content.length > 20
-    const hasExcessivePunctuation = (content.match(/[!?]{3,}/g) || []).length > 0
-
-    return hasSpamKeywords || 
-           hasExcessiveUrls || 
-           hasSuspiciousEmail || 
-           isVeryShort || 
-           isAllCaps || 
-           hasExcessivePunctuation
   },
 
   /**
@@ -289,6 +236,8 @@ export const commentService = {
    * @returns 评论数量
    */
   async getCommentCount(postId: string): Promise<number> {
+    if (!supabase) throw new DatabaseError('Supabase client is not initialized')
+    
     const { count, error } = await supabase
       .from('comments')
       .select('*', { count: 'exact' })

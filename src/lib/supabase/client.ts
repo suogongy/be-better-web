@@ -9,19 +9,22 @@ const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 // 配置验证
 const isConfigValid = (): boolean => {
   if (!supabaseUrl || !supabaseAnonKey) {
+    console.warn('Supabase configuration missing: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY')
     return false
   }
   
   // 检查 URL 格式
   try {
     const url = new URL(supabaseUrl)
-    return url.hostname.includes('.supabase.co')
-  } catch {
+    const isValidUrl = url.hostname.includes('.supabase.co')
+    if (!isValidUrl) {
+      console.warn('Invalid Supabase URL format')
+    }
+    return isValidUrl
+  } catch (error) {
+    console.warn('Error validating Supabase URL:', error)
     return false
   }
-
-  console.log('supabaseUrl', supabaseUrl)
-  console.log('supabaseAnonKey', supabaseAnonKey)
 }
 
 // 客户端实例缓存
@@ -35,35 +38,56 @@ let supabaseAdminClient: ReturnType<typeof createSupabaseClient<Database>> | nul
  */
 export function createClient(): ReturnType<typeof createSupabaseClient<Database>> {
   if (!isConfigValid()) {
-    throw new Error('Supabase 配置无效。请检查 NEXT_PUBLIC_SUPABASE_URL 和 NEXT_PUBLIC_SUPABASE_ANON_KEY 环境变量。')
+    throw new Error('Supabase configuration is invalid. Please check NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables.')
   }
 
-  // 返回缓存的客户端实例
-  if (supabaseClient) {
-    return supabaseClient
+  // 在服务端总是创建新实例
+  if (typeof window === 'undefined') {
+    return createSupabaseClient<Database>(supabaseUrl!, supabaseAnonKey!, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        flowType: 'pkce',
+      },
+      global: {
+        headers: {
+          'X-Client-Info': 'be-better-web',
+        },
+      },
+      db: {
+        schema: 'public',
+      },
+      realtime: {
+        params: {
+          eventsPerSecond: 10,
+        },
+      },
+    })
   }
 
-  // 创建新的客户端实例
-  supabaseClient = createSupabaseClient<Database>(supabaseUrl!, supabaseAnonKey!, {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      flowType: 'pkce',
-    },
-    global: {
-      headers: {
-        'X-Client-Info': 'be-better-web',
+  // 创建并缓存客户端实例
+  if (!supabaseClient) {
+    supabaseClient = createSupabaseClient<Database>(supabaseUrl!, supabaseAnonKey!, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        flowType: 'pkce',
       },
-    },
-    db: {
-      schema: 'public',
-    },
-    realtime: {
-      params: {
-        eventsPerSecond: 10,
+      global: {
+        headers: {
+          'X-Client-Info': 'be-better-web',
+        },
       },
-    },
-  })
+      db: {
+        schema: 'public',
+      },
+      realtime: {
+        params: {
+          eventsPerSecond: 10,
+        },
+      },
+    })
+  }
 
   return supabaseClient
 }
@@ -74,9 +98,21 @@ export function createClient(): ReturnType<typeof createSupabaseClient<Database>
  */
 export function createAdminClient(): ReturnType<typeof createSupabaseClient<Database>> | null {
   if (!isConfigValid() || !serviceRoleKey) {
+    console.warn('Supabase admin configuration missing or invalid')
     return null
   }
 
+  // 在服务端总是创建新实例
+  if (typeof window === 'undefined') {
+    return createSupabaseClient<Database>(supabaseUrl!, serviceRoleKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    })
+  }
+
+  // 在浏览器端使用缓存的实例
   if (supabaseAdminClient) {
     return supabaseAdminClient
   }

@@ -1,11 +1,13 @@
 import { supabase } from '@/lib/supabase/client'
-import { DatabaseError } from './index'
+import { DatabaseError } from './database-error'
 
-import type { Category } from '@/types/database'
+import type { Category, CategoryInsert, CategoryUpdate } from '@/types/database'
 
 // Category operations
 export const categoryService = {
   async getCategories(): Promise<Category[]> {
+    if (!supabase) throw new DatabaseError('Supabase client is not initialized')
+    
     const { data, error } = await supabase
       .from('categories')
       .select('*')
@@ -18,7 +20,9 @@ export const categoryService = {
     return data || []
   },
 
-  async createCategory(category: Omit<Category, 'id' | 'created_at' | 'updated_at'>): Promise<Category> {
+  async createCategory(category: CategoryInsert): Promise<Category> {
+    if (!supabase) throw new DatabaseError('Supabase client is not initialized')
+    
     const { data, error } = await supabase
       .from('categories')
       .insert(category)
@@ -32,7 +36,9 @@ export const categoryService = {
     return data
   },
 
-  async updateCategory(id: string, updates: Partial<Omit<Category, 'id' | 'created_at' | 'updated_at'>>): Promise<Category> {
+  async updateCategory(id: string, updates: CategoryUpdate): Promise<Category> {
+    if (!supabase) throw new DatabaseError('Supabase client is not initialized')
+    
     const { data, error } = await supabase
       .from('categories')
       .update(updates)
@@ -48,6 +54,8 @@ export const categoryService = {
   },
 
   async deleteCategory(id: string): Promise<void> {
+    if (!supabase) throw new DatabaseError('Supabase client is not initialized')
+    
     const { error } = await supabase
       .from('categories')
       .delete()

@@ -1,11 +1,13 @@
 import { supabase } from '@/lib/supabase/client'
-import { DatabaseError } from './index'
+import { DatabaseError } from './database-error'
 
-import type { Tag } from '@/types/database'
+import type { Tag, TagInsert, TagUpdate } from '@/types/database'
 
 // Tag operations
 export const tagService = {
   async getTags(): Promise<Tag[]> {
+    if (!supabase) throw new DatabaseError('Supabase client is not initialized')
+    
     const { data, error } = await supabase
       .from('tags')
       .select('*')
@@ -18,7 +20,9 @@ export const tagService = {
     return data || []
   },
 
-  async createTag(tag: { name: string; slug: string }): Promise<Tag> {
+  async createTag(tag: TagInsert): Promise<Tag> {
+    if (!supabase) throw new DatabaseError('Supabase client is not initialized')
+    
     const { data, error } = await supabase
       .from('tags')
       .insert(tag)
@@ -32,7 +36,9 @@ export const tagService = {
     return data
   },
 
-  async updateTag(id: string, updates: Partial<Omit<Tag, 'id' | 'created_at' | 'updated_at'>>): Promise<Tag> {
+  async updateTag(id: string, updates: TagUpdate): Promise<Tag> {
+    if (!supabase) throw new DatabaseError('Supabase client is not initialized')
+    
     const { data, error } = await supabase
       .from('tags')
       .update(updates)
@@ -48,6 +54,8 @@ export const tagService = {
   },
 
   async deleteTag(id: string): Promise<void> {
+    if (!supabase) throw new DatabaseError('Supabase client is not initialized')
+    
     const { error } = await supabase
       .from('tags')
       .delete()
