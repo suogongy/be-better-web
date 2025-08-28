@@ -46,6 +46,8 @@ export default function SchedulePage() {
     
     try {
       setLoading(true)
+      
+      // 获取基础任务数据
       const [tasksData, categoriesData] = await Promise.all([
         taskService.getTasks(user.id, {
           ...filters,

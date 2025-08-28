@@ -14,7 +14,8 @@ import {
   Flag,
   MoreVertical,
   Play,
-  Pause
+  Pause,
+  Repeat
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Task } from '@/types/database'
@@ -88,10 +89,33 @@ export function TaskList({ tasks, onEdit, onDelete, onComplete, onUpdate }: Task
     
     const date = parseISO(dueDate)
     const dateStr = isToday(date) 
-      ? 'Today' 
+      ? '今天' 
       : format(date, 'MMM d')
     
-    return dueTime ? `${dateStr} at ${dueTime}` : dateStr
+    return dueTime ? `${dateStr} ${dueTime}` : dateStr
+  }
+
+  const formatRecurrencePattern = (pattern: Record<string, unknown>) => {
+    if (!pattern) return ''
+    
+    const { type, interval, daysOfWeek, dayOfMonth } = pattern
+    const dayNames = ['日', '一', '二', '三', '四', '五', '六']
+    
+    switch (type) {
+      case 'daily':
+        return interval === 1 ? '每天' : `每${interval}天`
+      case 'weekly':
+        const days = daysOfWeek && Array.isArray(daysOfWeek) 
+          ? daysOfWeek.map((d: unknown) => `周${dayNames[d as number]}`).join('、') 
+          : '未选择日期'
+        return interval === 1 ? `每周${days}` : `每${interval}周${days}`
+      case 'monthly':
+        return interval === 1 ? `每月${dayOfMonth}日` : `每${interval}个月${dayOfMonth}日`
+      case 'yearly':
+        return interval === 1 ? '每年' : `每${interval}年`
+      default:
+        return '重复任务'
+    }
   }
 
   const isDueSoon = (dueDate?: string) => {
@@ -237,7 +261,7 @@ export function TaskList({ tasks, onEdit, onDelete, onComplete, onUpdate }: Task
                             className={cn("text-xs", getPriorityColor(task.priority))}
                           >
                             <Flag className="h-3 w-3 mr-1" />
-                            {task.priority}
+                            {task.priority === 'high' ? '高' : task.priority === 'medium' ? '中' : '低'}
                           </Badge>
 
                           {/* Status */}
@@ -245,8 +269,19 @@ export function TaskList({ tasks, onEdit, onDelete, onComplete, onUpdate }: Task
                             variant="outline" 
                             className={cn("text-xs", getStatusColor(task.status))}
                           >
-                            {task.status.replace('_', ' ')}
+                            {statusLabels[task.status]}
                           </Badge>
+
+                          {/* Recurring indicator */}
+                          {task.is_recurring && (
+                            <Badge 
+                              variant="outline" 
+                              className="text-xs bg-purple-100 text-purple-800 border-purple-200"
+                            >
+                              <Repeat className="h-3 w-3 mr-1" />
+                              重复
+                            </Badge>
+                          )}
 
                           {/* Category */}
                           {task.category && (
@@ -270,10 +305,18 @@ export function TaskList({ tasks, onEdit, onDelete, onComplete, onUpdate }: Task
                           {task.estimated_minutes && (
                             <div className="flex items-center gap-1 text-muted-foreground">
                               <Clock className="h-3 w-3" />
-                              <span>{task.estimated_minutes}m</span>
+                              <span>{task.estimated_minutes}分钟</span>
                             </div>
                           )}
                         </div>
+
+                        {/* Recurrence Pattern Info */}
+                        {task.is_recurring && task.recurrence_pattern && (
+                          <div className="mt-2 text-xs text-muted-foreground flex items-center gap-1">
+                            <Repeat className="h-3 w-3" />
+                            <span>{formatRecurrencePattern(task.recurrence_pattern)}</span>
+                          </div>
+                        )}
 
                         {/* Progress Bar */}
                         {task.progress > 0 && task.status !== 'completed' && (
@@ -294,7 +337,7 @@ export function TaskList({ tasks, onEdit, onDelete, onComplete, onUpdate }: Task
                         {/* Completion Info */}
                         {task.status === 'completed' && task.completed_at && (
                           <div className="mt-3 text-sm text-muted-foreground">
-                            已完成 {format(parseISO(task.completed_at), 'MMM d, yyyy \'\u4e8e\' h:mm a')}
+                            已完成 {format(parseISO(task.completed_at), 'MMM d, yyyy \'于\' h:mm a')}
                             {task.actual_minutes && (
                               <span className="ml-2">
                                 • 耗时 {task.actual_minutes} 分钟

@@ -190,6 +190,33 @@ export const taskService = {
     }
   },
 
+  /**
+   * Generate recurring task instances for a specific date
+   * This method generates virtual task instances based on recurrence patterns
+   */
+  async getRecurringTaskInstances(userId: string, date: string): Promise<Task[]> {
+    // Get all recurring tasks for the user
+    const { data: recurringTasks, error } = await supabase
+      .from('tasks')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('is_recurring', true)
+      .not('recurrence_pattern', 'is', null)
+
+    if (error) {
+      throw new DatabaseError('Failed to fetch recurring tasks', error)
+    }
+
+    if (!recurringTasks || recurringTasks.length === 0) {
+      return []
+    }
+
+    // For now, we'll return an empty array as the logic for generating recurring task instances
+    // would require a more complex implementation based on the recurrence pattern
+    // This is a placeholder for future implementation
+    return []
+  },
+
   async createTask(task: {
     user_id: string
     title: string

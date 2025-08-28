@@ -9,7 +9,8 @@ import {
   ChevronRight, 
   Plus,
   Calendar as CalendarIcon,
-  Clock
+  Clock,
+  Repeat
 } from 'lucide-react'
 import { 
   format, 
@@ -251,7 +252,7 @@ export function TaskCalendar({
                         getStatusColor(task.status),
                         "text-white bg-opacity-90"
                       )}
-                      title={`${task.title}${task.due_time ? ` at ${task.due_time}` : ''}`}
+                      title={`${task.title}${task.due_time ? ` at ${task.due_time}` : ''}${task.is_recurring ? ' (重复任务)' : ''}`}
                     >
                       <div className="flex items-center gap-1">
                         {task.due_time && (
@@ -260,6 +261,9 @@ export function TaskCalendar({
                         <span className="truncate font-medium">
                           {task.title}
                         </span>
+                        {task.is_recurring && (
+                          <Repeat className="h-3 w-3 flex-shrink-0 text-white" />
+                        )}
                       </div>
                       {task.category && (
                         <div className="text-xs opacity-90 truncate">
