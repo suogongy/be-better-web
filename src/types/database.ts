@@ -43,7 +43,6 @@ export interface Database {
         Row: {
           id: string
           name: string
-          slug: string
           description?: string
           color?: string
           created_at: string
@@ -51,7 +50,6 @@ export interface Database {
         Insert: {
           id?: string
           name: string
-          slug: string
           description?: string
           color?: string
           created_at?: string
@@ -59,7 +57,6 @@ export interface Database {
         Update: {
           id?: string
           name?: string
-          slug?: string
           description?: string
           color?: string
           created_at?: string
@@ -69,19 +66,16 @@ export interface Database {
         Row: {
           id: string
           name: string
-          slug: string
           created_at: string
         }
         Insert: {
           id?: string
           name: string
-          slug: string
           created_at?: string
         }
         Update: {
           id?: string
           name?: string
-          slug?: string
           created_at?: string
         }
       }
@@ -90,7 +84,6 @@ export interface Database {
           id: string
           user_id: string
           title: string
-          slug: string
           content?: string
           excerpt?: string
           featured_image?: string
@@ -107,7 +100,6 @@ export interface Database {
           id?: string
           user_id: string
           title: string
-          slug: string
           content?: string
           excerpt?: string
           featured_image?: string
@@ -124,7 +116,6 @@ export interface Database {
           id?: string
           user_id?: string
           title?: string
-          slug?: string
           content?: string
           excerpt?: string
           featured_image?: string

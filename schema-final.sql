@@ -23,7 +23,6 @@ CREATE TABLE IF NOT EXISTS public.users (
 CREATE TABLE IF NOT EXISTS public.categories (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name VARCHAR(100) UNIQUE NOT NULL,
-  slug VARCHAR(100) UNIQUE NOT NULL,
   description TEXT,
   color VARCHAR(7), -- Hex color code
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -33,7 +32,6 @@ CREATE TABLE IF NOT EXISTS public.categories (
 CREATE TABLE IF NOT EXISTS public.tags (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name VARCHAR(50) UNIQUE NOT NULL,
-  slug VARCHAR(50) UNIQUE NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -42,7 +40,6 @@ CREATE TABLE IF NOT EXISTS public.posts (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
   title VARCHAR(255) NOT NULL,
-  slug VARCHAR(255) UNIQUE NOT NULL,
   content TEXT,
   excerpt TEXT,
   featured_image TEXT,
@@ -214,7 +211,6 @@ CREATE TABLE IF NOT EXISTS public.productivity_insights (
 CREATE INDEX IF NOT EXISTS idx_posts_user_id ON public.posts(user_id);
 CREATE INDEX IF NOT EXISTS idx_posts_status ON public.posts(status);
 CREATE INDEX IF NOT EXISTS idx_posts_published_at ON public.posts(published_at);
-CREATE INDEX IF NOT EXISTS idx_posts_slug ON public.posts(slug);
 CREATE INDEX IF NOT EXISTS idx_tasks_user_id ON public.tasks(user_id);
 CREATE INDEX IF NOT EXISTS idx_tasks_due_date ON public.tasks(due_date);
 CREATE INDEX IF NOT EXISTS idx_tasks_status ON public.tasks(status);

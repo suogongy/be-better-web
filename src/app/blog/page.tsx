@@ -25,7 +25,6 @@ import {
 interface Category {
   id: string
   name: string
-  slug: string
   description?: string | null
   color?: string | null
   created_at: string
@@ -35,7 +34,6 @@ interface Category {
 interface TagItem {
   id: string
   name: string
-  slug: string
   created_at: string
   post_count?: number
 }
@@ -79,26 +77,46 @@ export default function BlogPage() {
         status: 'published'
       })
 
-      // 获取每篇文章的评论数量
-      const postsWithComments: PostWithRelations[] = await Promise.all(
+      // 获取每篇文章的评论数量和关联数据
+      const postsWithCommentsAndRelations: PostWithRelations[] = await Promise.all(
         (postsData.data || []).map(async (post: Post) => {
           try {
+            // 获取评论数量
             const commentCount = await commentService.getCommentCount(post.id);
+            
+            // 获取分类信息
+            const postCategories = await categoryService.getCategories();
+            const postCategoryIds = await postService.getPostCategories(post.id);
+            const categoriesForPost = postCategories.filter(category => 
+              postCategoryIds.includes(category.id)
+            );
+            
+            // 获取标签信息
+            const postTags = await tagService.getTags();
+            const postTagIds = await postService.getPostTags(post.id);
+            const tagsForPost = postTags.filter(tag => 
+              postTagIds.includes(tag.id)
+            );
+            
             return {
               ...post,
+              categories: categoriesForPost,
+              tags: tagsForPost,
               comment_count: commentCount
             } as PostWithRelations;
           } catch (error) {
-            console.error('获取评论数量失败:', error);
+            console.error('获取文章关联数据失败:', error);
             return {
               ...post,
+              categories: [],
+              tags: [],
               comment_count: 0
             } as PostWithRelations;
           }
         })
       );
 
-      setPosts(postsWithComments)
+      setPosts(postsWithCommentsAndRelations)
       setTotal(postsData.total)
     } catch (error) {
       console.error('加载文章失败:', error)
@@ -313,7 +331,7 @@ export default function BlogPage() {
                   <Card key={post.id} className="flex flex-col hover:shadow-md transition-shadow">
                     <CardHeader className="flex-1">
                       <CardTitle className="line-clamp-2 text-lg">
-                        <Link href={`/blog/${post.slug}`} className="hover:text-primary">
+                        <Link href={`/user/${post.user_id}/blog/${post.id}`} className="hover:text-primary">
                           {post.title}
                         </Link>
                       </CardTitle>

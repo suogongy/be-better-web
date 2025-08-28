@@ -150,30 +150,54 @@ export const postService = {
   },
 
   /**
-   * 根据slug获取文章
-   * @param slug 文章slug
-   * @returns 文章详情或null
+   * 获取文章关联的分类ID列表
+   * @param postId 文章ID
+   * @returns 分类ID列表
    */
-  async getPostBySlug(slug: string): Promise<Post | null> {
+  async getPostCategories(postId: string): Promise<string[]> {
     try {
       const supabase = getClient()
       const { data, error } = await supabase
-        .from('posts')
-        .select('*')
-        .eq('slug', slug)
-        .single()
+        .from('post_categories')
+        .select('category_id')
+        .eq('post_id', postId)
 
       if (error) {
-        if (error.code === 'PGRST116') return null
-        throw new DatabaseError('Failed to fetch post by slug', error)
+        throw new DatabaseError('Failed to fetch post categories', error)
       }
 
-      return data
+      return data.map((item: { category_id: string }) => item.category_id)
     } catch (error) {
       if (error instanceof DatabaseError) {
         throw error
       }
-      throw new DatabaseError('Failed to fetch post by slug', error as Error)
+      throw new DatabaseError('Failed to fetch post categories', error as Error)
+    }
+  },
+
+  /**
+   * 获取文章关联的标签ID列表
+   * @param postId 文章ID
+   * @returns 标签ID列表
+   */
+  async getPostTags(postId: string): Promise<string[]> {
+    try {
+      const supabase = getClient()
+      const { data, error } = await supabase
+        .from('post_tags')
+        .select('tag_id')
+        .eq('post_id', postId)
+
+      if (error) {
+        throw new DatabaseError('Failed to fetch post tags', error)
+      }
+
+      return data.map((item: { tag_id: string }) => item.tag_id)
+    } catch (error) {
+      if (error instanceof DatabaseError) {
+        throw error
+      }
+      throw new DatabaseError('Failed to fetch post tags', error as Error)
     }
   },
 

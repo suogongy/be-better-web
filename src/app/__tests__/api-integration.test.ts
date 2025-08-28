@@ -3,7 +3,7 @@
  * These tests verify that the core API functionality works by testing actual endpoints
  */
 
-import { taskService, postService, summaryService } from '@/lib/supabase/database'
+import { taskService, postService, summaryService } from '@/lib/supabase/services/index'
 
 // Simple smoke tests to verify core functionality
 describe('API Integration Smoke Tests', () => {
@@ -23,7 +23,6 @@ describe('API Integration Smoke Tests', () => {
       expect(typeof postService.updatePost).toBe('function')
       expect(typeof postService.deletePost).toBe('function')
       expect(typeof postService.getPost).toBe('function')
-      expect(typeof postService.getPostBySlug).toBe('function')
     })
 
     it('should have summary service functions available', () => {
@@ -68,7 +67,6 @@ describe('API Integration Smoke Tests', () => {
         id: 'test-id',
         user_id: 'test-user',
         title: 'Test Post',
-        slug: 'test-post',
         content: 'Test content',
         status: 'published',
         type: 'manual',
@@ -80,7 +78,6 @@ describe('API Integration Smoke Tests', () => {
       // Validate required fields
       expect(mockPost.user_id).toBeDefined()
       expect(mockPost.title).toBeDefined()
-      expect(mockPost.slug).toBeDefined()
       expect(mockPost.status).toBeDefined()
       
       // Validate data types

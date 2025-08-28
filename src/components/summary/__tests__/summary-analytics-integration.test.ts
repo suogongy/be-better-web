@@ -509,3 +509,193 @@ describe('Daily Summary and Analytics Integration Tests', () => {
     })
   })
 })
+
+/**
+ * Summary Analytics Integration Tests
+ * Tests the integration between summary service and analytics functionality
+ */
+
+import { taskService, userService, summaryService } from '@/lib/supabase/services/index'
+import { supabase } from '@/lib/supabase/client'
+
+// Test user ID for testing purposes
+const TEST_USER_ID_SUMMARY = 'analytics-test-user-' + Date.now()
+const TEST_EMAIL_SUMMARY = `analyticstest${Date.now()}@example.com`
+
+// Mock task data for testing
+const mockTasks = [
+  {
+    user_id: TEST_USER_ID_SUMMARY,
+    title: 'Test Task 1',
+    description: 'Test task description 1',
+    category: 'Work',
+    priority: 'high',
+    status: 'completed',
+    progress: 100,
+    estimated_minutes: 120,
+    actual_minutes: 90,
+    due_date: '2024-12-31',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    user_id: TEST_USER_ID_SUMMARY,
+    title: 'Test Task 2',
+    description: 'Test task description 2',
+    category: 'Personal',
+    priority: 'medium',
+    status: 'pending',
+    progress: 0,
+    estimated_minutes: 60,
+    due_date: '2024-12-30',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }
+]
+
+// Mock summary data for testing
+const mockSummary = {
+  user_id: TEST_USER_ID_SUMMARY,
+  summary_date: new Date().toISOString().split('T')[0], // Today's date
+  total_tasks: 5,
+  completed_tasks: 3,
+  completion_rate: 60,
+  total_planned_time: 300,
+  total_actual_time: 240,
+  productivity_score: 80,
+  mood_rating: 7,
+  energy_rating: 8,
+  notes: 'Test summary notes',
+  achievements: ['Completed important project', 'Met daily goals'],
+  challenges: ['Time management issues', 'Distractions during work'],
+  tomorrow_goals: ['Focus on priority tasks', 'Reduce meeting time'],
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString()
+}
+
+describe('Summary Analytics Integration', () => {
+  // Setup: Create test user before running tests
+  beforeAll(async () => {
+    // Create test user
+    const { data, error } = await supabase
+      .from('users')
+      .insert([
+        {
+          id: TEST_USER_ID_SUMMARY,
+          email: TEST_EMAIL_SUMMARY,
+          name: 'Analytics Test User',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      ])
+    
+    if (error) {
+      console.error('Error creating test user:', error)
+    }
+  })
+
+  // Cleanup: Delete test data after tests
+  afterAll(async () => {
+    // Delete test summaries
+    await supabase
+      .from('daily_summaries')
+      .delete()
+      .eq('user_id', TEST_USER_ID_SUMMARY)
+    
+    // Delete test tasks
+    await supabase
+      .from('tasks')
+      .delete()
+      .eq('user_id', TEST_USER_ID_SUMMARY)
+    
+    // Delete test user
+    await supabase
+      .from('users')
+      .delete()
+      .eq('id', TEST_USER_ID_SUMMARY)
+  })
+
+  describe('Summary Service Integration', () => {
+    it('should create and retrieve summary data', async () => {
+      // Create summary
+      const createdSummary = await summaryService.generateDailySummary(TEST_USER_ID_SUMMARY, mockSummary.summary_date)
+      
+      expect(createdSummary).toBeDefined()
+      expect(createdSummary.user_id).toBe(TEST_USER_ID_SUMMARY)
+      expect(createdSummary.summary_date).toBe(mockSummary.summary_date)
+      
+      // Retrieve summary
+      const retrievedSummary = await summaryService.getSummary(TEST_USER_ID_SUMMARY, createdSummary.summary_date)
+      
+      expect(retrievedSummary).toBeDefined()
+      expect(retrievedSummary.user_id).toBe(TEST_USER_ID_SUMMARY)
+    })
+
+    it('should update summary data', async () => {
+      // Create summary
+      const createdSummary = await summaryService.generateDailySummary(TEST_USER_ID_SUMMARY, mockSummary.summary_date)
+      
+      // Update summary
+      const updatedData = {
+        notes: 'Updated summary notes',
+        productivity_score: 85
+      }
+      
+      const updatedSummary = await summaryService.updateSummary(createdSummary.id, updatedData)
+      
+      expect(updatedSummary).toBeDefined()
+      expect(updatedSummary.notes).toBe(updatedData.notes)
+      expect(updatedSummary.productivity_score).toBe(updatedData.productivity_score)
+      expect(updatedSummary.id).toBe(createdSummary.id)
+    })
+
+    it('should generate daily summary from tasks', async () => {
+      // Create test tasks
+      const createdTasks = []
+      for (const task of mockTasks) {
+        const createdTask = await taskService.createTask(task)
+        createdTasks.push(createdTask)
+      }
+      
+      // Generate daily summary
+      const summaryDate = new Date().toISOString().split('T')[0]
+      const generatedSummary = await summaryService.generateDailySummary(TEST_USER_ID_SUMMARY, summaryDate)
+      
+      expect(generatedSummary).toBeDefined()
+      expect(generatedSummary.user_id).toBe(TEST_USER_ID_SUMMARY)
+      expect(generatedSummary.summary_date).toBe(summaryDate)
+      
+      // Clean up test tasks
+      for (const task of createdTasks) {
+        await taskService.deleteTask(task.id)
+      }
+    })
+  })
+
+  describe('Data Consistency', () => {
+    it('should maintain data consistency across operations', async () => {
+      // Create summary
+      const createdSummary = await summaryService.generateDailySummary(TEST_USER_ID_SUMMARY, mockSummary.summary_date)
+      
+      // Verify data consistency
+      expect(createdSummary.user_id).toBe(TEST_USER_ID_SUMMARY)
+      expect(createdSummary.total_tasks).toBeDefined()
+      expect(createdSummary.completed_tasks).toBeDefined()
+      expect(createdSummary.completion_rate).toBeDefined()
+      
+      // Update and verify consistency
+      const updateData = {
+        notes: 'Updated notes for consistency test'
+      }
+      
+      const updatedSummary = await summaryService.updateSummary(createdSummary.id, updateData)
+      
+      // Verify updated values
+      expect(updatedSummary.notes).toBe(updateData.notes)
+      expect(updatedSummary.id).toBe(createdSummary.id)
+      
+      // Clean up
+      await summaryService.deleteSummary(createdSummary.id)
+    })
+  })
+})

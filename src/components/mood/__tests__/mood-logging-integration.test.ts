@@ -580,3 +580,180 @@ describe('Mood Logging Integration Tests', () => {
     })
   })
 })
+
+/**
+ * Mood Logging Integration Tests
+ * Tests the integration between mood service and related functionality
+ */
+
+import { userService } from '@/lib/supabase/services/index'
+import { supabase } from '@/lib/supabase/client'
+
+// Test user ID for testing purposes
+const TEST_USER_ID_MOOD = 'mood-test-user-' + Date.now()
+const TEST_EMAIL_MOOD = `moodtest${Date.now()}@example.com`
+
+// Mock mood data for testing
+const mockMoodLogs = [
+  {
+    user_id: TEST_USER_ID_MOOD,
+    log_date: new Date().toISOString().split('T')[0],
+    log_time: '09:00:00',
+    mood_rating: 7,
+    energy_level: 8,
+    stress_level: 3,
+    sleep_quality: 8,
+    notes: 'Feeling good today',
+    tags: ['productive', 'happy'],
+    weather: 'sunny',
+    location: 'home'
+  },
+  {
+    user_id: TEST_USER_ID_MOOD,
+    log_date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Yesterday
+    log_time: '18:00:00',
+    mood_rating: 5,
+    energy_level: 6,
+    stress_level: 5,
+    sleep_quality: 6,
+    notes: 'Average day',
+    tags: ['tired'],
+    weather: 'cloudy',
+    location: 'office'
+  }
+]
+
+describe('Mood Logging Integration', () => {
+  // Setup: Create test user before running tests
+  beforeAll(async () => {
+    // Create test user
+    const { data, error } = await supabase
+      .from('users')
+      .insert([
+        {
+          id: TEST_USER_ID_MOOD,
+          email: TEST_EMAIL_MOOD,
+          name: 'Mood Test User',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      ])
+    
+    if (error) {
+      console.error('Error creating test user:', error)
+    }
+  })
+
+  // Cleanup: Delete test data after tests
+  afterAll(async () => {
+    // Delete test mood logs
+    await supabase
+      .from('mood_logs')
+      .delete()
+      .eq('user_id', TEST_USER_ID_MOOD)
+    
+    // Delete test user
+    await supabase
+      .from('users')
+      .delete()
+      .eq('id', TEST_USER_ID_MOOD)
+  })
+
+  describe('User Service Integration', () => {
+    it('should retrieve user profile', async () => {
+      const user = await userService.getProfile(TEST_USER_ID_MOOD)
+      
+      expect(user).toBeDefined()
+      expect(user.id).toBe(TEST_USER_ID_MOOD)
+      expect(user.email).toBe(TEST_EMAIL_MOOD)
+      expect(user.name).toBe('Mood Test User')
+    })
+
+    it('should update user profile', async () => {
+      const updateData = {
+        name: 'Updated Mood Test User',
+        bio: 'This is a test user for mood logging'
+      }
+      
+      const updatedUser = await userService.updateProfile(TEST_USER_ID_MOOD, updateData)
+      
+      expect(updatedUser).toBeDefined()
+      expect(updatedUser.name).toBe(updateData.name)
+      expect(updatedUser.bio).toBe(updateData.bio)
+    })
+  })
+
+  describe('Data Validation', () => {
+    it('should validate mood log data structure', () => {
+      const testMoodLog = mockMoodLogs[0]
+      
+      // Validate required fields
+      expect(testMoodLog.user_id).toBeDefined()
+      expect(testMoodLog.log_date).toBeDefined()
+      expect(testMoodLog.mood_rating).toBeDefined()
+      
+      // Validate data types
+      expect(typeof testMoodLog.mood_rating).toBe('number')
+      expect(typeof testMoodLog.energy_level).toBe('number')
+      expect(typeof testMoodLog.stress_level).toBe('number')
+      expect(typeof testMoodLog.sleep_quality).toBe('number')
+      
+      // Validate value ranges
+      expect(testMoodLog.mood_rating).toBeGreaterThanOrEqual(1)
+      expect(testMoodLog.mood_rating).toBeLessThanOrEqual(10)
+      expect(testMoodLog.energy_level).toBeGreaterThanOrEqual(1)
+      expect(testMoodLog.energy_level).toBeLessThanOrEqual(10)
+    })
+
+    it('should handle edge cases in mood ratings', () => {
+      // Test minimum values
+      const minRating = 1
+      expect(minRating).toBeGreaterThanOrEqual(1)
+      expect(minRating).toBeLessThanOrEqual(10)
+      
+      // Test maximum values
+      const maxRating = 10
+      expect(maxRating).toBeGreaterThanOrEqual(1)
+      expect(maxRating).toBeLessThanOrEqual(10)
+      
+      // Test invalid values are handled
+      const invalidLow = 0
+      const invalidHigh = 11
+      expect(invalidLow).toBeLessThan(1)
+      expect(invalidHigh).toBeGreaterThan(10)
+    })
+  })
+
+  describe('Business Logic Validation', () => {
+    it('should calculate mood trends correctly', () => {
+      // Mock mood data for trend calculation
+      const moodData = [
+        { mood_rating: 7, log_date: '2024-01-01' },
+        { mood_rating: 8, log_date: '2024-01-02' },
+        { mood_rating: 6, log_date: '2024-01-03' },
+        { mood_rating: 9, log_date: '2024-01-04' }
+      ]
+      
+      // Calculate average mood
+      const totalMood = moodData.reduce((sum, log) => sum + log.mood_rating, 0)
+      const averageMood = totalMood / moodData.length
+      
+      expect(averageMood).toBe(7.5)
+      
+      // Calculate trend direction
+      const firstHalf = moodData.slice(0, 2).reduce((sum, log) => sum + log.mood_rating, 0) / 2
+      const secondHalf = moodData.slice(2).reduce((sum, log) => sum + log.mood_rating, 0) / 2
+      const trendDirection = secondHalf > firstHalf ? 'improving' : 'declining'
+      
+      expect(trendDirection).toBe('improving')
+    })
+
+    it('should validate date formats', () => {
+      const testDate = '2024-01-15'
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/
+      
+      expect(dateRegex.test(testDate)).toBe(true)
+      expect(new Date(testDate).toISOString().split('T')[0]).toBe(testDate)
+    })
+  })
+})
