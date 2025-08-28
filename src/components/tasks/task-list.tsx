@@ -47,7 +47,7 @@ export function TaskList({ tasks, onEdit, onDelete, onComplete, onUpdate }: Task
   const handleStatusChange = async (task: Task, newStatus: Task['status']) => {
     try {
       if (newStatus === 'completed') {
-        await onComplete(task.id)
+        await onComplete(task.id, undefined)
       } else {
         await onUpdate(task.id, { status: newStatus })
       }

@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge'
 import { X, Plus, Repeat, ChevronDown, ChevronUp, Calendar, Clock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Task } from '@/types/database'
+import { getErrorMessage } from '@/lib/utils/error-handler'
 
 // 为一次性任务和重复任务分别定义验证规则
 const baseTaskSchema = z.object({
@@ -25,8 +26,8 @@ const baseTaskSchema = z.object({
 
 // 一次性任务验证规则
 const oneTimeTaskSchema = baseTaskSchema.extend({
-  // 一次性任务必须有起止日期
-  due_date: z.string().min(1, '截止日期是必填的'),
+  // 一次性任务的截止日期现在是可选的
+  due_date: z.string().optional(),
   due_time: z.string().optional(),
   estimated_minutes: z.number().min(1).optional(),
   is_recurring: z.literal(false),
@@ -36,7 +37,6 @@ const oneTimeTaskSchema = baseTaskSchema.extend({
 const recurringTaskSchema = baseTaskSchema.extend({
   due_date: z.string().optional(),
   due_time: z.string().optional(),
-  estimated_minutes: z.number().min(1).optional(),
   is_recurring: z.literal(true),
 })
 
@@ -67,8 +67,10 @@ export function TaskForm({ task, categories, onSubmit, onCancel }: TaskFormProps
     task?.is_recurring ? 'recurring' : 'one-time'
   )
   const [recurrencePattern, setRecurrencePattern] = useState<RecurrencePattern | null>(
-    task?.recurrence_pattern ? task.recurrence_pattern as RecurrencePattern : null
+    task?.recurrence_pattern ? task.recurrence_pattern as RecurrencePattern : 
+    (task?.is_recurring ? { type: 'daily', interval: 1 } as RecurrencePattern : null)
   )
+  const [validationError, setValidationError] = useState<string | null>(null)
 
   // 根据活动Tab选择适当的验证模式
   const getSchema = () => {
@@ -109,10 +111,12 @@ export function TaskForm({ task, categories, onSubmit, onCancel }: TaskFormProps
     setValue('is_recurring', activeTab === 'recurring')
     // 当Tab切换时，清除之前的错误并重新设置验证器
     clearErrors()
+    setValidationError(null)
   }, [activeTab, setValue, clearErrors])
 
   const handleFormSubmit = async (data: TaskFormData) => {
     setIsSubmitting(true)
+    setValidationError(null)
     try {
       // Filter out empty strings and convert numbers
       const cleanData = {
@@ -125,9 +129,34 @@ export function TaskForm({ task, categories, onSubmit, onCancel }: TaskFormProps
         recurrence_pattern: activeTab === 'recurring' ? recurrencePattern : undefined,
       }
       
-      await onSubmit(cleanData)
+      // 确保重复任务有重复模式
+      if (activeTab === 'recurring') {
+        if (!recurrencePattern) {
+          throw new Error('请设置重复任务的重复模式');
+        }
+        
+        // 验证重复模式的有效性
+        if (recurrencePattern.type === 'weekly' && 
+            (!recurrencePattern.daysOfWeek || recurrencePattern.daysOfWeek.length === 0)) {
+          throw new Error('请选择每周重复的日期');
+        }
+        
+        if (recurrencePattern.type === 'monthly' && 
+            (recurrencePattern.dayOfMonth === undefined || 
+             recurrencePattern.dayOfMonth < 1 || 
+             recurrencePattern.dayOfMonth > 31)) {
+          throw new Error('请输入有效的每月日期（1-31）');
+        }
+      }
+      
+      await onSubmit(cleanData as TaskFormData)
     } catch (error) {
       // Error handling is done in parent component
+      console.error('Error submitting task:', error)
+      // 显示错误消息给用户
+      const errorMessage = error instanceof Error ? error.message : '提交任务时发生错误，请重试。';
+      setValidationError(errorMessage)
+      alert(errorMessage);
     } finally {
       setIsSubmitting(false)
     }
@@ -142,7 +171,7 @@ export function TaskForm({ task, categories, onSubmit, onCancel }: TaskFormProps
 
   // 重复任务相关函数
   const updateRecurrencePattern = (updates: Partial<RecurrencePattern>) => {
-    setRecurrencePattern(prev => prev ? { ...prev, ...updates } : null)
+    setRecurrencePattern(prev => prev ? { ...prev, ...updates } : { type: 'daily', interval: 1, ...updates });
   }
 
   const handleRecurrenceTypeChange = (type: RecurrencePattern['type']) => {
@@ -263,7 +292,23 @@ export function TaskForm({ task, categories, onSubmit, onCancel }: TaskFormProps
             trigger().then((isValid) => {
               if (isValid) {
                 handleSubmit(handleFormSubmit)(e);
+              } else {
+                // 验证失败时也要关闭loading状态
+                setIsSubmitting(false);
+                // 显示验证错误提示
+                console.log('Validation errors:', JSON.stringify(errors));
+                const errorMessages = Object.entries(errors).map(([field, error]) => {
+                  return `${field}: ${error?.message || '无效值'}`;
+                });
+                const errorMessage = '表单验证失败，请检查以下字段:\n' + errorMessages.join('\n');
+                setValidationError(errorMessage);
+                // 不使用alert显示详细错误，因为已经在UI上显示了
               }
+            }).catch((error) => {
+              // 处理trigger可能的错误
+              console.error('Validation trigger error:', error);
+              setIsSubmitting(false);
+              setValidationError('表单验证时发生错误，请重试。');
             });
           }} className="space-y-6">
             {/* Title */}
@@ -407,10 +452,10 @@ export function TaskForm({ task, categories, onSubmit, onCancel }: TaskFormProps
                 </h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* Due Date (Required for one-time tasks) */}
+                  {/* Due Date (Optional for one-time tasks) */}
                   <div>
                     <label className="block text-sm font-medium mb-2">
-                      截止日期 *
+                      截止日期
                     </label>
                     <Input
                       type="date"
@@ -671,6 +716,19 @@ export function TaskForm({ task, categories, onSubmit, onCancel }: TaskFormProps
                 {task ? '更新任务' : '创建任务'}
               </Button>
             </div>
+            
+            {/* Validation Error Message */}
+            {Object.keys(errors).length > 0 && (
+              <div className="text-sm text-red-600 mt-2">
+                请检查表单中的错误并修正后再提交。
+                {/* 显示详细的错误信息 */}
+                <ul className="list-disc list-inside mt-1">
+                  {Object.entries(errors).map(([key, error]) => (
+                    <li key={key}>{key}: {error?.message || '无效值'}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </form>
         </CardContent>
       </Card>

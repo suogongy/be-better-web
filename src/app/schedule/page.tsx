@@ -73,14 +73,14 @@ export default function SchedulePage() {
     }
   }, [user, filters])
 
-  const handleCreateTask = async (taskData: any) => {
+  const handleCreateTask = async (taskData: unknown) => {
     if (!user) return
     
     try {
       await taskService.createTask({
-        ...taskData,
+        ...taskData as Partial<Task>,
         user_id: user.id
-      })
+      } as any)
       
       addToast({
         title: '成功',
@@ -144,7 +144,7 @@ export default function SchedulePage() {
     }
   }
 
-  const handleTaskMove = async (taskId: string, newStatus: string) => {
+  const handleTaskMove = async (taskId: string, newStatus: Task['status']) => {
     if (!user) return
     
     try {
@@ -154,6 +154,27 @@ export default function SchedulePage() {
       addToast({
         title: '错误',
         description: '移动任务失败，请重试。',
+        variant: 'destructive',
+      })
+    }
+  }
+
+  const handleTaskComplete = async (taskId: string, completionData?: {
+    actual_minutes?: number
+    completion_notes?: string
+  }) => {
+    if (!user) return
+    
+    try {
+      await taskService.updateTask(taskId, { 
+        status: 'completed',
+        ...completionData
+      })
+      loadData()
+    } catch (error) {
+      addToast({
+        title: '错误',
+        description: '完成任务失败，请重试。',
         variant: 'destructive',
       })
     }
@@ -240,7 +261,7 @@ export default function SchedulePage() {
         {/* Filters */}
         <TaskFilters
           filters={filters}
-          onFiltersChange={setFilters}
+          onFiltersChange={(newFilters) => setFilters(newFilters as TaskFilterOptions)}
           categories={categories}
         />
 
@@ -251,7 +272,8 @@ export default function SchedulePage() {
             loading={loading}
             onEdit={setEditingTask}
             onDelete={handleDeleteTask}
-            onStatusChange={handleTaskMove}
+            onComplete={handleTaskComplete}
+            onUpdate={handleUpdateTask}
           />
         )}
 
@@ -260,6 +282,8 @@ export default function SchedulePage() {
             tasks={tasks}
             onDateClick={handleDateClick}
             onCreateTask={handleCreateTaskForDate}
+            onTaskClick={() => {}}
+            onTaskMove={() => {}}
           />
         )}
 
