@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { TaskTemplateService } from '@/lib/supabase/services/task-template.service';
+import { getUserFromRequest } from '@/lib/supabase/auth-utils';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -12,7 +13,8 @@ const taskTemplateService = new TaskTemplateService(supabase);
 // GET /api/templates - 获取任务模板
 export async function GET(request: NextRequest) {
   try {
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // 使用新的认证工具从请求头获取用户信息
+    const { user, error: authError } = await getUserFromRequest(request);
     
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -42,7 +44,8 @@ export async function GET(request: NextRequest) {
 // POST /api/templates - 创建任务模板
 export async function POST(request: NextRequest) {
   try {
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // 使用新的认证工具从请求头获取用户信息
+    const { user, error: authError } = await getUserFromRequest(request);
     
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

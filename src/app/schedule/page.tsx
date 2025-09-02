@@ -113,9 +113,25 @@ export default function SchedulePage() {
     if (!user) return
     
     try {
+      // 获取当前用户的认证token
+      const supabase = (await import('@/lib/supabase/client')).createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      if (!session?.access_token) {
+        addToast({
+          title: '错误',
+          description: '认证失败，请重新登录。',
+          variant: 'destructive',
+        })
+        return
+      }
+
       const response = await fetch(`/api/templates/${templateId}/apply`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
         body: JSON.stringify(options || {}),
       })
 
@@ -127,8 +143,11 @@ export default function SchedulePage() {
           variant: 'success',
         })
         loadData()
+      } else {
+        throw new Error(`API调用失败: ${response.status}`)
       }
     } catch (error) {
+      console.error('Failed to apply template:', error)
       addToast({
         title: '错误',
         description: '应用模板失败，请重试。',

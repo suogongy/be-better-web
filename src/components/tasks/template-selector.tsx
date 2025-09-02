@@ -103,10 +103,27 @@ export function TemplateSelector({
   const fetchTemplates = async () => {
     setLoading(true)
     try {
-      const response = await fetch('/api/templates')
+      // 获取当前用户的认证token
+      const supabase = (await import('@/lib/supabase/client')).createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      if (!session?.access_token) {
+        console.error('No access token available')
+        return
+      }
+
+      const response = await fetch('/api/templates', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      
       if (response.ok) {
         const data = await response.json()
         setTemplates(data.templates)
+      } else {
+        console.error('Failed to fetch templates:', response.status, response.statusText)
       }
     } catch (error) {
       console.error('Failed to fetch templates:', error)
@@ -131,21 +148,17 @@ export function TemplateSelector({
     if (!selectedTemplate) return
 
     try {
-      const response = await fetch(`/api/templates/${selectedTemplate.id}/apply`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          startDate: previewDate.toISOString(),
-          preserveDependencies: true,
-        }),
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        onApplyTemplate(selectedTemplate.id, { startDate: previewDate })
-        setIsOpen(false)
-        setSelectedTemplate(null)
+      // 不再在这里调用API，而是通过回调函数让父组件处理
+      // 这样可以避免重复调用API
+      if (onApplyTemplate) {
+        onApplyTemplate(selectedTemplate.id, { 
+          startDate: previewDate
+        })
       }
+      
+      // 关闭对话框并重置状态
+      setIsOpen(false)
+      setSelectedTemplate(null)
     } catch (error) {
       console.error('Failed to apply template:', error)
     }
@@ -154,11 +167,28 @@ export function TemplateSelector({
   // 预览模板
   const handlePreviewTemplate = async (template: TaskTemplate) => {
     try {
-      const response = await fetch(`/api/templates/${template.id}/preview?date=${previewDate.toISOString()}`)
+      // 获取当前用户的认证token
+      const supabase = (await import('@/lib/supabase/client')).createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      if (!session?.access_token) {
+        console.error('No access token available')
+        return
+      }
+
+      const response = await fetch(`/api/templates/${template.id}/preview?date=${previewDate.toISOString()}`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      
       if (response.ok) {
         const data = await response.json()
         setPreviewTasks(data.previewTasks)
         setShowPreview(true)
+      } else {
+        console.error('Failed to preview template:', response.status, response.statusText)
       }
     } catch (error) {
       console.error('Failed to preview template:', error)
