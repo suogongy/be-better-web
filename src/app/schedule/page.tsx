@@ -47,6 +47,7 @@ export default function SchedulePage() {
     
     try {
       setLoading(true)
+      console.log('Loading data for user:', user.id)
       
       // 获取基础任务数据
       const [tasksData, categoriesData] = await Promise.all([
@@ -57,9 +58,11 @@ export default function SchedulePage() {
         taskService.getTaskCategories(user.id)
       ])
       
+      console.log('Loaded tasks:', tasksData?.length)
       setTasks(tasksData)
       setCategories(categoriesData)
     } catch (error) {
+      console.error('Error loading data:', error)
       addToast({
         title: '错误',
         description: '加载任务失败，请重试。',
@@ -201,6 +204,17 @@ export default function SchedulePage() {
     if (!user) return
     
     try {
+      // 检查是否为重复任务
+      const task = tasks.find(t => t.id === taskId);
+      if (task?.is_recurring) {
+        addToast({
+          title: '操作无效',
+          description: '重复任务不能直接标记为完成，请编辑重复任务的实例。',
+          variant: 'destructive',
+        });
+        return;
+      }
+      
       await taskService.updateTask(taskId, { 
         status: 'completed',
         ...completionData
@@ -323,8 +337,8 @@ export default function SchedulePage() {
           />
         )}
 
-        {currentView === 'stats' && (
-          <TaskStats tasks={tasks} />
+        {currentView === 'stats' && user && (
+          <TaskStats userId={user.id} />
         )}
 
         {/* Task Form Modal */}

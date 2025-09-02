@@ -216,6 +216,8 @@ export const postService = {
         .single()
 
       if (error) {
+        console.error('创建文章失败，数据:', data)
+        console.error('数据库错误:', error)
         throw new DatabaseError('Failed to create post', error)
       }
 
@@ -288,27 +290,38 @@ export const postService = {
     try {
       const supabase = getClient()
       
-      // 先获取当前浏览量
-      const { data: post, error: fetchError } = await supabase
-        .from('posts')
-        .select('view_count')
-        .eq('id', id)
-        .single()
+      // 使用 RPC 调用直接增加浏览量，避免竞态条件
+      const { error } = await supabase.rpc('increment_post_view_count', { 
+        post_id: id 
+      })
       
-      if (fetchError) {
-        throw new DatabaseError('Failed to fetch post for view count increment', fetchError)
-      }
-      
-      // 更新浏览量
-      const { error: updateError } = await supabase
-        .from('posts')
-        .update({ 
-          view_count: (post as { view_count: number }).view_count + 1
-        })
-        .eq('id', id)
+      if (error) {
+        // 如果 RPC 不存在，回退到原始方法
+        console.warn('RPC increment_post_view_count not found, falling back to manual update')
         
-      if (updateError) {
-        throw new DatabaseError('Failed to increment view count', updateError)
+        // 先获取当前浏览量
+        const { data: post, error: fetchError } = await supabase
+          .from('posts')
+          .select('view_count')
+          .eq('id', id)
+          .single()
+        
+        if (fetchError) {
+          throw new DatabaseError('Failed to fetch post for view count increment', fetchError)
+        }
+        
+        // 更新浏览量，处理 null/undefined 情况
+        const currentViewCount = (post as { view_count?: number | null }).view_count || 0
+        const { error: updateError } = await supabase
+          .from('posts')
+          .update({ 
+            view_count: currentViewCount + 1
+          })
+          .eq('id', id)
+          
+        if (updateError) {
+          throw new DatabaseError('Failed to increment view count', updateError)
+        }
       }
     } catch (error) {
       if (error instanceof DatabaseError) {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -8,16 +8,46 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { X, Plus, Trash2 } from 'lucide-react'
+import { X, Plus, Trash2, AlertCircle } from 'lucide-react'
 import type { DailySummary } from '@/types/database'
+
+// 定义错误类型
+interface ErrorWithMessage {
+  message: string
+}
+
+function isErrorWithMessage(error: unknown): error is ErrorWithMessage {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'message' in error &&
+    typeof (error as Record<string, unknown>).message === 'string'
+  )
+}
+
+function getErrorMessage(error: unknown) {
+  if (isErrorWithMessage(error)) return error.message
+  return String(error)
+}
 
 const summarySchema = z.object({
   mood_rating: z.number().min(1).max(5).optional(),
   energy_rating: z.number().min(1).max(5).optional(),
   notes: z.string().optional(),
-  achievements: z.array(z.string()),
-  challenges: z.array(z.string()),
-  tomorrow_goals: z.array(z.string()),
+  achievements: z.array(z.string()).optional(),
+  challenges: z.array(z.string()).optional(),
+  tomorrow_goals: z.array(z.string()).optional(),
+}).refine(data => {
+  // 至少需要填写一个字段
+  return data.mood_rating !== undefined || 
+         data.energy_rating !== undefined || 
+         (data.notes !== undefined && data.notes.trim() !== '') ||
+         (data.achievements !== undefined && data.achievements.length > 0) ||
+         (data.challenges !== undefined && data.challenges.length > 0) ||
+         (data.tomorrow_goals !== undefined && data.tomorrow_goals.length > 0)
+}, {
+  message: "请至少填写一项内容",
+  path: ["root"]
 })
 
 type SummaryFormData = z.infer<typeof summarySchema>
@@ -30,83 +60,144 @@ interface SummaryFormProps {
 }
 
 export function SummaryForm({ summary, date, onSubmit, onCancel }: SummaryFormProps) {
-  const [achievements, setAchievements] = useState<string[]>(summary?.achievements || [])
-  const [challenges, setChallenges] = useState<string[]>(summary?.challenges || [])
-  const [tomorrowGoals, setTomorrowGoals] = useState<string[]>(summary?.tomorrow_goals || [])
+  console.log('SummaryForm 初始化, summary:', summary)
+  
+  const [achievements, setAchievements] = useState<string[]>(summary?.achievements as string[] || [])
+  const [challenges, setChallenges] = useState<string[]>(summary?.challenges as string[] || [])
+  const [tomorrowGoals, setTomorrowGoals] = useState<string[]>(summary?.tomorrow_goals as string[] || [])
   const [newAchievement, setNewAchievement] = useState('')
   const [newChallenge, setNewChallenge] = useState('')
   const [newGoal, setNewGoal] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const {
     register,
     handleSubmit,
-    formState: { errors }
+    watch,
+    setValue,
+    trigger,
+    formState: { errors, isValid, dirtyFields },
+    setError,
+    clearErrors
   } = useForm<SummaryFormData>({
     resolver: zodResolver(summarySchema),
     defaultValues: {
-      mood_rating: summary?.mood_rating || undefined,
-      energy_rating: summary?.energy_rating || undefined,
-      notes: summary?.notes || '',
-      achievements: achievements,
-      challenges: challenges,
-      tomorrow_goals: tomorrowGoals,
+      mood_rating: summary?.mood_rating ?? undefined,
+      energy_rating: summary?.energy_rating ?? undefined,
+      notes: summary?.notes ?? '',
+      achievements: summary?.achievements as string[] ?? [],
+      challenges: summary?.challenges as string[] ?? [],
+      tomorrow_goals: summary?.tomorrow_goals as string[] ?? [],
+    },
+    mode: 'onChange' // 实时验证
+  })
+
+  // 添加表单状态监听
+  const formValues = watch()
+  console.log('表单状态变化:', { 
+    isValid, 
+    errors: Object.keys(errors), 
+    formValues: {
+      mood_rating: formValues.mood_rating,
+      energy_rating: formValues.energy_rating,
+      notes: formValues.notes,
+      achievements: formValues.achievements,
+      challenges: formValues.challenges,
+      tomorrow_goals: formValues.tomorrow_goals
     }
   })
 
+  // 同步表单值到本地状态
+  useEffect(() => {
+    if (formValues.achievements) {
+      setAchievements(formValues.achievements)
+    }
+    if (formValues.challenges) {
+      setChallenges(formValues.challenges)
+    }
+    if (formValues.tomorrow_goals) {
+      setTomorrowGoals(formValues.tomorrow_goals)
+    }
+  }, [formValues.achievements, formValues.challenges, formValues.tomorrow_goals])
+
   const addItem = (
-    type: 'achievement' | 'challenge' | 'goal',
+    fieldName: 'achievements' | 'challenges' | 'tomorrow_goals',
     value: string,
     setter: (items: string[]) => void,
-    currentItems: string[],
     clearInput: () => void
   ) => {
     if (value.trim()) {
-      setter([...currentItems, value.trim()])
+      const newItems = [...(formValues[fieldName] || []), value.trim()]
+      setValue(fieldName, newItems, { shouldValidate: true })
+      setter(newItems)
       clearInput()
     }
   }
 
   const removeItem = (
-    type: 'achievement' | 'challenge' | 'goal',
+    fieldName: 'achievements' | 'challenges' | 'tomorrow_goals',
     index: number,
-    setter: (items: string[]) => void,
-    currentItems: string[]
-  ) => {
-    setter(currentItems.filter((_, i) => i !== index))
+    setter: (items: string[]) => void
+) => {
+    const newItems = (formValues[fieldName] || []).filter((_, i) => i !== index)
+    setValue(fieldName, newItems, { shouldValidate: true })
+    setter(newItems)
   }
 
   const handleFormSubmit = async (data: SummaryFormData) => {
+    console.log('handleFormSubmit 被调用，表单验证状态:', isValid)
+    console.log('接收到的数据:', data)
+    
     setIsSubmitting(true)
+    setSubmitError(null)
+    clearErrors()
+    
     try {
+      // 确保数组字段被正确包含
       const formData = {
         ...data,
-        achievements,
-        challenges,
-        tomorrow_goals: tomorrowGoals,
+        achievements: data.achievements ?? [],
+        challenges: data.challenges ?? [],
+        tomorrow_goals: data.tomorrow_goals ?? [],
       }
+      
+      console.log('提交表单数据:', formData)
+      console.log('数组字段详情:', {
+        achievements: formData.achievements,
+        achievementsLength: formData.achievements?.length,
+        challenges: formData.challenges,
+        challengesLength: formData.challenges?.length,
+        tomorrow_goals: formData.tomorrow_goals,
+        tomorrowGoalsLength: formData.tomorrow_goals?.length
+      })
+      
       await onSubmit(formData)
+      // 成功后由父组件决定是否关闭表单
     } catch (error) {
-      // Error handling is done in parent component
+      console.error('提交总结时出错:', error)
+      const errorMessage = getErrorMessage(error)
+      setSubmitError(errorMessage)
+      setError('root', { message: errorMessage })
     } finally {
       setIsSubmitting(false)
     }
   }
 
   const ratingOptions = [
-    { value: 1, label: '1 - Very Low', emoji: '😢' },
-    { value: 2, label: '2 - Low', emoji: '😔' },
-    { value: 3, label: '3 - Medium', emoji: '😐' },
-    { value: 4, label: '4 - High', emoji: '😊' },
-    { value: 5, label: '5 - Very High', emoji: '😄' },
+    { value: 1, label: '1 - 非常低', emoji: '😢' },
+    { value: 2, label: '2 - 低', emoji: '😔' },
+    { value: 3, label: '3 - 中等', emoji: '😐' },
+    { value: 4, label: '4 - 高', emoji: '😊' },
+    { value: 5, label: '5 - 非常高', emoji: '😄' },
   ]
-
+  
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
       <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>
-            Edit Daily Summary
+            编辑每日总结
             <div className="text-sm font-normal text-muted-foreground mt-1">
               {date}
             </div>
@@ -117,19 +208,23 @@ export function SummaryForm({ summary, date, onSubmit, onCancel }: SummaryFormPr
         </CardHeader>
         
         <CardContent>
-          <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+          <form onSubmit={(e) => {
+          console.log('表单提交事件触发')
+          handleSubmit(handleFormSubmit)(e)
+        }} className="space-y-6">
             {/* Mood Rating */}
             <div>
               <label className="block text-sm font-medium mb-3">
-                Mood Rating
+                心情评分
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-5 gap-2">
                 {ratingOptions.map(option => (
                   <label key={option.value} className="flex items-center space-x-2 cursor-pointer p-2 rounded border hover:bg-muted">
                     <input
                       type="radio"
-                      {...register('mood_rating', { valueAsNumber: true })}
                       value={option.value}
+                      checked={formValues.mood_rating === option.value}
+                      onChange={() => setValue('mood_rating', option.value, { shouldValidate: true })}
                       className="text-primary"
                     />
                     <span className="text-sm flex items-center gap-1">
@@ -144,15 +239,16 @@ export function SummaryForm({ summary, date, onSubmit, onCancel }: SummaryFormPr
             {/* Energy Rating */}
             <div>
               <label className="block text-sm font-medium mb-3">
-                Energy Level
+                精力水平
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-5 gap-2">
                 {ratingOptions.map(option => (
                   <label key={option.value} className="flex items-center space-x-2 cursor-pointer p-2 rounded border hover:bg-muted">
                     <input
                       type="radio"
-                      {...register('energy_rating', { valueAsNumber: true })}
                       value={option.value}
+                      checked={formValues.energy_rating === option.value}
+                      onChange={() => setValue('energy_rating', option.value, { shouldValidate: true })}
                       className="text-primary"
                     />
                     <span className="text-sm">
@@ -166,7 +262,7 @@ export function SummaryForm({ summary, date, onSubmit, onCancel }: SummaryFormPr
             {/* Achievements */}
             <div>
               <label className="block text-sm font-medium mb-2">
-                Today's Achievements
+                今日成就
               </label>
               <div className="space-y-2">
                 {achievements.map((achievement, index) => (
@@ -176,7 +272,7 @@ export function SummaryForm({ summary, date, onSubmit, onCancel }: SummaryFormPr
                       type="button"
                       variant="ghost"
                       size="sm"
-                      onClick={() => removeItem('achievement', index, setAchievements, achievements)}
+                      onClick={() => removeItem('achievements', index, setAchievements)}
                     >
                       <Trash2 className="h-4 w-4 text-red-600" />
                     </Button>
@@ -186,18 +282,18 @@ export function SummaryForm({ summary, date, onSubmit, onCancel }: SummaryFormPr
                   <Input
                     value={newAchievement}
                     onChange={(e) => setNewAchievement(e.target.value)}
-                    placeholder="Add an achievement..."
+                    placeholder="添加一个成就..."
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault()
-                        addItem('achievement', newAchievement, setAchievements, achievements, () => setNewAchievement(''))
+                        addItem('achievements', newAchievement, setAchievements, () => setNewAchievement(''))
                       }
                     }}
                   />
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => addItem('achievement', newAchievement, setAchievements, achievements, () => setNewAchievement(''))}
+                    onClick={() => addItem('achievements', newAchievement, setAchievements, () => setNewAchievement(''))}
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
@@ -208,7 +304,7 @@ export function SummaryForm({ summary, date, onSubmit, onCancel }: SummaryFormPr
             {/* Challenges */}
             <div>
               <label className="block text-sm font-medium mb-2">
-                Challenges Faced
+                遇到的挑战
               </label>
               <div className="space-y-2">
                 {challenges.map((challenge, index) => (
@@ -218,7 +314,7 @@ export function SummaryForm({ summary, date, onSubmit, onCancel }: SummaryFormPr
                       type="button"
                       variant="ghost"
                       size="sm"
-                      onClick={() => removeItem('challenge', index, setChallenges, challenges)}
+                      onClick={() => removeItem('challenges', index, setChallenges)}
                     >
                       <Trash2 className="h-4 w-4 text-red-600" />
                     </Button>
@@ -228,18 +324,18 @@ export function SummaryForm({ summary, date, onSubmit, onCancel }: SummaryFormPr
                   <Input
                     value={newChallenge}
                     onChange={(e) => setNewChallenge(e.target.value)}
-                    placeholder="Add a challenge..."
+                    placeholder="添加一个挑战..."
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault()
-                        addItem('challenge', newChallenge, setChallenges, challenges, () => setNewChallenge(''))
+                        addItem('challenges', newChallenge, setChallenges, () => setNewChallenge(''))
                       }
                     }}
                   />
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => addItem('challenge', newChallenge, setChallenges, challenges, () => setNewChallenge(''))}
+                    onClick={() => addItem('challenges', newChallenge, setChallenges, () => setNewChallenge(''))}
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
@@ -250,7 +346,7 @@ export function SummaryForm({ summary, date, onSubmit, onCancel }: SummaryFormPr
             {/* Tomorrow's Goals */}
             <div>
               <label className="block text-sm font-medium mb-2">
-                Tomorrow's Goals
+                明日目标
               </label>
               <div className="space-y-2">
                 {tomorrowGoals.map((goal, index) => (
@@ -260,7 +356,7 @@ export function SummaryForm({ summary, date, onSubmit, onCancel }: SummaryFormPr
                       type="button"
                       variant="ghost"
                       size="sm"
-                      onClick={() => removeItem('goal', index, setTomorrowGoals, tomorrowGoals)}
+                      onClick={() => removeItem('tomorrow_goals', index, setTomorrowGoals)}
                     >
                       <Trash2 className="h-4 w-4 text-red-600" />
                     </Button>
@@ -270,18 +366,18 @@ export function SummaryForm({ summary, date, onSubmit, onCancel }: SummaryFormPr
                   <Input
                     value={newGoal}
                     onChange={(e) => setNewGoal(e.target.value)}
-                    placeholder="Add a goal for tomorrow..."
+                    placeholder="为明天添加一个目标..."
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault()
-                        addItem('goal', newGoal, setTomorrowGoals, tomorrowGoals, () => setNewGoal(''))
+                        addItem('tomorrow_goals', newGoal, setTomorrowGoals, () => setNewGoal(''))
                       }
                     }}
                   />
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => addItem('goal', newGoal, setTomorrowGoals, tomorrowGoals, () => setNewGoal(''))}
+                    onClick={() => addItem('tomorrow_goals', newGoal, setTomorrowGoals, () => setNewGoal(''))}
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
@@ -292,22 +388,33 @@ export function SummaryForm({ summary, date, onSubmit, onCancel }: SummaryFormPr
             {/* Notes */}
             <div>
               <label className="block text-sm font-medium mb-2">
-                Notes & Reflections
+                笔记与反思
               </label>
               <Textarea
                 {...register('notes')}
-                placeholder="Add any additional notes or reflections about your day..."
+                placeholder="添加关于您这一天的任何额外笔记或反思..."
                 rows={4}
               />
             </div>
 
+            {/* Error Message */}
+            {(submitError || errors.root) && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded text-red-700 flex items-start gap-2">
+                <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                <div>
+                  <div className="font-medium">提交失败</div>
+                  <div className="text-sm">{submitError || errors.root?.message}</div>
+                </div>
+              </div>
+            )}
+
             {/* Form Actions */}
             <div className="flex justify-end gap-3 pt-4 border-t">
               <Button variant="outline" onClick={onCancel} type="button">
-                Cancel
+                取消
               </Button>
-              <Button type="submit" loading={isSubmitting}>
-                Save Summary
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? '保存中...' : '保存总结'}
               </Button>
             </div>
           </form>

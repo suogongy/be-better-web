@@ -21,12 +21,12 @@ import {
 import type { HabitWithLogs } from '@/types/advanced'
 
 const habitSchema = z.object({
-  name: z.string().min(1, 'Habit name is required').max(255, 'Name too long'),
+  name: z.string().min(1, '习惯名称不能为空').max(255, '名称过长'),
   description: z.string().optional(),
   category: z.string().optional(),
   frequency: z.enum(['daily', 'weekly', 'monthly']),
   target_count: z.number().min(1).max(100),
-  color: z.string().regex(/^#[0-9A-F]{6}$/i, 'Invalid color format'),
+  color: z.string().regex(/^#[0-9A-F]{6}$/i, '无效的颜色格式'),
   icon: z.string(),
   reminder_time: z.string().optional(),
   reminder_enabled: z.boolean(),
@@ -54,19 +54,19 @@ const colorOptions = [
 ]
 
 const iconOptions = [
-  { value: 'circle', icon: Circle, label: 'Circle' },
-  { value: 'square', icon: Square, label: 'Square' },
-  { value: 'triangle', icon: Triangle, label: 'Triangle' },
-  { value: 'star', icon: Star, label: 'Star' },
-  { value: 'heart', icon: Heart, label: 'Heart' },
-  { value: 'zap', icon: Zap, label: 'Lightning' },
-  { value: 'target', icon: Target, label: 'Target' },
+  { value: 'circle', icon: Circle, label: '圆形' },
+  { value: 'square', icon: Square, label: '方形' },
+  { value: 'triangle', icon: Triangle, label: '三角形' },
+  { value: 'star', icon: Star, label: '星星' },
+  { value: 'heart', icon: Heart, label: '爱心' },
+  { value: 'zap', icon: Zap, label: '闪电' },
+  { value: 'target', icon: Target, label: '目标' },
 ]
 
 const frequencyOptions = [
-  { value: 'daily', label: 'Daily', description: 'Every day' },
-  { value: 'weekly', label: 'Weekly', description: 'Once per week' },
-  { value: 'monthly', label: 'Monthly', description: 'Once per month' },
+  { value: 'daily', label: '每日', description: '每天' },
+  { value: 'weekly', label: '每周', description: '每周一次' },
+  { value: 'monthly', label: '每月', description: '每月一次' },
 ]
 
 export function HabitForm({ habit, onSubmit, onCancel }: HabitFormProps) {
@@ -116,7 +116,7 @@ export function HabitForm({ habit, onSubmit, onCancel }: HabitFormProps) {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Target className="h-5 w-5" />
-            {habit ? 'Edit Habit' : 'Create New Habit'}
+            {habit ? '编辑习惯' : '创建新习惯'}
           </CardTitle>
           <Button variant="ghost" size="sm" onClick={onCancel}>
             <X className="h-4 w-4" />
@@ -129,33 +129,33 @@ export function HabitForm({ habit, onSubmit, onCancel }: HabitFormProps) {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Habit Name *
+                  习惯名称 *
                 </label>
                 <Input
                   {...register('name')}
-                  placeholder="e.g., Drink 8 glasses of water"
+                  placeholder="例如：每天喝8杯水"
                   error={errors.name?.message}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Description
+                  描述
                 </label>
                 <Textarea
                   {...register('description')}
-                  placeholder="Optional description or motivation..."
+                  placeholder="可选的描述或动机..."
                   rows={3}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Category
+                  分类
                 </label>
                 <Input
                   {...register('category')}
-                  placeholder="e.g., Health, Productivity, Learning"
+                  placeholder="例如：健康、效率、学习"
                 />
               </div>
             </div>
@@ -164,7 +164,7 @@ export function HabitForm({ habit, onSubmit, onCancel }: HabitFormProps) {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-3">
-                  Frequency
+                  频率
                 </label>
                 <div className="grid grid-cols-3 gap-3">
                   {frequencyOptions.map(option => (
@@ -192,7 +192,7 @@ export function HabitForm({ habit, onSubmit, onCancel }: HabitFormProps) {
 
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Target Count
+                  目标次数
                 </label>
                 <div className="flex items-center gap-2">
                   <Input
@@ -203,7 +203,7 @@ export function HabitForm({ habit, onSubmit, onCancel }: HabitFormProps) {
                     className="w-24"
                   />
                   <span className="text-sm text-muted-foreground">
-                    times per {selectedFrequency === 'daily' ? 'day' : selectedFrequency === 'weekly' ? 'week' : 'month'}
+                    次/{selectedFrequency === 'daily' ? '天' : selectedFrequency === 'weekly' ? '周' : '月'}
                   </span>
                 </div>
                 {errors.target_count && (
@@ -216,7 +216,7 @@ export function HabitForm({ habit, onSubmit, onCancel }: HabitFormProps) {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-3">
-                  Color
+                  颜色
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {colorOptions.map(color => (
@@ -237,7 +237,7 @@ export function HabitForm({ habit, onSubmit, onCancel }: HabitFormProps) {
 
               <div>
                 <label className="block text-sm font-medium mb-3">
-                  Icon
+                  图标
                 </label>
                 <div className="grid grid-cols-7 gap-2">
                   {iconOptions.map(option => {
@@ -270,9 +270,9 @@ export function HabitForm({ habit, onSubmit, onCancel }: HabitFormProps) {
                   className="rounded"
                 />
                 <div>
-                  <div className="font-medium">Enable Reminders</div>
+                  <div className="font-medium">启用提醒</div>
                   <div className="text-sm text-muted-foreground">
-                    Get notified to complete this habit
+                    接收完成此习惯的通知
                   </div>
                 </div>
               </div>
@@ -280,7 +280,7 @@ export function HabitForm({ habit, onSubmit, onCancel }: HabitFormProps) {
               {watch('reminder_enabled') && (
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Reminder Time
+                    提醒时间
                   </label>
                   <Input
                     type="time"
@@ -293,7 +293,7 @@ export function HabitForm({ habit, onSubmit, onCancel }: HabitFormProps) {
 
             {/* Preview */}
             <div className="p-4 bg-muted rounded-lg">
-              <h4 className="font-medium mb-2">Preview</h4>
+              <h4 className="font-medium mb-2">预览</h4>
               <div className="flex items-center gap-3">
                 <div 
                   className="w-10 h-10 rounded-full flex items-center justify-center"
@@ -305,9 +305,9 @@ export function HabitForm({ habit, onSubmit, onCancel }: HabitFormProps) {
                   })}
                 </div>
                 <div>
-                  <div className="font-medium">{watch('name') || 'Habit Name'}</div>
+                  <div className="font-medium">{watch('name') || '习惯名称'}</div>
                   <div className="text-sm text-muted-foreground">
-                    {watch('target_count')} time{watch('target_count') > 1 ? 's' : ''} per {selectedFrequency}
+                    {watch('target_count')} 次/{selectedFrequency}
                     {watch('category') && ` • ${watch('category')}`}
                   </div>
                 </div>
@@ -317,10 +317,10 @@ export function HabitForm({ habit, onSubmit, onCancel }: HabitFormProps) {
             {/* Form Actions */}
             <div className="flex justify-end gap-3 pt-4 border-t">
               <Button variant="outline" onClick={onCancel} type="button">
-                Cancel
+                取消
               </Button>
               <Button type="submit" loading={isSubmitting}>
-                {habit ? 'Update Habit' : 'Create Habit'}
+                {habit ? '更新习惯' : '创建习惯'}
               </Button>
             </div>
           </form>

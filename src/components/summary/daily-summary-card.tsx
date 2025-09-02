@@ -24,12 +24,13 @@ import type { DailySummary } from '@/types/database'
 
 interface DailySummaryCardProps {
   summary: DailySummary | null
+  userId?: string
   onEdit: () => void
   onRegenerateTasks: () => void
   onGenerateBlog?: () => void
 }
 
-export function DailySummaryCard({ summary, onEdit, onRegenerateTasks, onGenerateBlog }: DailySummaryCardProps) {
+export function DailySummaryCard({ summary, userId, onEdit, onRegenerateTasks, onGenerateBlog }: DailySummaryCardProps) {
   const getProductivityLevel = (score: number) => {
     if (score >= 80) return { label: '优秀', color: 'bg-green-100 text-green-800 border-green-200' }
     if (score >= 60) return { label: '良好', color: 'bg-blue-100 text-blue-800 border-blue-200' }
@@ -299,7 +300,7 @@ export function DailySummaryCard({ summary, onEdit, onRegenerateTasks, onGenerat
               已根据此总结自动生成一篇博客文章。
             </p>
             <Button variant="outline" size="sm" className="mt-2" asChild>
-              <a href={`/blog/post/${summary.generated_post_id}`} target="_blank">
+              <a href={`/user/${userId}/blog/${summary.generated_post_id}`} target="_blank">
                 查看文章
                 <ExternalLink className="h-4 w-4 ml-1" />
               </a>

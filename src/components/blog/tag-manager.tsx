@@ -11,11 +11,9 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { createSlug } from '@/lib/utils'
 
 const tagSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  slug: z.string().min(1, 'Slug is required'),
 })
 
 type TagFormData = z.infer<typeof tagSchema>
@@ -23,7 +21,6 @@ type TagFormData = z.infer<typeof tagSchema>
 interface BlogTag {
   id: string
   name: string
-  slug: string
   created_at: string
   updated_at?: string
   post_count?: number
@@ -65,12 +62,6 @@ export function TagManager() {
   useEffect(() => {
     loadTags()
   }, [])
-
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newName = e.target.value
-    const newSlug = createSlug(newName)
-    setValue('slug', newSlug)
-  }
 
   const handleCreate = async (data: TagFormData) => {
     setIsSubmitting(true)
@@ -139,7 +130,6 @@ export function TagManager() {
   const startEdit = (tag: BlogTag) => {
     setEditingId(tag.id)
     setValue('name', tag.name)
-    setValue('slug', tag.slug)
   }
 
   const cancelEdit = () => {
@@ -174,10 +164,6 @@ export function TagManager() {
                 <label className="block text-sm font-medium mb-2">Name</label>
                 <Input
                   {...register('name')}
-                  onChange={(e) => {
-                    register('name').onChange(e)
-                    handleNameChange(e)
-                  }}
                   placeholder="Tag name"
                   className={errors.name ? 'border-red-500' : ''}
                 />
@@ -186,17 +172,6 @@ export function TagManager() {
                 )}
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">Slug</label>
-                <Input
-                  {...register('slug')}
-                  placeholder="tag-slug"
-                  className={errors.slug ? 'border-red-500' : ''}
-                />
-                {errors.slug && (
-                  <p className="mt-1 text-sm text-red-600">{errors.slug.message}</p>
-                )}
-              </div>
             </div>
 
             <Button type="submit" loading={isSubmitting}>
@@ -233,14 +208,12 @@ export function TagManager() {
                       register={register}
                       handleSubmit={handleSubmit}
                       errors={errors}
-                      setValue={setValue}
                     />
                   ) : (
                     <>
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <h3 className="font-semibold">{tag.name}</h3>
-                          <Badge variant="outline">{tag.slug}</Badge>
                           {tag.post_count !== undefined && (
                             <Badge variant="secondary">
                               {tag.post_count} posts
@@ -305,7 +278,6 @@ function EditTagForm({
   register,
   handleSubmit,
   errors,
-  setValue,
 }: {
   tag: BlogTag
   onSave: (data: TagFormData) => void
@@ -314,33 +286,15 @@ function EditTagForm({
   register: any
   handleSubmit: any
   errors: any
-  setValue: any
 }) {
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newName = e.target.value
-    const newSlug = createSlug(newName)
-    setValue('slug', newSlug)
-  }
-
   return (
     <form onSubmit={handleSubmit(onSave)} className="flex-1">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <Input
             {...register('name')}
-            onChange={(e) => {
-              register('name').onChange(e)
-              handleNameChange(e)
-            }}
             placeholder="Tag name"
             className={errors.name ? 'border-red-500' : ''}
-          />
-        </div>
-        <div>
-          <Input
-            {...register('slug')}
-            placeholder="tag-slug"
-            className={errors.slug ? 'border-red-500' : ''}
           />
         </div>
         <div className="flex gap-2">

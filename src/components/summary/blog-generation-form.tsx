@@ -94,22 +94,22 @@ export function BlogGenerationForm({
   const templateOptions = [
     {
       value: 'daily',
-      label: 'Daily Summary',
-      description: 'Detailed day-by-day productivity insights',
+      label: '每日总结',
+      description: '详细的每日生产力洞察',
       icon: FileText,
       recommended: true
     },
     {
       value: 'weekly',
-      label: 'Weekly Wrap-up',
-      description: 'Comprehensive week overview with trends',
+      label: '每周回顾',
+      description: '全面的每周概览与趋势分析',
       icon: Calendar,
       recommended: false
     },
     {
       value: 'monthly',
-      label: 'Monthly Review',
-      description: 'High-level monthly productivity analysis',
+      label: '每月回顾',
+      description: '高层次的月度生产力分析',
       icon: BarChart3,
       recommended: false
     }
@@ -118,27 +118,27 @@ export function BlogGenerationForm({
   const toneOptions = [
     {
       value: 'professional',
-      label: 'Professional',
-      description: 'Formal, business-oriented language',
-      example: '"Today\'s metrics indicate strong performance..."'
+      label: '专业',
+      description: '正式、商务化的语言风格',
+      example: '"今天的指标表现出强劲的性能..."'
     },
     {
       value: 'casual',
-      label: 'Casual',
-      description: 'Friendly, conversational tone',
-      example: '"Had a pretty good day today..."'
+      label: '轻松',
+      description: '友好、对话式的语气',
+      example: '"今天过得相当不错..."'
     },
     {
       value: 'motivational',
-      label: 'Motivational',
-      description: 'Inspiring and encouraging',
-      example: '"Today was another step toward my goals..."'
+      label: '激励性',
+      description: '鼓舞人心和积极的',
+      example: '"今天又是向目标迈进一步的一天..."'
     },
     {
       value: 'reflective',
-      label: 'Reflective',
-      description: 'Thoughtful and introspective',
-      example: '"Looking back on today, I learned that..."'
+      label: '反思性',
+      description: '深思熟虑和内省的',
+      example: '"回顾今天，我学到了..."'
     }
   ]
 
@@ -148,7 +148,7 @@ export function BlogGenerationForm({
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Wand2 className="h-5 w-5" />
-            Generate Blog Post
+            生成博客文章
             <Badge variant="secondary" className="ml-2">
               {new Date(summary.summary_date).toLocaleDateString()}
             </Badge>
@@ -163,7 +163,7 @@ export function BlogGenerationForm({
             {/* Template Selection */}
             <div>
               <label className="block text-sm font-medium mb-3">
-                Blog Template
+                博客模板
               </label>
               <div className="grid gap-3">
                 {templateOptions.map(option => {
@@ -190,7 +190,7 @@ export function BlogGenerationForm({
                               <span className="font-medium">{option.label}</span>
                               {option.recommended && (
                                 <Badge variant="secondary" className="text-xs">
-                                  Recommended
+                                  推荐
                                 </Badge>
                               )}
                             </div>
@@ -209,7 +209,7 @@ export function BlogGenerationForm({
             {/* Content Options */}
             <div>
               <label className="block text-sm font-medium mb-3">
-                Content Sections
+                内容板块
               </label>
               <div className="space-y-3">
                 <label className="flex items-center space-x-3 cursor-pointer p-3 border rounded-lg hover:bg-muted">
@@ -219,9 +219,9 @@ export function BlogGenerationForm({
                     className="rounded"
                   />
                   <div>
-                    <div className="font-medium">Task Breakdown</div>
+                    <div className="font-medium">任务分解</div>
                     <div className="text-sm text-muted-foreground">
-                      Include detailed list of completed, in-progress, and pending tasks
+                      包含已完成、进行中和待办任务的详细列表
                     </div>
                   </div>
                 </label>
@@ -233,9 +233,9 @@ export function BlogGenerationForm({
                     className="rounded"
                   />
                   <div>
-                    <div className="font-medium">Personal Notes</div>
+                    <div className="font-medium">个人笔记</div>
                     <div className="text-sm text-muted-foreground">
-                      Include your personal reflections and notes from the day
+                      包含您当天的个人反思和笔记
                     </div>
                   </div>
                 </label>
@@ -247,9 +247,9 @@ export function BlogGenerationForm({
                     className="rounded"
                   />
                   <div>
-                    <div className="font-medium">Productivity Statistics</div>
+                    <div className="font-medium">生产力统计</div>
                     <div className="text-sm text-muted-foreground">
-                      Include completion rates, productivity scores, and time tracking data
+                      包含完成率、生产力分数和时间跟踪数据
                     </div>
                   </div>
                 </label>
@@ -259,7 +259,7 @@ export function BlogGenerationForm({
             {/* Tone Selection */}
             <div>
               <label className="block text-sm font-medium mb-3">
-                Writing Tone
+                写作语气
               </label>
               <div className="grid gap-3">
                 {toneOptions.map(option => (
@@ -282,7 +282,7 @@ export function BlogGenerationForm({
                             {option.description}
                           </p>
                           <p className="text-xs text-muted-foreground mt-2 italic">
-                            Example: {option.example}
+                            示例：{option.example}
                           </p>
                         </div>
                       </div>
@@ -295,7 +295,7 @@ export function BlogGenerationForm({
             {/* Publishing Options */}
             <div>
               <label className="block text-sm font-medium mb-3">
-                Publishing Options
+                发布选项
               </label>
               <label className="flex items-center space-x-3 cursor-pointer p-3 border rounded-lg hover:bg-muted">
                 <input
@@ -304,9 +304,9 @@ export function BlogGenerationForm({
                   className="rounded"
                 />
                 <div>
-                  <div className="font-medium">Publish Immediately</div>
+                  <div className="font-medium">立即发布</div>
                   <div className="text-sm text-muted-foreground">
-                    Publish the blog post immediately after generation (otherwise saved as draft)
+                    生成后立即发布博客文章（否则保存为草稿）
                   </div>
                 </div>
               </label>
@@ -314,22 +314,22 @@ export function BlogGenerationForm({
 
             {/* Summary Preview */}
             <div className="p-4 bg-muted rounded-lg">
-              <h4 className="font-medium mb-2">Summary Data Preview</h4>
+              <h4 className="font-medium mb-2">总结数据预览</h4>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="text-muted-foreground">Tasks:</span>
+                  <span className="text-muted-foreground">任务：</span>
                   <span className="ml-2">{summary.completed_tasks}/{summary.total_tasks}</span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Completion:</span>
+                  <span className="text-muted-foreground">完成率：</span>
                   <span className="ml-2">{Math.round(summary.completion_rate || 0)}%</span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Productivity:</span>
+                  <span className="text-muted-foreground">生产力：</span>
                   <span className="ml-2">{Math.round(summary.productivity_score || 0)}%</span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Achievements:</span>
+                  <span className="text-muted-foreground">成就：</span>
                   <span className="ml-2">{summary.achievements?.length || 0}</span>
                 </div>
               </div>
@@ -346,14 +346,14 @@ export function BlogGenerationForm({
                     className="flex items-center gap-2"
                   >
                     <Eye className="h-4 w-4" />
-                    Preview
+                    预览
                   </Button>
                 )}
               </div>
               
               <div className="flex gap-2">
                 <Button variant="outline" onClick={onCancel} type="button">
-                  Cancel
+                  取消
                 </Button>
                 <Button 
                   type="submit" 
@@ -361,7 +361,7 @@ export function BlogGenerationForm({
                   className="flex items-center gap-2"
                 >
                   <Sparkles className="h-4 w-4" />
-                  {isGenerating ? 'Generating...' : 'Generate Blog Post'}
+                  {isGenerating ? '正在生成...' : '生成博客文章'}
                 </Button>
               </div>
             </div>

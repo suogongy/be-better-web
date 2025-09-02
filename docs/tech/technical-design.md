@@ -44,7 +44,6 @@ src/
 │   │   ├── blog/
 │   │   └── schedule/
 │   ├── blog/                     # 公共博客路由
-│   │   ├── [slug]/
 │   │   └── category/[name]/
 │   ├── api/                      # API路由
 │   │   ├── auth/
@@ -94,7 +93,6 @@ CREATE TABLE posts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID,
   title VARCHAR(255) NOT NULL,
-  slug VARCHAR(255) UNIQUE NOT NULL,
   content TEXT,
   excerpt TEXT,
   featured_image TEXT,
@@ -105,7 +103,6 @@ CREATE TABLE posts (
   published_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  view_count INTEGER DEFAULT 0
 );
 ```
 
@@ -114,7 +111,6 @@ CREATE TABLE posts (
 CREATE TABLE categories (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(100) UNIQUE NOT NULL,
-  slug VARCHAR(100) UNIQUE NOT NULL,
   description TEXT,
   color VARCHAR(7), -- 十六进制颜色代码
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -126,7 +122,6 @@ CREATE TABLE categories (
 CREATE TABLE tags (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(50) UNIQUE NOT NULL,
-  slug VARCHAR(50) UNIQUE NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 ```
@@ -255,7 +250,6 @@ interface GetPostsQuery {
   order?: 'asc' | 'desc';
 }
 
-// GET /api/blog/posts/[slug]
 // POST /api/blog/posts
 // PUT /api/blog/posts/[id]
 // DELETE /api/blog/posts/[id]
@@ -402,7 +396,6 @@ interface CommentSectionProps {
 // CategoryFilter.tsx
 // TagCloud.tsx
 // BlogSearch.tsx
-// RelatedPosts.tsx
 ```
 
 #### 2.4.3 日程组件（src/components/schedule/）

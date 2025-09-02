@@ -65,7 +65,7 @@ export default function NewBlogPostPage() {
         description: "文章创建成功"
       })
       
-      router.push(`/blog/${result.slug}`)
+      router.push(`/user/${result.user_id}/blog/${result.id}`)
     } catch (error) {
       console.error('创建文章失败:', error)
       addToast({

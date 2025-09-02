@@ -69,7 +69,7 @@ export default function BlogPage() {
       setLoading(true)
       // @ts-expect-error
       const postsData = await postService.getPosts({
-        page: currentPage,
+        page: currentPagea,
         limit: POSTS_PER_PAGE,
         search: searchTerm || undefined,
         categoryId: selectedCategory || undefined,
@@ -324,26 +324,26 @@ export default function BlogPage() {
           </Card>
         ) : (
           <>
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
+            <div className="space-y-6 mb-8">
               {posts.map(post => {
                 const readingTime = estimateReadingTime(post.content || '')
                 return (
-                  <Card key={post.id} className="flex flex-col hover:shadow-md transition-shadow">
-                    <CardHeader className="flex-1">
-                      <CardTitle className="line-clamp-2 text-lg">
+                  <Card key={post.id} className="hover:shadow-md transition-shadow">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-xl">
                         <Link href={`/user/${post.user_id}/blog/${post.id}`} className="hover:text-primary">
                           {post.title}
                         </Link>
                       </CardTitle>
                       {post.excerpt && (
-                        <CardDescription className="line-clamp-2 mt-2">
+                        <CardDescription className="mt-2">
                           {post.excerpt}
                         </CardDescription>
                       )}
                     </CardHeader>
                     <CardContent>
                       <div className="flex flex-wrap gap-2 mb-4">
-                        {post.categories?.slice(0, 2).map((category: Category) => (
+                        {post.categories?.slice(0, 3).map((category: Category) => (
                           <Badge 
                             key={category.id} 
                             variant="secondary" 
@@ -356,7 +356,7 @@ export default function BlogPage() {
                             {category.name}
                           </Badge>
                         ))}
-                        {post.tags?.slice(0, 2).map((tag: TagItem) => (
+                        {post.tags?.slice(0, 5).map((tag: TagItem) => (
                           <Badge 
                             key={tag.id} 
                             variant="outline" 

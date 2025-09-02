@@ -93,33 +93,6 @@
 **集成位置：**
 - 文章详情页元数据区域
 
-### 6. 相关文章推荐 ✅
-**新增文件：**
-- `src/components/blog/related-posts.tsx` - 相关文章组件
-
-**功能特性：**
-- 基于分类、标签的相似度计算
-- 内容相似度算法（Jaccard 相似度）
-- 显示文章缩略图和摘要
-- 相似度评分展示
-- 最多推荐3篇文章
-
-**集成位置：**
-- 文章详情页底部
-
-### 7. 文章统计功能 ✅
-**新增文件：**
-- `src/components/blog/post-statistics.tsx` - 文章统计组件
-- `src/components/blog/post-stats-wrapper.tsx` - 权限包装组件
-
-**功能特性：**
-- 浏览量统计（日、周、月）
-- 评论、点赞、分享数据
-- 流量来源分析
-- 参与度计算
-- 阅读时长统计
-- 趋势对比显示
-- 仅文章作者可见
 
 ## 数据库更新
 
@@ -138,9 +111,7 @@
 2. NewsletterSubscription - 邮件订阅
 3. AdvancedAnalytics - 高级数据分析
 4. ReadingTime - 阅读时间显示
-5. RelatedPosts - 相关文章推荐
-6. PostStatistics - 文章统计
-7. Dialog, Tabs, Badge - UI 基础组件
+5. Dialog, Tabs, Badge - UI 基础组件
 
 ### 优化组件
 1. ShareButtons - 增强分享功能
@@ -171,7 +142,5 @@
 - 邮件订阅系统
 - 高级数据分析
 - 阅读时间估算
-- 相关文章推荐
-- 文章统计功能
 
 项目现在具备了一个现代化个人博客平台应有的全部功能，代码结构清晰，用户体验优秀，可以投入生产使用。

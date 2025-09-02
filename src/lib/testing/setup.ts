@@ -164,7 +164,6 @@ global.testUtils = {
     id: 'test-post-id',
     user_id: 'test-user-id',
     title: 'Test Post',
-    slug: 'test-post',
     content: 'Test content',
     excerpt: 'Test excerpt',
     status: 'published' as const,
@@ -172,7 +171,6 @@ global.testUtils = {
     created_at: '2023-01-01T00:00:00.000Z',
     updated_at: '2023-01-01T00:00:00.000Z',
     published_at: '2023-01-01T00:00:00.000Z',
-    view_count: 0,
   },
 
   // Mock daily summary object

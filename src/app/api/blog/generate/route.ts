@@ -8,13 +8,15 @@ const supabase = createClient(
 );
 
 // 初始化OpenAI（可选）
-let openai;
+let openai: any = null;
 if (process.env.OPENAI_API_KEY) {
   // 动态导入以避免未使用时的错误
   import('openai').then(OpenAI => {
     openai = new OpenAI.default({
       apiKey: process.env.OPENAI_API_KEY,
     });
+  }).catch(() => {
+    console.warn('OpenAI package not installed. AI features will be disabled.');
   });
 }
 

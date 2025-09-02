@@ -63,6 +63,22 @@ export const summaryService = {
     return data || []
   },
 
+  async createSummary(summaryData: DailySummaryInsert): Promise<DailySummary> {
+    if (!supabase) throw new DatabaseError('Supabase client is not initialized')
+    
+    const { data, error } = await supabase
+      .from('daily_summaries')
+      .insert(summaryData)
+      .select()
+      .single()
+
+    if (error) {
+      throw new DatabaseError('Failed to create daily summary', error)
+    }
+
+    return data
+  },
+
   async generateDailySummary(userId: string, date: string): Promise<DailySummary> {
     // Get tasks for the specified date
     const tasks = await taskService.getTasks(userId, {
@@ -184,16 +200,18 @@ export const summaryService = {
     const blogContent = this.generateBlogContent(summary)
 
     // Create blog post
-    const post = await postService.createPost({
+    const postData = {
       user_id: userId,
       title: `我的一天：${summary.summary_date}`,
-      slug: `my-day-${summary.summary_date}-${Date.now()}`,
       content: blogContent,
       excerpt: `关于 ${summary.summary_date} 的日常总结`,
       status: 'published',
       type: 'schedule_generated',
       published_at: new Date().toISOString()
-    })
+    }
+    
+    console.log('准备创建博客文章，数据:', postData)
+    const post = await postService.createPost(postData)
 
     // Update summary to mark blog as generated
     await this.updateSummary(summaryId, {

@@ -27,55 +27,55 @@ import { format } from 'date-fns'
 import type { MoodLog, MoodStats } from '@/types/advanced'
 
 const moodEmojis = [
-  { value: 1, emoji: '😢', label: 'Terrible', color: 'text-red-600' },
-  { value: 2, emoji: '😔', label: 'Bad', color: 'text-red-500' },
-  { value: 3, emoji: '😕', label: 'Poor', color: 'text-orange-500' },
-  { value: 4, emoji: '😐', label: 'Okay', color: 'text-yellow-500' },
-  { value: 5, emoji: '🙂', label: 'Good', color: 'text-yellow-600' },
-  { value: 6, emoji: '😊', label: 'Great', color: 'text-green-500' },
-  { value: 7, emoji: '😄', label: 'Very Good', color: 'text-green-600' },
-  { value: 8, emoji: '😆', label: 'Excellent', color: 'text-blue-500' },
-  { value: 9, emoji: '🤩', label: 'Amazing', color: 'text-blue-600' },
-  { value: 10, emoji: '🥳', label: 'Euphoric', color: 'text-purple-600' },
+  { value: 1, emoji: '😢', label: '糟糕', color: 'text-red-600' },
+  { value: 2, emoji: '😔', label: '不好', color: 'text-red-500' },
+  { value: 3, emoji: '😕', label: '较差', color: 'text-orange-500' },
+  { value: 4, emoji: '😐', label: '一般', color: 'text-yellow-500' },
+  { value: 5, emoji: '🙂', label: '还好', color: 'text-yellow-600' },
+  { value: 6, emoji: '😊', label: '不错', color: 'text-green-500' },
+  { value: 7, emoji: '😄', label: '很好', color: 'text-green-600' },
+  { value: 8, emoji: '😆', label: '非常好', color: 'text-blue-500' },
+  { value: 9, emoji: '🤩', label: '极好', color: 'text-blue-600' },
+  { value: 10, emoji: '🥳', label: '完美', color: 'text-purple-600' },
 ]
 
 const energyLevels = [
-  { value: 1, label: 'Exhausted', icon: '🔋', color: 'text-red-600' },
-  { value: 2, label: 'Very Low', icon: '🔋', color: 'text-red-500' },
-  { value: 3, label: 'Low', icon: '🔋', color: 'text-orange-500' },
-  { value: 4, label: 'Below Average', icon: '🔋', color: 'text-yellow-500' },
-  { value: 5, label: 'Average', icon: '🔋', color: 'text-yellow-600' },
-  { value: 6, label: 'Good', icon: '🔋', color: 'text-green-500' },
-  { value: 7, label: 'High', icon: '⚡', color: 'text-green-600' },
-  { value: 8, label: 'Very High', icon: '⚡', color: 'text-blue-500' },
-  { value: 9, label: 'Energized', icon: '⚡', color: 'text-blue-600' },
-  { value: 10, label: 'Peak Energy', icon: '⚡', color: 'text-purple-600' },
+  { value: 1, label: '精疲力尽', icon: '🔋', color: 'text-red-600' },
+  { value: 2, label: '很低', icon: '🔋', color: 'text-red-500' },
+  { value: 3, label: '较低', icon: '🔋', color: 'text-orange-500' },
+  { value: 4, label: '一般以下', icon: '🔋', color: 'text-yellow-500' },
+  { value: 5, label: '一般', icon: '🔋', color: 'text-yellow-600' },
+  { value: 6, label: '良好', icon: '🔋', color: 'text-green-500' },
+  { value: 7, label: '较高', icon: '⚡', color: 'text-green-600' },
+  { value: 8, label: '很高', icon: '⚡', color: 'text-blue-500' },
+  { value: 9, label: '精力充沛', icon: '⚡', color: 'text-blue-600' },
+  { value: 10, label: '巅峰状态', icon: '⚡', color: 'text-purple-600' },
 ]
 
 const stressLevels = [
-  { value: 1, label: 'Completely Calm', icon: '🧘', color: 'text-blue-600' },
-  { value: 2, label: 'Very Relaxed', icon: '😌', color: 'text-blue-500' },
-  { value: 3, label: 'Relaxed', icon: '😌', color: 'text-green-600' },
-  { value: 4, label: 'Calm', icon: '😊', color: 'text-green-500' },
-  { value: 5, label: 'Neutral', icon: '😐', color: 'text-yellow-600' },
-  { value: 6, label: 'Slightly Stressed', icon: '😕', color: 'text-yellow-500' },
-  { value: 7, label: 'Moderately Stressed', icon: '😰', color: 'text-orange-500' },
-  { value: 8, label: 'Stressed', icon: '😫', color: 'text-red-500' },
-  { value: 9, label: 'Very Stressed', icon: '😖', color: 'text-red-600' },
-  { value: 10, label: 'Overwhelmed', icon: '🤯', color: 'text-red-700' },
+  { value: 1, label: '完全平静', icon: '🧘', color: 'text-blue-600' },
+  { value: 2, label: '非常放松', icon: '😌', color: 'text-blue-500' },
+  { value: 3, label: '放松', icon: '😌', color: 'text-green-600' },
+  { value: 4, label: '平静', icon: '😊', color: 'text-green-500' },
+  { value: 5, label: '中性', icon: '😐', color: 'text-yellow-600' },
+  { value: 6, label: '略有压力', icon: '😕', color: 'text-yellow-500' },
+  { value: 7, label: '中度压力', icon: '😰', color: 'text-orange-500' },
+  { value: 8, label: '压力较大', icon: '😫', color: 'text-red-500' },
+  { value: 9, label: '压力很大', icon: '😖', color: 'text-red-600' },
+  { value: 10, label: '不堪重负', icon: '🤯', color: 'text-red-700' },
 ]
 
 const sleepQuality = [
-  { value: 1, label: 'Terrible', icon: '😴', color: 'text-red-600' },
-  { value: 2, label: 'Poor', icon: '😴', color: 'text-red-500' },
-  { value: 3, label: 'Bad', icon: '😴', color: 'text-orange-500' },
-  { value: 4, label: 'Below Average', icon: '😴', color: 'text-yellow-500' },
-  { value: 5, label: 'Average', icon: '😴', color: 'text-yellow-600' },
-  { value: 6, label: 'Good', icon: '😴', color: 'text-green-500' },
-  { value: 7, label: 'Very Good', icon: '😴', color: 'text-green-600' },
-  { value: 8, label: 'Great', icon: '😴', color: 'text-blue-500' },
-  { value: 9, label: 'Excellent', icon: '😴', color: 'text-blue-600' },
-  { value: 10, label: 'Perfect', icon: '😴', color: 'text-purple-600' },
+  { value: 1, label: '很差', icon: '😴', color: 'text-red-600' },
+  { value: 2, label: '较差', icon: '😴', color: 'text-red-500' },
+  { value: 3, label: '不好', icon: '😴', color: 'text-orange-500' },
+  { value: 4, label: '一般以下', icon: '😴', color: 'text-yellow-500' },
+  { value: 5, label: '一般', icon: '😴', color: 'text-yellow-600' },
+  { value: 6, label: '良好', icon: '😴', color: 'text-green-500' },
+  { value: 7, label: '很好', icon: '😴', color: 'text-green-600' },
+  { value: 8, label: '非常好', icon: '😴', color: 'text-blue-500' },
+  { value: 9, label: '极好', icon: '😴', color: 'text-blue-600' },
+  { value: 10, label: '完美', icon: '😴', color: 'text-purple-600' },
 ]
 
 interface MoodLoggerProps {
@@ -151,8 +151,8 @@ export function MoodLogger({ onLogAdded }: MoodLoggerProps) {
       })
       
       addToast({
-        title: 'Mood Logged',
-        description: 'Your mood entry has been saved successfully.',
+        title: '心情已记录',
+        description: '您的心情记录已成功保存。',
         variant: 'success',
       })
       
@@ -169,8 +169,8 @@ export function MoodLogger({ onLogAdded }: MoodLoggerProps) {
       
     } catch (error) {
       addToast({
-        title: 'Error',
-        description: 'Failed to log mood. Please try again.',
+        title: '错误',
+        description: '记录心情失败，请重试。',
         variant: 'destructive',
       })
     } finally {
@@ -228,7 +228,7 @@ export function MoodLogger({ onLogAdded }: MoodLoggerProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Loading text="Loading mood data..." />
+        <Loading text="加载心情数据中..." />
       </div>
     )
   }
@@ -242,7 +242,7 @@ export function MoodLogger({ onLogAdded }: MoodLoggerProps) {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Avg Mood</p>
+                  <p className="text-sm font-medium text-muted-foreground">平均心情</p>
                   <p className="text-2xl font-bold">{stats.avg_mood.toFixed(1)}</p>
                 </div>
                 <Smile className="h-8 w-8 text-blue-600" />
@@ -254,7 +254,7 @@ export function MoodLogger({ onLogAdded }: MoodLoggerProps) {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Avg Energy</p>
+                  <p className="text-sm font-medium text-muted-foreground">平均精力</p>
                   <p className="text-2xl font-bold">{stats.avg_energy.toFixed(1)}</p>
                 </div>
                 <Zap className="h-8 w-8 text-green-600" />
@@ -266,7 +266,7 @@ export function MoodLogger({ onLogAdded }: MoodLoggerProps) {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Avg Stress</p>
+                  <p className="text-sm font-medium text-muted-foreground">平均压力</p>
                   <p className="text-2xl font-bold">{stats.avg_stress.toFixed(1)}</p>
                 </div>
                 <AlertTriangle className="h-8 w-8 text-orange-600" />
@@ -278,7 +278,7 @@ export function MoodLogger({ onLogAdded }: MoodLoggerProps) {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Trend</p>
+                  <p className="text-sm font-medium text-muted-foreground">趋势</p>
                   <p className="text-lg font-bold capitalize">{stats.mood_trend}</p>
                 </div>
                 <TrendingUp className={`h-8 w-8 ${
@@ -298,7 +298,7 @@ export function MoodLogger({ onLogAdded }: MoodLoggerProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5" />
-              Today's Mood Logs
+              今日心情记录
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -320,15 +320,15 @@ export function MoodLogger({ onLogAdded }: MoodLoggerProps) {
                   
                   <div className="grid grid-cols-3 gap-4 text-sm">
                     <div>
-                      <span className="text-muted-foreground">Energy:</span>
+                      <span className="text-muted-foreground">精力:</span>
                       <span className="ml-1 font-medium">{log.energy_level || 'N/A'}</span>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">Stress:</span>
+                      <span className="text-muted-foreground">压力:</span>
                       <span className="ml-1 font-medium">{log.stress_level || 'N/A'}</span>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">Sleep:</span>
+                      <span className="text-muted-foreground">睡眠:</span>
                       <span className="ml-1 font-medium">{log.sleep_quality || 'N/A'}</span>
                     </div>
                   </div>
@@ -358,7 +358,7 @@ export function MoodLogger({ onLogAdded }: MoodLoggerProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Heart className="h-5 w-5" />
-            Log Your Mood
+            记录您的心情
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -367,7 +367,7 @@ export function MoodLogger({ onLogAdded }: MoodLoggerProps) {
             mood, 
             setMood, 
             moodEmojis, 
-            'Mood Rating',
+            '心情评分',
             <Smile className="h-5 w-5 text-blue-600" />
           )}
 
@@ -376,7 +376,7 @@ export function MoodLogger({ onLogAdded }: MoodLoggerProps) {
             energy, 
             setEnergy, 
             energyLevels, 
-            'Energy Level',
+            '精力水平',
             <Zap className="h-5 w-5 text-green-600" />
           )}
 
@@ -385,7 +385,7 @@ export function MoodLogger({ onLogAdded }: MoodLoggerProps) {
             stress, 
             setStress, 
             stressLevels, 
-            'Stress Level',
+            '压力水平',
             <AlertTriangle className="h-5 w-5 text-orange-600" />
           )}
 
@@ -394,19 +394,19 @@ export function MoodLogger({ onLogAdded }: MoodLoggerProps) {
             sleep, 
             setSleep, 
             sleepQuality, 
-            'Sleep Quality',
+            '睡眠质量',
             <Moon className="h-5 w-5 text-purple-600" />
           )}
 
           {/* Notes */}
           <div>
             <label className="block text-sm font-medium mb-2">
-              Notes (Optional)
+              备注（可选）
             </label>
             <Textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="How are you feeling? What's affecting your mood today?"
+              placeholder="您感觉如何？今天有什么影响了您的心情？"
               rows={3}
             />
           </div>
@@ -414,7 +414,7 @@ export function MoodLogger({ onLogAdded }: MoodLoggerProps) {
           {/* Tags */}
           <div>
             <label className="block text-sm font-medium mb-2">
-              Tags (Optional)
+              标签（可选）
             </label>
             <div className="flex flex-wrap gap-2 mb-2">
               {tags.map(tag => (
@@ -427,7 +427,7 @@ export function MoodLogger({ onLogAdded }: MoodLoggerProps) {
               <Input
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}
-                placeholder="Add a tag (e.g., work, weekend, exercise)"
+                placeholder="添加标签（例如：工作、周末、运动）"
                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
               />
               <Button type="button" variant="outline" onClick={addTag}>
@@ -440,22 +440,22 @@ export function MoodLogger({ onLogAdded }: MoodLoggerProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-2">
-                Weather (Optional)
+                天气（可选）
               </label>
               <Input
                 value={weather}
                 onChange={(e) => setWeather(e.target.value)}
-                placeholder="e.g., Sunny, Rainy, Cloudy"
+                placeholder="例如：晴天、雨天、多云"
               />
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">
-                Location (Optional)
+                位置（可选）
               </label>
               <Input
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                placeholder="e.g., Home, Office, Gym"
+                placeholder="例如：家里、办公室、健身房"
               />
             </div>
           </div>
@@ -467,7 +467,7 @@ export function MoodLogger({ onLogAdded }: MoodLoggerProps) {
             className="w-full"
           >
             <Heart className="h-4 w-4 mr-2" />
-            Log Mood Entry
+            记录心情
           </Button>
         </CardContent>
       </Card>

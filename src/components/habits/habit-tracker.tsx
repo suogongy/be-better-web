@@ -52,8 +52,8 @@ export function HabitTracker({ onCreateHabit, onEditHabit }: HabitTrackerProps) 
       setStats(statsData)
     } catch (error) {
       addToast({
-        title: 'Error',
-        description: 'Failed to load habits. Please try again.',
+        title: '错误',
+        description: '加载习惯失败，请重试。',
         variant: 'destructive',
       })
     } finally {
@@ -83,8 +83,8 @@ export function HabitTracker({ onCreateHabit, onEditHabit }: HabitTrackerProps) 
         })
         
         addToast({
-          title: 'Great job!',
-          description: 'Habit logged successfully.',
+          title: '做得好！',
+          description: '习惯记录成功。',
           variant: 'success',
         })
       }
@@ -92,8 +92,8 @@ export function HabitTracker({ onCreateHabit, onEditHabit }: HabitTrackerProps) 
       loadData()
     } catch (error) {
       addToast({
-        title: 'Error',
-        description: 'Failed to log habit. Please try again.',
+        title: '错误',
+        description: '记录习惯失败，请重试。',
         variant: 'destructive',
       })
     } finally {
@@ -126,7 +126,7 @@ export function HabitTracker({ onCreateHabit, onEditHabit }: HabitTrackerProps) 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Loading text="Loading habits..." />
+        <Loading text="加载习惯中..." />
       </div>
     )
   }
@@ -140,7 +140,7 @@ export function HabitTracker({ onCreateHabit, onEditHabit }: HabitTrackerProps) 
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Active Habits</p>
+                  <p className="text-sm font-medium text-muted-foreground">活跃习惯</p>
                   <p className="text-2xl font-bold">{stats.active_habits}</p>
                 </div>
                 <Target className="h-8 w-8 text-blue-600" />
@@ -154,7 +154,7 @@ export function HabitTracker({ onCreateHabit, onEditHabit }: HabitTrackerProps) 
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Today</p>
                   <p className="text-2xl font-bold">{stats.completed_today}</p>
-                  <p className="text-xs text-muted-foreground">completed</p>
+                  <p className="text-xs text-muted-foreground">已完成</p>
                 </div>
                 <CheckCircle className="h-8 w-8 text-green-600" />
               </div>
@@ -165,9 +165,9 @@ export function HabitTracker({ onCreateHabit, onEditHabit }: HabitTrackerProps) 
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Best Streak</p>
+                  <p className="text-sm font-medium text-muted-foreground">最佳连续</p>
                   <p className="text-2xl font-bold">{stats.longest_streak}</p>
-                  <p className="text-xs text-muted-foreground">days</p>
+                  <p className="text-xs text-muted-foreground">天</p>
                 </div>
                 <Flame className="h-8 w-8 text-orange-600" />
               </div>
@@ -178,9 +178,9 @@ export function HabitTracker({ onCreateHabit, onEditHabit }: HabitTrackerProps) 
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Completion</p>
+                  <p className="text-sm font-medium text-muted-foreground">完成率</p>
                   <p className="text-2xl font-bold">{Math.round(stats.completion_rate)}%</p>
-                  <p className="text-xs text-muted-foreground">30 days</p>
+                  <p className="text-xs text-muted-foreground">30天</p>
                 </div>
                 <TrendingUp className="h-8 w-8 text-purple-600" />
               </div>
@@ -192,23 +192,23 @@ export function HabitTracker({ onCreateHabit, onEditHabit }: HabitTrackerProps) 
       {/* Habits List */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Today's Habits</CardTitle>
+          <CardTitle>今日习惯</CardTitle>
           <Button onClick={onCreateHabit} size="sm">
             <Plus className="h-4 w-4 mr-2" />
-            Add Habit
+添加习惯
           </Button>
         </CardHeader>
         <CardContent>
           {habits.length === 0 ? (
             <div className="text-center py-8">
               <Target className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-semibold mb-2">No Habits Yet</h3>
+              <h3 className="text-lg font-semibold mb-2">暂无习惯</h3>
               <p className="text-muted-foreground mb-4">
-                Start building positive habits to track your progress.
+                开始建立积极习惯，追踪您的进步。
               </p>
               <Button onClick={onCreateHabit}>
                 <Plus className="h-4 w-4 mr-2" />
-                Create Your First Habit
+创建您的第一个习惯
               </Button>
             </div>
           ) : (
@@ -286,14 +286,14 @@ export function HabitTracker({ onCreateHabit, onEditHabit }: HabitTrackerProps) 
                             <div className="flex items-center gap-1">
                               <Flame className="h-4 w-4 text-orange-500" />
                               <span className={`font-medium ${getStreakColor(habit.streak_count)}`}>
-                                {habit.streak_count} day streak
+                                {habit.streak_count} 天连续
                               </span>
                             </div>
                             
                             <div className="flex items-center gap-1">
                               <TrendingUp className="h-4 w-4 text-blue-500" />
                               <span className={`font-medium ${getCompletionColor(completionRate)}`}>
-                                {Math.round(completionRate)}% completion
+                                {Math.round(completionRate)}% 完成率
                               </span>
                             </div>
                           </div>
@@ -306,7 +306,7 @@ export function HabitTracker({ onCreateHabit, onEditHabit }: HabitTrackerProps) 
                         {habit.best_streak > 0 && (
                           <Badge className={getStreakColor(habit.best_streak)}>
                             <Award className="h-3 w-3 mr-1" />
-                            Best: {habit.best_streak}
+                            最佳: {habit.best_streak}
                           </Badge>
                         )}
                         
@@ -323,7 +323,7 @@ export function HabitTracker({ onCreateHabit, onEditHabit }: HabitTrackerProps) 
                     {/* Progress Bar */}
                     <div className="mt-3">
                       <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                        <span>30-day completion rate</span>
+                        <span>30天完成率</span>
                         <span>{Math.round(completionRate)}%</span>
                       </div>
                       <Progress 

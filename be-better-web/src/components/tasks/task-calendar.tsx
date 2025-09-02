@@ -1,71 +1,11 @@
-'use client'
-
-import { useState, useEffect, useRef } from 'react'
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  CalendarIcon, 
-  Clock, 
-  Repeat,
-  Plus
-} from "lucide-react"
-import { cn } from "@/lib/utils"
-import { 
-  startOfMonth, 
-  endOfMonth, 
-  startOfWeek, 
-  endOfWeek, 
-  eachDayOfInterval, 
-  isSameMonth, 
-  isSameDay, 
-  isToday,
-  format,
-  parseISO,
-  addMonths,
-  subMonths
-} from "date-fns"
-import { zhCN } from "date-fns/locale"
-
-interface Task {
-  id: string
-  title: string
-  category?: string
-  due_date?: string
-  due_time?: string
-  priority: 'high' | 'medium' | 'low'
-  status: 'completed' | 'in_progress' | 'cancelled'
-  is_recurring: boolean
-}
-
-interface CalendarTask extends Task {
-  displayDate: Date
-}
-
-interface TaskCalendarProps {
-  tasks: Task[]
-  onTaskClick: (task: Task) => void
-  onDateClick: (date: Date) => void
-  onTaskMove: (taskId: string, newDate: string) => void
-  onCreateTask: (date: Date) => void
-  className?: string
-}
-
-export function TaskCalendar({ 
+const TaskCalendar = ({ 
   tasks, 
   onTaskClick, 
   onDateClick, 
   onTaskMove, 
   onCreateTask,
   className 
-}: TaskCalendarProps) {
+}: TaskCalendarProps) => {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [draggedTask, setDraggedTask] = useState<CalendarTask | null>(null)
   const [dragOverDate, setDragOverDate] = useState<Date | null>(null)
@@ -249,89 +189,40 @@ export function TaskCalendar({
                   </Button>
                 </div>
                 
-                {/* Tasks */}
-                <div className="space-y-1 max-h-[80px] overflow-y-auto">
-                  {dayTasks.slice(0, 3).map(task => (
+                {/* Tasks for this day */}
+                <div className="space-y-1 max-h-[calc(100%-3rem)] overflow-y-auto">
+                  {dayTasks.map((task, index) => (
                     <div
-                      key={task.id}
+                      key={`${task.id}-${index}`}
+                      className={cn(
+                        "text-xs p-1 rounded border cursor-pointer transition-all hover:bg-muted/50",
+                        getPriorityColor(task.priority),
+                        getStatusColor(task.status),
+                        "group flex items-center justify-between"
+                      )}
                       draggable
                       onDragStart={(e) => handleDragStart(e, task)}
-                      onDragEnd={handleDragEnd}
                       onClick={(e) => {
                         e.stopPropagation()
                         onTaskClick(task)
                       }}
-                      className={cn(
-                        "text-xs p-1 rounded cursor-pointer border-l-2 hover:shadow-sm transition-all truncate text-white",
-                        getPriorityColor(task.priority),
-                        getStatusColor(task.status)
-                      )}
-                      title={`${task.title}${task.due_time ? ` at ${task.due_time}` : ''}${task.is_recurring ? ' (重复任务)' : ''}`}
                     >
-                      <div className="flex items-center gap-1">
-                        {task.due_time && (
-                          <Clock className="h-3 w-3 flex-shrink-0" />
-                        )}
-                        <span className="truncate font-medium">
-                          {task.title}
-                        </span>
-                        {task.is_recurring && (
-                          <Badge variant="secondary" className="h-3 w-3 p-0 flex items-center justify-center">
-                            <Repeat className="h-2 w-2" />
-                          </Badge>
-                        )}
+                      <div className="truncate max-w-[80%]">
+                        {task.title}
                       </div>
-                      {task.category && (
-                        <div className="text-xs opacity-90 truncate">
-                          {task.category}
-                        </div>
+                      {task.is_recurring && (
+                        <Repeat className="h-3 w-3 text-gray-400" />
                       )}
                     </div>
                   ))}
-                  
-                  {/* Show more indicator */}
-                  {dayTasks.length > 3 && (
-                    <div className="text-xs text-muted-foreground px-1">
-                      +{dayTasks.length - 3} 更多
-                    </div>
-                  )}
                 </div>
               </div>
             )
           })}
         </div>
-        
-        {/* Legend */}
-        <div className="mt-4 flex flex-wrap gap-4 justify-center text-xs">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-red-500 rounded"></div>
-            <span>高优先级</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-yellow-500 rounded"></div>
-            <span>中优先级</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-green-500 rounded"></div>
-            <span>低优先级</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-blue-500 rounded border-l-2 border-blue-700"></div>
-            <span>进行中</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Repeat className="h-3 w-3" />
-            <span>重复任务</span>
-          </div>
-        </div>
-        
-        {/* Drag Instructions */}
-        {draggedTask && (
-          <div className="mt-4 text-center text-sm text-muted-foreground">
-            {`将 "${draggedTask.title}" 拖动到不同日期以重新安排`}
-          </div>
-        )}
       </CardContent>
     </Card>
   )
 }
+
+export default TaskCalendar

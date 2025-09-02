@@ -49,8 +49,7 @@ CREATE TABLE IF NOT EXISTS public.posts (
   meta_description TEXT,
   published_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  view_count INTEGER DEFAULT 0
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Post-Category junction table

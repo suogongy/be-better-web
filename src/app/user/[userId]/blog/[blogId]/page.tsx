@@ -12,8 +12,7 @@ import { MDXContent } from '@/components/blog/mdx-content'
 import { ShareButtons } from '@/components/blog/share-buttons'
 import { Badge } from '@/components/ui/badge'
 import { ReadingTime } from '@/components/ui/reading-time'
-import { RelatedPosts } from '@/components/blog/related-posts'
-import { PostStatsWrapper } from '@/components/blog/post-stats-wrapper'
+import { calculateReadingTime } from '@/lib/utils/reading-time'
 
 interface BlogPostPageProps {
   params: {
@@ -38,6 +37,9 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
   const description = post.excerpt || post.content?.slice(0, 160) || '博客文章'
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bebetterweb.com'
   const url = `${siteUrl}/user/${userId}/blog/${blogId}`
+
+  // 计算阅读时间
+  const readingTime = post.content ? calculateReadingTime(post.content).minutes : 1
 
   return {
     title,
@@ -81,7 +83,7 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { userId, blogId } = await params
 
-  const post = await postService.getPost(blogId)
+  const post: any = await postService.getPost(blogId)
 
   if (!post || post.user_id !== userId || post.status !== 'published') {
     notFound()
@@ -104,7 +106,8 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     }
   }
 
-  // 阅读时间将在组件中计算
+  // 计算阅读时间
+  const readingTime = post.content ? calculateReadingTime(post.content).minutes : 1
 
   // 获取相邻文章
   const allPosts = await postService.getPosts({
@@ -112,9 +115,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     userId: post.user_id // 只获取同一作者的文章
   })
 
-  const currentIndex = allPosts.data.findIndex((p: any) => p.id === post.id)
-  const prevPost = currentIndex > 0 ? allPosts.data[currentIndex - 1] : null
-  const nextPost = currentIndex < allPosts.data.length - 1 ? allPosts.data[currentIndex + 1] : null
+  const currentIndex = allPosts.data.findIndex((p: { id: string }) => p.id === post.id)
+  const prevPost: { id: string; title: string } | null = currentIndex > 0 ? allPosts.data[currentIndex - 1] : null
+  const nextPost: { id: string; title: string } | null = currentIndex < allPosts.data.length - 1 ? allPosts.data[currentIndex + 1] : null
 
   return (
     <article className="container mx-auto px-4 py-8 max-w-4xl">
@@ -230,23 +233,6 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           <ShareButtons title={post.title} />
         </div>
       </footer>
-
-      {/* 文章统计（仅作者可见） */}
-      <section className="border-t pt-12 mt-12">
-        <PostStatsWrapper postId={post.id} authorId={post.user_id} />
-      </section>
-
-      {/* 相关文章推荐 */}
-      <section className="border-t pt-12 mt-12">
-        <RelatedPosts
-          currentPostId={post.id}
-          currentPostCategories={post.categories?.map((c: any) => c.name) || []}
-          currentPostTags={post.tags?.map((t: any) => t.name) || []}
-          currentPostContent={post.content || ''}
-          userId={userId}
-          maxPosts={3}
-        />
-      </section>
 
       {/* 评论区域 */}
       <section className="border-t pt-12 mt-12">

@@ -36,8 +36,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       post: {
         id: post.id,
-        title: post.title,
-        slug: post.slug
+        title: post.title
       },
       totalComments: allComments?.length || 0,
       approvedComments: approvedComments?.length || 0,

@@ -18,37 +18,45 @@ const DEFAULT_OPTIONS: Required<ReadingTimeOptions> = {
 }
 
 /**
- * 从 HTML 内容中提取纯文本并计算字数
+ * 从 HTML 内容中提取纯文本并计算字数（服务端安全版本）
  */
 function extractTextFromHTML(html: string): string {
-  // 创建一个临时的 DOM 元素
-  const div = document.createElement('div')
-  div.innerHTML = html
+  // 移除HTML标签
+  let text = html.replace(/<[^>]*>/g, '');
   
-  // 移除不需要计数的元素
-  const elementsToRemove = div.querySelectorAll('script, style, noscript, iframe, .no-reading-time')
-  elementsToRemove.forEach(el => el.remove())
+  // 解码HTML实体
+  text = text.replace(/&nbsp;/g, ' ')
+             .replace(/&amp;/g, '&')
+             .replace(/&lt;/g, '<')
+             .replace(/&gt;/g, '>')
+             .replace(/&quot;/g, '"')
+             .replace(/&#(\d+);/g, (match, dec) => String.fromCharCode(parseInt(dec, 10)))
+             .replace(/&#x([0-9a-fA-F]+);/g, (match, hex) => String.fromCharCode(parseInt(hex, 16)));
   
-  // 获取文本内容
-  return div.textContent || div.innerText || ''
+  return text;
 }
 
 /**
- * 计算图片数量
+ * 计算图片数量（服务端安全版本）
  */
 function countImages(html: string): number {
-  const div = document.createElement('div')
-  div.innerHTML = html
-  return div.querySelectorAll('img').length
+  // 使用正则表达式匹配<img>标签
+  const imgRegex = /<img\b[^>]*>/gi;
+  return (html.match(imgRegex) || []).length;
 }
 
 /**
- * 计算代码块数量
+ * 计算代码块数量（服务端安全版本）
  */
 function countCodeBlocks(html: string): number {
-  const div = document.createElement('div')
-  div.innerHTML = html
-  return div.querySelectorAll('pre, code').length
+  // 使用正则表达式匹配<pre>和<code>标签
+  const preRegex = /<pre\b[^>]*>[\s\S]*?<\/pre>/gi;
+  const codeRegex = /<code\b[^>]*>[\s\S]*?<\/code>/gi;
+  
+  const preCount = (html.match(preRegex) || []).length;
+  const codeCount = (html.match(codeRegex) || []).length;
+  
+  return preCount + codeCount;
 }
 
 /**
@@ -172,7 +180,7 @@ export function getReadingTimeDetails(readingTime: ReturnType<typeof calculateRe
   
   const medium = `阅读时间：${short}`
   
-  let details = [`预计阅读时间：${short}`]
+  const details = [`预计阅读时间：${short}`]
   if (imageCount > 0) {
     details.push(`包含 ${imageCount} 张图片`)
   }

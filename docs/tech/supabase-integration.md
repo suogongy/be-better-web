@@ -74,8 +74,7 @@ const post = await postService.getPost('post-id')
 // 创建文章
 const newPost = await postService.createPost({
   title: 'New Post',
-  content: 'Post content',
-  slug: 'new-post'
+  content: 'Post content'
 })
 ```
 
@@ -133,7 +132,6 @@ try {
 - `id`: UUID (主键)
 - `user_id`: 作者ID
 - `title`: 标题
-- `slug`: 别名 (唯一)
 - `content`: 内容
 - `excerpt`: 摘要
 - `featured_image`: 特色图片
@@ -144,12 +142,10 @@ try {
 - `published_at`: 发布时间
 - `created_at`: 创建时间
 - `updated_at`: 更新时间
-- `view_count`: 浏览次数
 
 ### 分类 (categories)
 - `id`: UUID (主键)
 - `name`: 名称 (唯一)
-- `slug`: 别名 (唯一)
 - `description`: 描述
 - `color`: 颜色
 - `created_at`: 创建时间
@@ -157,7 +153,6 @@ try {
 ### 标签 (tags)
 - `id`: UUID (主键)
 - `name`: 名称 (唯一)
-- `slug`: 别名 (唯一)
 - `created_at`: 创建时间
 
 ### 评论 (comments)

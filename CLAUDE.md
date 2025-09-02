@@ -43,7 +43,6 @@ src/
 │   │   └── debug-comments/       # Debug utilities
 │   ├── auth/                     # Authentication pages
 │   ├── blog/                     # Blog-related pages
-│   │   ├── [slug]/               # Individual blog posts
 │   │   ├── admin/                # Blog administration
 │   │   └── new/                  # Create new blog posts
 │   ├── dashboard/                # Main dashboard

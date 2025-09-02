@@ -10,6 +10,7 @@ import { DailySummaryCard } from '@/components/summary/daily-summary-card'
 import { ProductivityChart } from '@/components/summary/productivity-chart'
 import { WeeklyInsights } from '@/components/summary/weekly-insights'
 import { SummaryForm } from '@/components/summary/summary-form'
+import { SimpleSummaryForm } from '@/components/summary/simple-summary-form'
 import { BlogGenerationForm } from '@/components/summary/blog-generation-form'
 import { summaryService } from '@/lib/supabase/services/index'
 import { useAuth } from '@/lib/auth/auth-context'
@@ -17,6 +18,46 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { addDays, subDays } from 'date-fns'
 import { DailySummary } from '@/types/database'
+import { DatabaseError } from '@/lib/supabase/services/index'
+
+// 定义错误类型
+interface ErrorWithMessage {
+  message: string
+}
+
+function isErrorWithMessage(error: unknown): error is ErrorWithMessage {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'message' in error &&
+    typeof (error as Record<string, unknown>).message === 'string'
+  )
+}
+
+function getErrorMessage(error: unknown) {
+  if (isErrorWithMessage(error)) return error.message
+  return String(error)
+}
+
+// 定义表单数据类型
+interface SummaryFormData {
+  mood_rating?: number
+  energy_rating?: number
+  notes?: string
+  achievements?: string[]
+  challenges?: string[]
+  tomorrow_goals?: string[]
+}
+
+// 定义博客生成数据类型
+interface BlogGenerationData {
+  template: 'daily' | 'weekly' | 'monthly'
+  includeTaskBreakdown: boolean
+  includePersonalNotes: boolean
+  includeProductivityStats: boolean
+  tone: 'professional' | 'casual' | 'motivational' | 'reflective'
+  publishImmediately: boolean
+}
 
 export default function SummaryPage() {
   const { user, loading: authLoading, error: authError } = useAuth()
@@ -40,21 +81,17 @@ export default function SummaryPage() {
       setLoading(true)
       const dateStr = format(selectedDate, 'yyyy-MM-dd')
       
-      const [summary, recentData, trendsData, weeklyData] = await Promise.all([
-        summaryService.getSummary(user.id, dateStr),
-        summaryService.getSummaries(user.id, { limit: 7 }),
-        summaryService.getProductivityTrends(user.id, 30),
-        summaryService.getWeeklyInsights(user.id, 0)
-      ])
+      const summary = await summaryService.getSummary(user.id, dateStr)
+      const recentData = await summaryService.getSummaries(user.id, { limit: 7 })
       
       setCurrentSummary(summary)
       setRecentSummaries(recentData)
-      setProductivityTrends(trendsData)
-      setWeeklyInsights(weeklyData)
+      // 移除不存在的方法调用
     } catch (error) {
+      console.error('加载总结数据失败:', error)
       addToast({
         title: '错误',
-        description: '加载总结数据失败，请重试。',
+        description: `加载总结数据失败: ${getErrorMessage(error)}`,
         variant: 'destructive',
       })
     } finally {
@@ -82,69 +119,140 @@ export default function SummaryPage() {
         variant: 'success',
       })
     } catch (error) {
+      console.error('生成总结失败:', error)
       addToast({
         title: '错误',
-        description: '生成总结失败，请重试。',
+        description: `生成总结失败: ${getErrorMessage(error)}`,
         variant: 'destructive',
       })
     }
   }
 
-  const handleUpdateSummary = async (updates: any) => {
-    if (!user) return
+  const handleUpdateSummary = async (updates: Partial<DailySummary>) => {
+    if (!user || !currentSummary) return
     
     try {
-      const dateStr = format(selectedDate, 'yyyy-MM-dd')
-      const updatedSummary = await summaryService.updateSummary(user.id, dateStr, updates)
+      console.log('更新总结数据:', updates)
       
-      setCurrentSummary(updatedSummary)
+      // 构建更新数据，只包含有值的字段
+      const updateData: any = {}
+      
+      if (updates.mood_rating !== undefined) {
+        updateData.mood_rating = updates.mood_rating
+      }
+      if (updates.energy_rating !== undefined) {
+        updateData.energy_rating = updates.energy_rating
+      }
+      if (updates.notes !== undefined) {
+        updateData.notes = updates.notes
+      }
+      // 数组字段需要明确包含，即使是空数组
+      if (updates.achievements !== undefined) {
+        updateData.achievements = updates.achievements
+      }
+      if (updates.challenges !== undefined) {
+        updateData.challenges = updates.challenges
+      }
+      if (updates.tomorrow_goals !== undefined) {
+        updateData.tomorrow_goals = updates.tomorrow_goals
+      }
+      
+      console.log('最终更新数据:', updateData)
+      
+      const updatedSummary = await summaryService.updateSummary(currentSummary.id, updateData)
+      
+      // 刷新数据
+      await loadSummaryData()
+      
+      // 关闭表单
+      setShowSummaryForm(false)
+      
       addToast({
         title: '成功',
         description: '总结更新成功。',
         variant: 'success',
       })
     } catch (error) {
+      console.error('更新总结失败:', error)
       addToast({
         title: '错误',
-        description: '更新总结失败，请重试。',
+        description: `更新总结失败: ${getErrorMessage(error)}`,
         variant: 'destructive',
       })
+      throw error // 重新抛出错误，让表单组件处理
     }
   }
 
-  const handleCreateSummary = async (summaryData: any) => {
+  const handleCreateSummary = async (summaryData: SummaryFormData) => {
     if (!user) return
     
     try {
+      console.log('开始创建总结:', summaryData)
       const dateStr = format(selectedDate, 'yyyy-MM-dd')
-      const summary = await summaryService.createSummary({
-        ...summaryData,
-        user_id: user.id,
-        date: dateStr
-      })
       
-      setCurrentSummary(summary)
+      // 构建符合数据库要求的数据
+      const createData: any = {
+        user_id: user.id,
+        summary_date: dateStr,
+        total_tasks: 0,
+        completed_tasks: 0,
+        completion_rate: 0,
+        auto_blog_generated: false
+      }
+      
+      // 只有当字段有值时才添加
+      if (summaryData.mood_rating !== undefined) {
+        createData.mood_rating = summaryData.mood_rating
+      }
+      if (summaryData.energy_rating !== undefined) {
+        createData.energy_rating = summaryData.energy_rating
+      }
+      if (summaryData.notes) {
+        createData.notes = summaryData.notes
+      }
+      // 数组字段需要明确包含，即使是空数组
+      if (summaryData.achievements !== undefined) {
+        createData.achievements = summaryData.achievements
+      }
+      if (summaryData.challenges !== undefined) {
+        createData.challenges = summaryData.challenges
+      }
+      if (summaryData.tomorrow_goals !== undefined) {
+        createData.tomorrow_goals = summaryData.tomorrow_goals
+      }
+      
+      console.log('最终提交数据:', createData)
+      
+      const summary = await summaryService.createSummary(createData)
+      
+      // 刷新数据
+      await loadSummaryData()
+      
+      // 关闭表单
       setShowSummaryForm(false)
+      
       addToast({
         title: '成功',
         description: '总结创建成功。',
         variant: 'success',
       })
     } catch (error) {
+      console.error('创建总结失败:', error)
       addToast({
         title: '错误',
-        description: '创建总结失败，请重试。',
+        description: `创建总结失败: ${getErrorMessage(error)}`,
         variant: 'destructive',
       })
+      throw error // 重新抛出错误，让表单组件处理
     }
   }
 
-  const handleGenerateBlog = async (blogData: any) => {
-    if (!user) return
+  const handleGenerateBlog = async (blogData: BlogGenerationData) => {
+    if (!user || !currentSummary) return
     
     try {
-      const dateStr = format(selectedDate, 'yyyy-MM-dd')
-      const blogPost = await summaryService.generateBlogFromSummary(user.id, dateStr, blogData)
+      console.log('开始生成博客，数据:', blogData)
+      const result = await summaryService.generateBlogFromSummary(user.id, currentSummary.id)
       
       addToast({
         title: '成功',
@@ -154,40 +262,18 @@ export default function SummaryPage() {
       
       setShowBlogForm(false)
       // Redirect to the new blog post
-      window.open(`/blog/${blogPost.slug}`, '_blank')
+      window.open(`/user/${user.id}/blog/${result.post.id}`, '_blank')
     } catch (error) {
+      console.error('生成博客文章失败:', error)
+      if (error instanceof DatabaseError) {
+        console.error('数据库错误详情:', error.originalError)
+      }
       addToast({
         title: '错误',
-        description: '生成博客文章失败，请重试。',
+        description: `生成博客文章失败: ${getErrorMessage(error)}`,
         variant: 'destructive',
       })
     }
-  }
-
-  const handleRegenerateTasks = async () => {
-    if (!user) return
-    
-    try {
-      const dateStr = format(selectedDate, 'yyyy-MM-dd')
-      const summary = await summaryService.regenerateTasks(user.id, dateStr)
-      
-      setCurrentSummary(summary)
-      addToast({
-        title: '成功',
-        description: '任务重新生成成功。',
-        variant: 'success',
-      })
-    } catch (error) {
-      addToast({
-        title: '错误',
-        description: '重新生成任务失败，请重试。',
-        variant: 'destructive',
-      })
-    }
-  }
-
-  const handleWeekChange = (weekOffset: number) => {
-    setSelectedDate(addDays(selectedDate, weekOffset * 7))
   }
 
   // 如果用户未登录，显示登录提示
@@ -272,6 +358,7 @@ export default function SummaryPage() {
           <Button
             variant={currentView === 'trends' ? 'default' : 'outline'}
             onClick={() => setCurrentView('trends')}
+            disabled
           >
             <TrendingUp className="h-4 w-4 mr-2" />
             趋势分析
@@ -279,6 +366,7 @@ export default function SummaryPage() {
           <Button
             variant={currentView === 'weekly' ? 'default' : 'outline'}
             onClick={() => setCurrentView('weekly')}
+            disabled
           >
             <BarChart3 className="h-4 w-4 mr-2" />
             周度洞察
@@ -289,24 +377,25 @@ export default function SummaryPage() {
         {currentView === 'daily' && (
           <DailySummaryCard
             summary={currentSummary}
+            userId={user?.id}
             onEdit={() => setShowSummaryForm(true)}
-            onRegenerateTasks={handleRegenerateTasks}
+            onRegenerateTasks={() => {}}
             onGenerateBlog={currentSummary ? () => setShowBlogForm(true) : undefined}
           />
         )}
 
         {currentView === 'trends' && (
-          <ProductivityChart data={productivityTrends} loading={loading} />
+          <ProductivityChart data={null} loading={loading} />
         )}
 
         {currentView === 'weekly' && (
-          <WeeklyInsights data={weeklyInsights} loading={loading} onWeekChange={handleWeekChange} />
+          <WeeklyInsights data={null} loading={loading} onWeekChange={() => {}} />
         )}
 
         {/* Summary Form Modal */}
         {showSummaryForm && (
           <SummaryForm
-            onSubmit={handleCreateSummary}
+            onSubmit={currentSummary ? handleUpdateSummary : handleCreateSummary}
             onCancel={() => setShowSummaryForm(false)}
             date={format(selectedDate, 'yyyy-MM-dd')}
             summary={currentSummary}

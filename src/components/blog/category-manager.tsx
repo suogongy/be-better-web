@@ -20,11 +20,9 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { createSlug } from '@/lib/utils'
 
 const categorySchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  slug: z.string().min(1, 'Slug is required'),
   description: z.string().optional(),
 })
 
@@ -33,7 +31,6 @@ type CategoryFormData = z.infer<typeof categorySchema>
 interface Category {
   id: string
   name: string
-  slug: string
   description?: string | null
   color?: string | null
   created_at: string
@@ -77,12 +74,6 @@ export function CategoryManager() {
   useEffect(() => {
     loadCategories()
   }, [])
-
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newName = e.target.value
-    const newSlug = createSlug(newName)
-    setValue('slug', newSlug)
-  }
 
   const handleCreate = async (data: CategoryFormData) => {
     setIsSubmitting(true)
@@ -151,7 +142,6 @@ export function CategoryManager() {
   const startEdit = (category: Category) => {
     setEditingId(category.id)
     setValue('name', category.name)
-    setValue('slug', category.slug)
     setValue('description', category.description || '')
   }
 
@@ -187,10 +177,6 @@ export function CategoryManager() {
                 <label className="block text-sm font-medium mb-2">Name</label>
                 <Input
                   {...register('name')}
-                  onChange={(e) => {
-                    register('name').onChange(e)
-                    handleNameChange(e)
-                  }}
                   placeholder="Category name"
                   className={errors.name ? 'border-red-500' : ''}
                 />
@@ -199,17 +185,6 @@ export function CategoryManager() {
                 )}
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">Slug</label>
-                <Input
-                  {...register('slug')}
-                  placeholder="category-slug"
-                  className={errors.slug ? 'border-red-500' : ''}
-                />
-                {errors.slug && (
-                  <p className="mt-1 text-sm text-red-600">{errors.slug.message}</p>
-                )}
-              </div>
             </div>
 
             <div>
@@ -252,14 +227,12 @@ export function CategoryManager() {
                       register={register}
                       handleSubmit={handleSubmit}
                       errors={errors}
-                      setValue={setValue}
                     />
                   ) : (
                     <>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                           <h3 className="font-semibold">{category.name}</h3>
-                          <Badge variant="outline">{category.slug}</Badge>
                           {category.post_count !== undefined && (
                             <Badge variant="secondary">
                               {category.post_count} posts
@@ -306,7 +279,6 @@ function EditCategoryForm({
   register,
   handleSubmit,
   errors,
-  setValue,
 }: {
   category: Category
   onSave: (data: CategoryFormData) => void
@@ -315,33 +287,15 @@ function EditCategoryForm({
   register: any
   handleSubmit: any
   errors: any
-  setValue: any
 }) {
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newName = e.target.value
-    const newSlug = createSlug(newName)
-    setValue('slug', newSlug)
-  }
-
   return (
     <form onSubmit={handleSubmit(onSave)} className="flex-1">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         <div>
           <Input
             {...register('name')}
-            onChange={(e) => {
-              register('name').onChange(e)
-              handleNameChange(e)
-            }}
             placeholder="Category name"
             className={errors.name ? 'border-red-500' : ''}
-          />
-        </div>
-        <div>
-          <Input
-            {...register('slug')}
-            placeholder="category-slug"
-            className={errors.slug ? 'border-red-500' : ''}
           />
         </div>
         <div className="flex gap-2">

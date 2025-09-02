@@ -182,8 +182,7 @@ export default function DebugComments() {
               {debugInfo.post && (
                 <>
                   <p><strong>文章标题:</strong> {debugInfo.post.title}</p>
-                  <p><strong>文章Slug:</strong> {debugInfo.post.slug}</p>
-                </>
+                  </>
               )}
             </div>
 

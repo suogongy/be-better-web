@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { exportService } from '@/lib/supabase/services/index'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast-provider'
@@ -67,12 +67,6 @@ const exportFormats = [
     description: '适用于分析的电子表格格式',
     extension: '.csv'
   },
-  { 
-    value: 'pdf', 
-    label: 'PDF', 
-    description: '适用于人类阅读的报告格式',
-    extension: '.pdf'
-  },
 ]
 
 export function DataExporter() {
@@ -82,10 +76,11 @@ export function DataExporter() {
   const [exports, setExports] = useState<DataExport[]>([])
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
+  const pollingRef = useRef<NodeJS.Timeout | null>(null)
   
   // Export form state
-  const [selectedType, setSelectedType] = useState<'posts' | 'tasks' | 'summaries' | 'habits' | 'moods' | 'all'>('all')
-  const [selectedFormat, setSelectedFormat] = useState<'json' | 'csv' | 'pdf'>('json')
+  const [selectedType, setSelectedType] = useState<'posts' | 'tasks' | 'summaries' | 'all'>('all')
+  const [selectedFormat, setSelectedFormat] = useState<'json' | 'csv'>('json')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
 
@@ -96,6 +91,15 @@ export function DataExporter() {
       setLoading(true)
       const data = await exportService.getExports(user.id)
       setExports(data || [])
+      
+      // Check if there are any pending or processing exports
+      const hasActiveExports = data?.some(exp => exp.status === 'pending' || exp.status === 'processing')
+      
+      if (hasActiveExports) {
+        startPolling()
+      } else {
+        stopPolling()
+      }
     } catch (error) {
       console.error('加载导出历史失败:', error)
       addToast({
@@ -105,6 +109,35 @@ export function DataExporter() {
       })
     } finally {
       setLoading(false)
+    }
+  }
+
+  const startPolling = () => {
+    if (pollingRef.current) return
+    
+    pollingRef.current = setInterval(async () => {
+      if (!user) return
+      
+      try {
+        const data = await exportService.getExports(user.id)
+        setExports(data || [])
+        
+        // Check if all exports are completed
+        const hasActiveExports = data?.some(exp => exp.status === 'pending' || exp.status === 'processing')
+        
+        if (!hasActiveExports) {
+          stopPolling()
+        }
+      } catch (error) {
+        console.error('Polling exports failed:', error)
+      }
+    }, 3000) // Poll every 3 seconds
+  }
+
+  const stopPolling = () => {
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current)
+      pollingRef.current = null
     }
   }
 
@@ -119,6 +152,11 @@ export function DataExporter() {
       
       setEndDate(format(end, 'yyyy-MM-dd'))
       setStartDate(format(start, 'yyyy-MM-dd'))
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      stopPolling()
     }
   }, [user])
 
@@ -226,7 +264,7 @@ export function DataExporter() {
                       name="exportType"
                       value={type.value}
                       checked={selectedType === type.value}
-                      onChange={(e) => setSelectedType(e.target.value as any)}
+                      onChange={(e) => setSelectedType(e.target.value as 'posts' | 'tasks' | 'summaries' | 'all')}
                       className="sr-only"
                     />
                     <div className={`p-4 border rounded-lg transition-all ${
@@ -265,7 +303,7 @@ export function DataExporter() {
                     name="exportFormat"
                     value={format.value}
                     checked={selectedFormat === format.value}
-                    onChange={(e) => setSelectedFormat(e.target.value as any)}
+                    onChange={(e) => setSelectedFormat(e.target.value as 'json' | 'csv')}
                     className="sr-only"
                   />
                   <div className={`p-3 border rounded-lg text-center transition-all ${
