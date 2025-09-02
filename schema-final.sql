@@ -187,10 +187,13 @@ CREATE TABLE IF NOT EXISTS public.data_exports (
   date_range_start DATE,
   date_range_end DATE,
   file_url TEXT,
+  file_name VARCHAR(255),
   file_size BIGINT,
   status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'failed')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  expires_at TIMESTAMP WITH TIME ZONE DEFAULT (NOW() + INTERVAL '7 days')
+  expires_at TIMESTAMP WITH TIME ZONE DEFAULT (NOW() + INTERVAL '7 days'),
+  completed_at TIMESTAMP WITH TIME ZONE,
+  error_message TEXT
 );
 
 -- Productivity insights cache table

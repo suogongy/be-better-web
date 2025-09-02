@@ -334,10 +334,13 @@ export interface Database {
           date_range_start?: string
           date_range_end?: string
           file_url?: string
+          file_name?: string
           file_size?: number
           status: 'pending' | 'processing' | 'completed' | 'failed'
           created_at: string
           expires_at: string
+          completed_at?: string
+          error_message?: string
         }
         Insert: {
           id?: string
@@ -347,10 +350,13 @@ export interface Database {
           date_range_start?: string
           date_range_end?: string
           file_url?: string
+          file_name?: string
           file_size?: number
           status?: 'pending' | 'processing' | 'completed' | 'failed'
           created_at?: string
           expires_at?: string
+          completed_at?: string
+          error_message?: string
         }
         Update: {
           id?: string
@@ -360,10 +366,13 @@ export interface Database {
           date_range_start?: string
           date_range_end?: string
           file_url?: string
+          file_name?: string
           file_size?: number
           status?: 'pending' | 'processing' | 'completed' | 'failed'
           created_at?: string
           expires_at?: string
+          completed_at?: string
+          error_message?: string
         }
       }
     }
