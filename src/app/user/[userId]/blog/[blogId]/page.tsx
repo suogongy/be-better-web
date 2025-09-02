@@ -11,6 +11,9 @@ import { NewsletterSubscription } from '@/components/blog/newsletter-subscriptio
 import { MDXContent } from '@/components/blog/mdx-content'
 import { ShareButtons } from '@/components/blog/share-buttons'
 import { Badge } from '@/components/ui/badge'
+import { ReadingTime } from '@/components/ui/reading-time'
+import { RelatedPosts } from '@/components/blog/related-posts'
+import { PostStatsWrapper } from '@/components/blog/post-stats-wrapper'
 
 interface BlogPostPageProps {
   params: {
@@ -101,13 +104,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     }
   }
 
-  const estimateReadingTime = (content: string): number => {
-    const wordsPerMinute = 200
-    const words = content.split(/\s+/).length
-    return Math.ceil(words / wordsPerMinute)
-  }
-
-  const readingTime = estimateReadingTime(post.content || '')
+  // 阅读时间将在组件中计算
 
   // 获取相邻文章
   const allPosts = await postService.getPosts({
@@ -197,10 +194,11 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
               {formatDate(post.published_at || post.created_at)}
             </time>
           </div>
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4" />
-            {readingTime} 分钟阅读
-          </div>
+          <ReadingTime 
+            content={post.content || ''} 
+            variant="simple"
+            showWordCount={true}
+          />
           <div className="flex items-center gap-2">
             <Eye className="h-4 w-4" />
             {(post.view_count || 0) + 1} 次阅读
@@ -232,6 +230,23 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           <ShareButtons title={post.title} />
         </div>
       </footer>
+
+      {/* 文章统计（仅作者可见） */}
+      <section className="border-t pt-12 mt-12">
+        <PostStatsWrapper postId={post.id} authorId={post.user_id} />
+      </section>
+
+      {/* 相关文章推荐 */}
+      <section className="border-t pt-12 mt-12">
+        <RelatedPosts
+          currentPostId={post.id}
+          currentPostCategories={post.categories?.map((c: any) => c.name) || []}
+          currentPostTags={post.tags?.map((t: any) => t.name) || []}
+          currentPostContent={post.content || ''}
+          userId={userId}
+          maxPosts={3}
+        />
+      </section>
 
       {/* 评论区域 */}
       <section className="border-t pt-12 mt-12">

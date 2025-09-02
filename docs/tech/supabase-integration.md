@@ -131,7 +131,7 @@ try {
 
 ### 文章 (posts)
 - `id`: UUID (主键)
-- `user_id`: 作者ID (外键)
+- `user_id`: 作者ID
 - `title`: 标题
 - `slug`: 别名 (唯一)
 - `content`: 内容
@@ -162,8 +162,8 @@ try {
 
 ### 评论 (comments)
 - `id`: UUID (主键)
-- `post_id`: 文章ID (外键)
-- `parent_id`: 父评论ID (外键，用于回复)
+- `post_id`: 文章ID
+- `parent_id`: 父评论ID (用于回复)
 - `author_name`: 作者姓名
 - `author_email`: 作者邮箱
 - `author_website`: 作者网站
@@ -175,7 +175,7 @@ try {
 
 ### 任务 (tasks)
 - `id`: UUID (主键)
-- `user_id`: 用户ID (外键)
+- `user_id`: 用户ID
 - `title`: 标题
 - `description`: 描述
 - `category`: 分类

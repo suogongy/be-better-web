@@ -7,7 +7,8 @@ import Image from '@tiptap/extension-image'
 import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
 import { Button } from '@/components/ui/button'
-import { Bold, Italic, Heading1, Heading2, List, Quote, Undo, Redo } from 'lucide-react'
+import { MediaLibrary } from '@/components/media/media-library'
+import { Bold, Italic, Heading1, Heading2, List, Quote, Undo, Redo, Image as ImageIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface BlogEditorProps {
@@ -137,6 +138,13 @@ export function BlogEditor({
           >
             <Quote className="h-4 w-4" />
           </MenuButton>
+          <MediaLibrary
+            onSelect={(media) => {
+              if (editor) {
+                editor.chain().focus().setImage({ src: media.url }).run()
+              }
+            }}
+          />
           <MenuButton
             onClick={() => editor.chain().focus().undo().run()}
             disabled={!editor.can().undo()}

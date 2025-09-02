@@ -92,7 +92,7 @@ CREATE TABLE users (
 ```sql
 CREATE TABLE posts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  user_id UUID,
   title VARCHAR(255) NOT NULL,
   slug VARCHAR(255) UNIQUE NOT NULL,
   content TEXT,
@@ -134,8 +134,8 @@ CREATE TABLE tags (
 #### 2.2.5 文章-分类连接表
 ```sql
 CREATE TABLE post_categories (
-  post_id UUID REFERENCES posts(id) ON DELETE CASCADE,
-  category_id UUID REFERENCES categories(id) ON DELETE CASCADE,
+  post_id UUID,
+  category_id UUID,
   PRIMARY KEY (post_id, category_id)
 );
 ```
@@ -143,8 +143,8 @@ CREATE TABLE post_categories (
 #### 2.2.6 文章-标签连接表
 ```sql
 CREATE TABLE post_tags (
-  post_id UUID REFERENCES posts(id) ON DELETE CASCADE,
-  tag_id UUID REFERENCES tags(id) ON DELETE CASCADE,
+  post_id UUID,
+  tag_id UUID,
   PRIMARY KEY (post_id, tag_id)
 );
 ```
@@ -153,8 +153,8 @@ CREATE TABLE post_tags (
 ```sql
 CREATE TABLE comments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  post_id UUID REFERENCES posts(id) ON DELETE CASCADE,
-  parent_id UUID REFERENCES comments(id) ON DELETE CASCADE,
+  post_id UUID,
+  parent_id UUID,
   author_name VARCHAR(100) NOT NULL,
   author_email VARCHAR(255) NOT NULL,
   author_website VARCHAR(255),
@@ -170,7 +170,7 @@ CREATE TABLE comments (
 ```sql
 CREATE TABLE tasks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  user_id UUID,
   title VARCHAR(255) NOT NULL,
   description TEXT,
   category VARCHAR(50),
@@ -194,7 +194,7 @@ CREATE TABLE tasks (
 ```sql
 CREATE TABLE daily_summaries (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  user_id UUID,
   summary_date DATE NOT NULL,
   total_tasks INTEGER DEFAULT 0,
   completed_tasks INTEGER DEFAULT 0,
@@ -209,7 +209,7 @@ CREATE TABLE daily_summaries (
   challenges JSONB,
   tomorrow_goals JSONB,
   auto_blog_generated BOOLEAN DEFAULT FALSE,
-  generated_post_id UUID REFERENCES posts(id),
+  generated_post_id UUID,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE(user_id, summary_date)

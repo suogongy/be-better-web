@@ -359,3 +359,4 @@ NODE_ENV=development
 ---
 
 This guide provides a comprehensive overview of the Be Better Web project for Claude AI assistants. The codebase follows modern React and Next.js best practices with a focus on type safety, performance, and user experience.
+- 用中文回复

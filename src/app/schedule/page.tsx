@@ -9,10 +9,11 @@ import { TaskForm } from '@/components/tasks/task-form'
 import { TaskStats } from '@/components/tasks/task-stats'
 import { TaskCalendar } from '@/components/tasks/task-calendar'
 import { TaskFilters } from '@/components/tasks/task-filters'
+import { TemplateSelector } from '@/components/tasks/template-selector'
 import { LoadingError } from '@/components/ui/loading-error'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Plus, CalendarIcon, BarChart3 } from 'lucide-react'
+import { Plus, CalendarIcon, BarChart3, LayoutTemplate } from 'lucide-react'
 import type { Task } from '@/types/database'
 
 interface TaskFilterOptions {
@@ -96,6 +97,38 @@ export default function SchedulePage() {
       addToast({
         title: '错误',
         description: '创建任务失败，请重试。',
+        variant: 'destructive',
+      })
+    }
+  }
+
+  const handleApplyTemplate = async (templateId: string, options?: {
+    startDate?: Date
+    offsetDays?: number
+    customizations?: Record<string, any>
+  }) => {
+    if (!user) return
+    
+    try {
+      const response = await fetch(`/api/templates/${templateId}/apply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(options || {}),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        addToast({
+          title: '成功',
+          description: `成功应用模板，创建了 ${data.tasks.length} 个任务。`,
+          variant: 'success',
+        })
+        loadData()
+      }
+    } catch (error) {
+      addToast({
+        title: '错误',
+        description: '应用模板失败，请重试。',
         variant: 'destructive',
       })
     }
@@ -232,6 +265,7 @@ export default function SchedulePage() {
               <Plus className="h-4 w-4 mr-2" />
               添加任务
             </Button>
+            <TemplateSelector onApplyTemplate={handleApplyTemplate} />
           </div>
         </div>
 

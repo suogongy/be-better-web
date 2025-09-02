@@ -410,3 +410,7 @@ export type PostCategoryUpdate = Database['public']['Tables']['post_categories']
 export type PostTag = Database['public']['Tables']['post_tags']['Row']
 export type PostTagInsert = Database['public']['Tables']['post_tags']['Insert']
 export type PostTagUpdate = Database['public']['Tables']['post_tags']['Update']
+
+export type Subscription = Database['public']['Tables']['subscriptions']['Row']
+export type SubscriptionInsert = Database['public']['Tables']['subscriptions']['Insert']
+export type SubscriptionUpdate = Database['public']['Tables']['subscriptions']['Update']

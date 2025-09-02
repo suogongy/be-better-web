@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
-import { Menu, X, Home, BookOpen, Calendar, User, LogOut, Settings, BarChart3, Target, Heart, Download, Brain } from 'lucide-react'
+import { Menu, X, Home, BookOpen, Calendar, User, LogOut, Settings, BarChart3, Target, Heart, Download, Brain, Zap } from 'lucide-react'
 import { useAuth } from '@/lib/auth/auth-context'
 import { Button } from '@/components/ui/button'
 import { ThemeToggleButton } from '@/components/ui/theme-toggle'
@@ -19,6 +19,7 @@ const authNavItems = [
   { href: '/blog', label: '博客', icon: BookOpen },
   { href: '/blog/admin', label: '博客管理', icon: Settings },
   { href: '/schedule', label: '日程安排', icon: Calendar },
+  { href: '/automation', label: '自动化', icon: Zap },
   { href: '/summary', label: '总结报告', icon: BarChart3 },
   { href: '/habits', label: '习惯跟踪', icon: Target },
   { href: '/mood', label: '心情记录', icon: Heart },
