@@ -22,7 +22,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 const categorySchema = z.object({
-  name: z.string().min(1, 'Name is required'),
+  name: z.string().min(1, '分类名称是必填的'),
   description: z.string().optional(),
 })
 
@@ -62,8 +62,8 @@ export function CategoryManager() {
       setCategories(data)
     } catch (error) {
       addToast({
-        title: 'Error',
-        description: 'Failed to load categories',
+        title: '错误',
+        description: '加载分类失败',
         variant: 'destructive',
       })
     } finally {
@@ -80,16 +80,16 @@ export function CategoryManager() {
     try {
       await categoryService.createCategory(data)
       addToast({
-        title: 'Success',
-        description: 'Category created successfully',
+        title: '成功',
+        description: '分类创建成功',
         variant: 'success',
       })
       reset()
       loadCategories()
     } catch (error) {
       addToast({
-        title: 'Error',
-        description: 'Failed to create category',
+        title: '错误',
+        description: '创建分类失败',
         variant: 'destructive',
       })
     } finally {
@@ -102,16 +102,16 @@ export function CategoryManager() {
     try {
       await categoryService.updateCategory(id, data)
       addToast({
-        title: 'Success',
-        description: 'Category updated successfully',
+        title: '成功',
+        description: '分类更新成功',
         variant: 'success',
       })
       setEditingId(null)
       loadCategories()
     } catch (error) {
       addToast({
-        title: 'Error',
-        description: 'Failed to update category',
+        title: '错误',
+        description: '更新分类失败',
         variant: 'destructive',
       })
     } finally {
@@ -120,20 +120,20 @@ export function CategoryManager() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this category?')) return
+    if (!confirm('确定要删除这个分类吗？')) return
 
     try {
       await categoryService.deleteCategory(id)
       addToast({
-        title: 'Success',
-        description: 'Category deleted successfully',
+        title: '成功',
+        description: '分类删除成功',
         variant: 'success',
       })
       loadCategories()
     } catch (error) {
       addToast({
-        title: 'Error',
-        description: 'Failed to delete category',
+        title: '错误',
+        description: '删除分类失败',
         variant: 'destructive',
       })
     }
@@ -167,17 +167,17 @@ export function CategoryManager() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Plus className="h-5 w-5" />
-            Create New Category
+            创建新分类
           </CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(handleCreate)} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Name</label>
+                <label className="block text-sm font-medium mb-2">分类名称</label>
                 <Input
                   {...register('name')}
-                  placeholder="Category name"
+                  placeholder="输入分类名称"
                   className={errors.name ? 'border-red-500' : ''}
                 />
                 {errors.name && (
@@ -188,16 +188,16 @@ export function CategoryManager() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Description</label>
+                              <label className="block text-sm font-medium mb-2">描述</label>
               <Textarea
                 {...register('description')}
-                placeholder="Optional description"
+                                  placeholder="可选描述信息"
                 rows={3}
               />
             </div>
 
             <Button type="submit" loading={isSubmitting}>
-              Create Category
+              创建分类
             </Button>
           </form>
         </CardContent>
@@ -206,11 +206,11 @@ export function CategoryManager() {
       {/* Categories List */}
       <Card>
         <CardHeader>
-          <CardTitle>Categories</CardTitle>
+                     <CardTitle>分类列表</CardTitle>
         </CardHeader>
         <CardContent>
           {categories.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">No categories found</p>
+            <p className="text-gray-500 text-center py-8">暂无分类</p>
           ) : (
             <div className="space-y-4">
               {categories.map((category) => (
@@ -234,9 +234,9 @@ export function CategoryManager() {
                         <div className="flex items-center gap-2 mb-2">
                           <h3 className="font-semibold">{category.name}</h3>
                           {category.post_count !== undefined && (
-                            <Badge variant="secondary">
-                              {category.post_count} posts
-                            </Badge>
+                                                         <Badge variant="secondary">
+                               {category.post_count} 篇文章
+                             </Badge>
                           )}
                         </div>
                         {category.description && (
@@ -294,7 +294,7 @@ function EditCategoryForm({
         <div>
           <Input
             {...register('name')}
-            placeholder="Category name"
+            placeholder="分类名称"
             className={errors.name ? 'border-red-500' : ''}
           />
         </div>
@@ -309,7 +309,7 @@ function EditCategoryForm({
       </div>
       <Textarea
         {...register('description')}
-        placeholder="Optional description"
+        placeholder="可选描述信息"
         rows={2}
       />
     </form>

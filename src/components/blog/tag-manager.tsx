@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 const tagSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
+  name: z.string().min(1, '标签名称是必填的'),
 })
 
 type TagFormData = z.infer<typeof tagSchema>
@@ -50,8 +50,8 @@ export function TagManager() {
       setTags(data)
     } catch (error) {
       addToast({
-        title: 'Error',
-        description: 'Failed to load tags',
+        title: '错误',
+        description: '加载标签失败',
         variant: 'destructive',
       })
     } finally {
@@ -68,16 +68,16 @@ export function TagManager() {
     try {
       await tagService.createTag(data)
       addToast({
-        title: 'Success',
-        description: 'Tag created successfully',
+        title: '成功',
+        description: '标签创建成功',
         variant: 'success',
       })
       reset()
       loadTags()
     } catch (error) {
       addToast({
-        title: 'Error',
-        description: 'Failed to create tag',
+        title: '错误',
+        description: '创建标签失败',
         variant: 'destructive',
       })
     } finally {
@@ -90,16 +90,16 @@ export function TagManager() {
     try {
       await tagService.updateTag(id, data)
       addToast({
-        title: 'Success',
-        description: 'Tag updated successfully',
+        title: '成功',
+        description: '标签更新成功',
         variant: 'success',
       })
       setEditingId(null)
       loadTags()
     } catch (error) {
       addToast({
-        title: 'Error',
-        description: 'Failed to update tag',
+        title: '错误',
+        description: '更新标签失败',
         variant: 'destructive',
       })
     } finally {
@@ -108,20 +108,20 @@ export function TagManager() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this tag?')) return
+    if (!confirm('确定要删除这个标签吗？')) return
 
     try {
       await tagService.deleteTag(id)
       addToast({
-        title: 'Success',
-        description: 'Tag deleted successfully',
+        title: '成功',
+        description: '标签删除成功',
         variant: 'success',
       })
       loadTags()
     } catch (error) {
       addToast({
-        title: 'Error',
-        description: 'Failed to delete tag',
+        title: '错误',
+        description: '删除标签失败',
         variant: 'destructive',
       })
     }
@@ -154,17 +154,17 @@ export function TagManager() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Plus className="h-5 w-5" />
-            Create New Tag
+            创建新标签
           </CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(handleCreate)} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Name</label>
+                <label className="block text-sm font-medium mb-2">标签名称</label>
                 <Input
                   {...register('name')}
-                  placeholder="Tag name"
+                  placeholder="输入标签名称"
                   className={errors.name ? 'border-red-500' : ''}
                 />
                 {errors.name && (
@@ -175,7 +175,7 @@ export function TagManager() {
             </div>
 
             <Button type="submit" loading={isSubmitting}>
-              Create Tag
+              创建标签
             </Button>
           </form>
         </CardContent>
@@ -186,12 +186,12 @@ export function TagManager() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Tag className="h-5 w-5" />
-            Tags
+            标签列表
           </CardTitle>
         </CardHeader>
         <CardContent>
           {tags.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">No tags found</p>
+            <p className="text-gray-500 text-center py-8">暂无标签</p>
           ) : (
             <div className="space-y-4">
               {tags.map((tag) => (
@@ -216,7 +216,7 @@ export function TagManager() {
                           <h3 className="font-semibold">{tag.name}</h3>
                           {tag.post_count !== undefined && (
                             <Badge variant="secondary">
-                              {tag.post_count} posts
+                              {tag.post_count} 篇文章
                             </Badge>
                           )}
                         </div>
@@ -249,7 +249,7 @@ export function TagManager() {
       {/* Tag Cloud Preview */}
       <Card>
         <CardHeader>
-          <CardTitle>Tag Cloud Preview</CardTitle>
+          <CardTitle>标签云预览</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
@@ -291,9 +291,9 @@ function EditTagForm({
     <form onSubmit={handleSubmit(onSave)} className="flex-1">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <Input
-            {...register('name')}
-            placeholder="Tag name"
+                      <Input
+              {...register('name')}
+              placeholder="标签名称"
             className={errors.name ? 'border-red-500' : ''}
           />
         </div>
