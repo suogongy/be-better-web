@@ -73,24 +73,44 @@ export const exportService = {
         throw new Error('导出正在处理中，无法重试')
       }
       
-      // 直接更新状态为pending，让系统重新处理
-      console.log('更新状态为pending')
-      const { error } = await supabase
+      // 清除之前的错误信息
+      const { error: clearError } = await supabase
         .from('data_exports')
         .update({ 
-          status: 'pending'
+          error_message: null,
+          updated_at: new Date().toISOString()
         })
         .eq('id', exportId)
       
-      if (error) {
-        console.error('更新状态失败:', error)
-        throw new DatabaseError('Failed to reset export status', error)
+      if (clearError) {
+        console.error('清除错误信息失败:', clearError)
+        throw new DatabaseError('Failed to clear error message', clearError)
       }
       
-      console.log('状态更新成功，导出将重新进入处理队列')
+      console.log('错误信息已清除，通过API重新处理导出')
       
-      // 注意：不调用processExport，让系统自动重新处理
-      // 或者如果有后台任务系统，可以触发一个重新处理的信号
+      // 获取当前用户的认证token
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        throw new Error('用户未认证，无法重试导出')
+      }
+      
+      // 通过API路由来执行重试，避免RLS权限问题
+      const response = await fetch('/api/exports/retry', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ exportId }),
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || '重试导出失败')
+      }
+      
+      console.log('导出重试请求已发送到API')
       
     } catch (error) {
       console.error('重试导出失败:', error)
@@ -257,15 +277,37 @@ export const exportService = {
 
       // Create blob and upload to Supabase Storage
       const blob = new Blob([formattedData], { type: mimeType })
-      const filePath = `exports/${exportRecord.user_id}/${fileName}`
+      
+      // 生成唯一的文件名，避免重试时的路径冲突
+      const timestamp = new Date().getTime()
+      const uniqueFileName = `${fileName}_${timestamp}`
+      const filePath = `exports/${exportRecord.user_id}/${uniqueFileName}`
+      
+      console.log('开始上传文件到路径:', filePath)
+      
+      // 先尝试删除可能存在的同名文件
+      try {
+        await supabase.storage
+          .from('exports')
+          .remove([filePath])
+      } catch (deleteError) {
+        // 忽略删除错误，文件可能不存在
+        console.log('删除旧文件时出错（可忽略）:', deleteError)
+      }
       
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('exports')
-        .upload(filePath, blob)
+        .upload(filePath, blob, {
+          upsert: true, // 如果文件存在则覆盖
+          cacheControl: '3600'
+        })
       
       if (uploadError) {
+        console.error('文件上传失败:', uploadError)
         throw new DatabaseError('Failed to upload export file', uploadError)
       }
+      
+      console.log('文件上传成功:', uploadData)
 
       // Get public URL
       // @ts-ignore
@@ -276,7 +318,7 @@ export const exportService = {
       // Update status to completed with file info
       const updateData: DataExportUpdate = {
         status: 'completed',
-        file_name: fileName,
+        file_name: uniqueFileName, // 使用唯一的文件名
         file_size: formattedData.length,
         // @ts-ignore
         file_url: urlData.publicUrl,

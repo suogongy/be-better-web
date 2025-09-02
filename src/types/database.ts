@@ -373,6 +373,48 @@ export interface Database {
           expires_at?: string
           completed_at?: string
           error_message?: string
+          updated_at?: string
+        }
+      }
+      subscriptions: {
+        Row: {
+          id: string
+          email: string
+          name?: string
+          status: 'active' | 'unsubscribed' | 'bounced'
+          preferences?: Record<string, unknown>
+          created_at: string
+          updated_at: string
+          unsubscribed_at?: string
+          last_email_sent_at?: string
+          confirmation_token?: string
+          confirmed_at?: string
+        }
+        Insert: {
+          id?: string
+          email: string
+          name?: string
+          status?: 'active' | 'unsubscribed' | 'bounced'
+          preferences?: Record<string, unknown>
+          created_at?: string
+          updated_at?: string
+          unsubscribed_at?: string
+          last_email_sent_at?: string
+          confirmation_token?: string
+          confirmed_at?: string
+        }
+        Update: {
+          id?: string
+          email?: string
+          name?: string
+          status?: 'active' | 'unsubscribed' | 'bounced'
+          preferences?: Record<string, unknown>
+          created_at?: string
+          updated_at?: string
+          unsubscribed_at?: string
+          last_email_sent_at?: string
+          confirmation_token?: string
+          confirmed_at?: string
         }
       }
     }
