@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Calendar, Clock, Eye, MessageCircle, ArrowLeft, Tag as TagIcon, FolderOpen } from 'lucide-react'
 import { BlogService } from '@/lib/supabase/services/blog-service'
 import { commentService } from '@/lib/supabase/services/index'
+import { postService } from '@/lib/supabase/services/post-service'
 import { createClient } from '@/lib/supabase/client'
 import { MarkdownPreview } from '@/components/editor/markdown-preview'
 import { CommentList } from '@/components/blog/comment-list'
@@ -39,31 +40,27 @@ export default function BlogPostPage() {
       try {
         setLoading(true)
         
-        // 获取文章详情
-        const result = await BlogService.getBlogList({
-          limit: 1,
-          // 这里需要添加按ID查询的功能
-        })
-
-        // 临时解决方案：从所有文章中找到匹配的
-        const allPostsResult = await BlogService.getBlogList({ limit: 1000 })
-        const foundPost = allPostsResult.data.find(p => p.id === postId)
-        
-        if (foundPost) {
-          // 获取完整的文章内容和评论计数
-          const supabase = createClient()
-          const [{ data: fullPost }, commentCount] = await Promise.all([
-            supabase
-              .from('posts')
-              .select('content')
-              .eq('id', postId)
-              .single(),
-            commentService.getCommentCount(postId)
-          ])
+        // 简单的防重复机制 - 使用全局标记
+        const viewKey = `post_viewed_${postId}`
+        if (typeof window !== 'undefined' && !window[viewKey]) {
+          // 标记为已访问
+          window[viewKey] = true
           
+          // 增加浏览量
+          await postService.incrementViewCount(postId)
+        }
+        
+        // 获取文章详情
+        const [postDetail, commentCount] = await Promise.all([
+          postService.getPost(postId),
+          commentService.getCommentCount(postId)
+        ])
+        
+        if (postDetail) {
           setPost({
-            ...foundPost,
-            content: fullPost?.content || foundPost.content || '',
+            ...postDetail,
+            categories: [],
+            tags: [],
             comment_count: commentCount
           })
         } else {
@@ -81,6 +78,7 @@ export default function BlogPostPage() {
       fetchPost()
     }
   }, [postId])
+
 
   const estimateReadingTime = (content: string): number => {
     const wordsPerMinute = 200

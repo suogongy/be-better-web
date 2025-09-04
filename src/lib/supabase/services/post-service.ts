@@ -631,10 +631,62 @@ export const postService = {
   },
 
   /**
-   * 增加文章浏览量
+   * 获取文章详情并增加浏览量（原子操作）
+   * @param id 文章ID
+   * @returns 文章详情或null
+   */
+  async getPostAndIncrementView(id: string): Promise<Post | null> {
+    try {
+      const supabase = getClient()
+      
+      // 使用 RPC 函数进行原子操作
+      const { data, error } = await supabase
+        .rpc('increment_post_view_count', { post_id: id })
+      
+      if (error) {
+        console.error('Failed to increment view count:', error)
+        // 如果 RPC 函数不存在，回退到普通查询
+        return await this.getPost(id)
+      }
+      
+      return data
+    } catch (error) {
+      console.error('Error in getPostAndIncrementView:', error)
+      return await this.getPost(id)
+    }
+  },
+
+  /**
+   * 增加文章浏览量（使用原子操作）
    * @param id 文章ID
    */
   async incrementViewCount(id: string): Promise<void> {
+    try {
+      const supabase = getClient()
+      
+      // 使用 RPC 函数进行原子更新
+      const { error } = await supabase.rpc('increment_post_view', {
+        post_id: id
+      })
+      
+      if (error) {
+        // 如果 RPC 函数不存在，回退到传统方法
+        console.warn('RPC function not found, falling back to traditional method:', error.message)
+        await this.incrementViewCountFallback(id)
+      }
+    } catch (error) {
+      console.error('Error in incrementViewCount:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        postId: id
+      })
+    }
+  },
+
+  /**
+   * 增加文章浏览量（传统方法，作为备用）
+   * @param id 文章ID
+   */
+  async incrementViewCountFallback(id: string): Promise<void> {
     try {
       const supabase = getClient()
       
@@ -660,7 +712,7 @@ export const postService = {
       const { error: updateError } = await supabase
         .from('posts')
         .update({ 
-          view_count:currentViewCount + 1
+          view_count: currentViewCount + 1
         })
         .eq('id', id)
         
@@ -671,10 +723,10 @@ export const postService = {
         })
       }
     } catch (error) {
-      console.error('Error in incrementViewCount:', {
+      console.error('Error in incrementViewCountFallback:', {
         error: error instanceof Error ? error.message : 'Unknown error',
         postId: id
       })
     }
-  }
+  },
 }
