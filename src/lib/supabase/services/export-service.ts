@@ -2,7 +2,6 @@ import { supabase } from '@/lib/supabase/client'
 import { DatabaseError } from './database-error'
 import type { DataExport, Post, Task, DailySummary } from '@/types/database'
 
-type DataExportRow = DataExport
 type DataExportInsert = {
   user_id: string
   export_type: string
@@ -375,61 +374,11 @@ export const exportService = {
     return { posts: posts || [], exportDate: new Date().toISOString() }
   },
 
-  async exportTasks(userId: string, startDate?: string, endDate?: string): Promise<{ tasks: Task[], exportDate: string }> {
-    // @ts-ignore
-    let query = supabase
-      .from('tasks')
-      .select('*')
-      .eq('user_id', userId)
-      
-    if (startDate) {
-      // @ts-ignore
-      query = query.gte('created_at', startDate)
-    }
-    
-    if (endDate) {
-      // @ts-ignore
-      query = query.lte('created_at', endDate)
-    }
-      
-    // @ts-ignore
-    query = query.order('created_at', { ascending: true })
 
-    // @ts-ignore
-    const { data: tasks } = await query
-
-    return { tasks: tasks || [], exportDate: new Date().toISOString() }
-  },
-
-  async exportSummaries(userId: string, startDate?: string, endDate?: string): Promise<{ summaries: DailySummary[], exportDate: string }> {
-    // @ts-ignore
-    let query = supabase
-      .from('daily_summaries')
-      .select('*')
-      .eq('user_id', userId)
-      
-    if (startDate) {
-      // @ts-ignore
-      query = query.gte('summary_date', startDate)
-    }
-    
-    if (endDate) {
-      // @ts-ignore
-      query = query.lte('summary_date', endDate)
-    }
-      
-    // @ts-ignore
-    query = query.order('summary_date', { ascending: true })
-
-    // @ts-ignore
-    const { data: summaries } = await query
-
-    return { summaries: summaries || [], exportDate: new Date().toISOString() }
-  },
 
   async exportHabits(userId: string, startDate?: string, endDate?: string): Promise<{ habits: any[], exportDate: string }> {
     // @ts-ignore
-    let query = supabase
+    const query = supabase
       .from('habits')
       .select('*')
       .eq('user_id', userId)
@@ -452,11 +401,52 @@ export const exportService = {
       habitLogs = logs || []
     }
 
-    return { 
-      habits: habits || [], 
-      habitLogs,
-      exportDate: new Date().toISOString() 
+    return { habits: habits || [], habitLogs, exportDate: new Date().toISOString() }
+  },
+
+  async exportTasks(userId: string, startDate?: string, endDate?: string): Promise<{ tasks: any[], exportDate: string }> {
+    // @ts-ignore
+    const query = supabase
+      .from('tasks')
+      .select(`
+        *,
+        task_templates (
+          name,
+          description
+        )
+      `)
+      .eq('user_id', userId)
+      
+    // @ts-ignore
+    const { data: tasks } = await query
+
+    return { tasks: tasks || [], exportDate: new Date().toISOString() }
+  },
+
+  async exportSummaries(userId: string, startDate?: string, endDate?: string): Promise<{ summaries: any[], exportDate: string }> {
+    // @ts-ignore
+    let query = supabase
+      .from('daily_summaries')
+      .select('*')
+      .eq('user_id', userId)
+      
+    if (startDate) {
+      // @ts-ignore
+      query = query.gte('summary_date', startDate)
     }
+    
+    if (endDate) {
+      // @ts-ignore
+      query = query.lte('summary_date', endDate)
+    }
+    
+    // @ts-ignore
+    query = query.order('summary_date', { ascending: true })
+
+    // @ts-ignore
+    const { data: summaries } = await query
+
+    return { summaries: summaries || [], exportDate: new Date().toISOString() }
   },
 
   async exportMoods(userId: string, startDate?: string, endDate?: string): Promise<{ moods: any[], exportDate: string }> {

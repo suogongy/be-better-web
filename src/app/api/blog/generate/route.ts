@@ -12,9 +12,13 @@ let openai: any = null;
 if (process.env.OPENAI_API_KEY) {
   // 动态导入以避免未使用时的错误
   try {
-    const OpenAI = require('openai');
-    openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
+    import('openai').then((module) => {
+      const OpenAI = module.default;
+      openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+    }).catch((error) => {
+      console.warn('OpenAI package not installed. AI features will be disabled.');
     });
   } catch (error) {
     console.warn('OpenAI package not installed. AI features will be disabled.');
@@ -52,22 +56,20 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const summaryId = searchParams.get('summaryId');
-    const templateId = searchParams.get('templateId') || undefined;
-    
+    const templateId = searchParams.get('templateId');
+
     if (!summaryId) {
-      return NextResponse.json(
-        { error: 'summaryId is required' }, 
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Summary ID is required' }, { status: 400 });
     }
-    
-    const preview = await blogService.previewBlog(summaryId, { templateId });
+
+    // @ts-ignore
+    const preview = await blogService.generateBlogFromSummary(summaryId, { templateId });
     
     return NextResponse.json(preview);
   } catch (error: any) {
     console.error('博客预览错误:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to preview blog' }, 
+      { error: error.message || 'Failed to generate preview' }, 
       { status: 500 }
     );
   }
