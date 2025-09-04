@@ -11,13 +11,14 @@ const supabase = createClient(
 let openai: any = null;
 if (process.env.OPENAI_API_KEY) {
   // 动态导入以避免未使用时的错误
-  import('openai').then(OpenAI => {
-    openai = new OpenAI.default({
+  try {
+    const OpenAI = require('openai');
+    openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
-  }).catch(() => {
+  } catch (error) {
     console.warn('OpenAI package not installed. AI features will be disabled.');
-  });
+  }
 }
 
 const blogService = new BlogGenerationService(supabase, openai);
@@ -30,41 +31,43 @@ export async function POST(request: NextRequest) {
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
+    
     const body = await request.json();
-    const { summaryId, templateId, includeTasks, includeStats, includeInsights, autoPublish } = body;
+    const { summaryId, options } = body;
+    
+    const result = await blogService.generateBlogFromSummary(summaryId, options);
+    
+    return NextResponse.json(result);
+  } catch (error: any) {
+    console.error('博客生成错误:', error);
+    return NextResponse.json(
+      { error: error.message || 'Failed to generate blog' }, 
+      { status: 500 }
+    );
+  }
+}
 
+// GET /api/blog/generate/preview - 预览博客
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const summaryId = searchParams.get('summaryId');
+    const templateId = searchParams.get('templateId') || undefined;
+    
     if (!summaryId) {
       return NextResponse.json(
-        { error: 'Summary ID is required' },
+        { error: 'summaryId is required' }, 
         { status: 400 }
       );
     }
-
-    // 验证总结属于当前用户
-    const { data: summary } = await supabase
-      .from('daily_summaries')
-      .select('user_id')
-      .eq('id', summaryId)
-      .single();
-
-    if (!summary || summary.user_id !== user.id) {
-      return NextResponse.json({ error: 'Summary not found' }, { status: 404 });
-    }
-
-    const post = await blogService.generateBlogFromSummary(summaryId, {
-      templateId,
-      includeTasks,
-      includeStats,
-      includeInsights,
-      autoPublish,
-    });
-
-    return NextResponse.json({ post });
-  } catch (error) {
-    console.error('Error generating blog:', error);
+    
+    const preview = await blogService.previewBlog(summaryId, { templateId });
+    
+    return NextResponse.json(preview);
+  } catch (error: any) {
+    console.error('博客预览错误:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to generate blog' },
+      { error: error.message || 'Failed to preview blog' }, 
       { status: 500 }
     );
   }

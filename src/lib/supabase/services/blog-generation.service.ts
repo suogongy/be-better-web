@@ -37,7 +37,10 @@ export class BlogGenerationService {
 
   constructor(supabase: any, openai?: any) {
     this.supabase = supabase;
-    this.openai = openai;
+    // 只有当openai有效且不是null时才设置
+    if (openai) {
+      this.openai = openai;
+    }
   }
 
   /**

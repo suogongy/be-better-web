@@ -41,26 +41,7 @@
 **新增文件：**
 - `src/app/rss.xml/route.ts` - RSS feed 生成 API
 
-### 3. 邮件订阅系统 ✅
-**新增文件：**
-- `src/components/newsletter/newsletter-subscription.tsx` - 订阅组件
-- `src/app/api/subscribe/route.ts` - 订阅 API
-- `scripts/subscription-table.sql` - 订阅表 SQL
-
-**功能特性：**
-- 支持姓名和邮箱订阅
-- 三种订阅类型：新文章通知、每周精选、月度总结
-- 邮箱验证机制
-- 取消订阅功能
-- 多种展示样式（默认、紧凑、内联）
-- 集成到首页
-
-**数据库设计：**
-- subscriptions 表存储订阅信息
-- 支持订阅偏好设置
-- RLS 安全策略
-
-### 4. 高级数据分析功能 ✅
+### 3. 高级数据分析功能 ✅
 **新增文件：**
 - `src/components/insights/advanced-analytics.tsx` - 高级分析组件
 - `src/components/ui/tabs.tsx` - Tabs 组件（已有）
@@ -78,7 +59,7 @@
 - 洞察页面新增基础/高级分析切换
 - 更丰富的数据展示
 
-### 5. 阅读时间估算 ✅
+### 4. 阅读时间估算 ✅
 **新增文件：**
 - `src/lib/utils/reading-time.ts` - 阅读时间计算工具
 - `src/components/ui/reading-time.tsx` - 阅读时间显示组件
@@ -93,12 +74,7 @@
 **集成位置：**
 - 文章详情页元数据区域
 
-
 ## 数据库更新
-
-### 新增表
-1. **subscriptions** - 邮件订阅表
-2. **media** - 媒体文件存储（Supabase Storage）
 
 ### 更新文件
 - `schema-final.sql` - 添加订阅表定义
@@ -108,7 +84,6 @@
 
 ### 新增组件
 1. MediaLibrary - 媒体库管理
-2. NewsletterSubscription - 邮件订阅
 3. AdvancedAnalytics - 高级数据分析
 4. ReadingTime - 阅读时间显示
 5. Dialog, Tabs, Badge - UI 基础组件
@@ -120,7 +95,6 @@
 ## API 端点
 
 ### 新增 API
-1. `/api/subscribe` - 邮件订阅管理
 2. `/rss.xml` - RSS feed 生成
 
 ## 总结
@@ -139,7 +113,6 @@
 - 从日程自动生成博客内容
 - 媒体库管理
 - 社交分享（多平台支持）
-- 邮件订阅系统
 - 高级数据分析
 - 阅读时间估算
 

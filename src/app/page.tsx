@@ -175,19 +175,7 @@ export default function Home() {
       </section>
 
       {/* Newsletter Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-800">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-              订阅博客更新
-            </h2>
-            <p className="text-lg text-gray-600 dark:text-gray-300">
-              获取最新的文章、生产力技巧和网站更新
-            </p>
-          </div>
-          <NewsletterSubscription />
-        </div>
-      </section>
+      {/* 已移除订阅功能 */}
     </div>
   )
 }

@@ -376,47 +376,50 @@ export interface Database {
           updated_at?: string
         }
       }
-      subscriptions: {
-        Row: {
-          id: string
-          email: string
-          name?: string
-          status: 'active' | 'unsubscribed' | 'bounced'
-          preferences?: Record<string, unknown>
-          created_at: string
-          updated_at: string
-          unsubscribed_at?: string
-          last_email_sent_at?: string
-          confirmation_token?: string
-          confirmed_at?: string
-        }
-        Insert: {
-          id?: string
-          email: string
-          name?: string
-          status?: 'active' | 'unsubscribed' | 'bounced'
-          preferences?: Record<string, unknown>
-          created_at?: string
-          updated_at?: string
-          unsubscribed_at?: string
-          last_email_sent_at?: string
-          confirmation_token?: string
-          confirmed_at?: string
-        }
-        Update: {
-          id?: string
-          email?: string
-          name?: string
-          status?: 'active' | 'unsubscribed' | 'bounced'
-          preferences?: Record<string, unknown>
-          created_at?: string
-          updated_at?: string
-          unsubscribed_at?: string
-          last_email_sent_at?: string
-          confirmation_token?: string
-          confirmed_at?: string
-        }
-      }
+      /*
+       * 已移除订阅功能，相关表定义已删除
+       * subscriptions: {
+       *   Row: {
+       *     id: string
+       *     email: string
+       *     name?: string
+       *     status: 'active' | 'unsubscribed' | 'bounced'
+       *     preferences?: Record<string, unknown>
+       *     created_at: string
+       *     updated_at: string
+       *     unsubscribed_at?: string
+       *     last_email_sent_at?: string
+       *     confirmation_token?: string
+       *     confirmed_at?: string
+       *   }
+       *   Insert: {
+       *     id?: string
+       *     email: string
+       *     name?: string
+       *     status?: 'active' | 'unsubscribed' | 'bounced'
+       *     preferences?: Record<string, unknown>
+       *     created_at?: string
+       *     updated_at?: string
+       *     unsubscribed_at?: string
+       *     last_email_sent_at?: string
+       *     confirmation_token?: string
+       *     confirmed_at?: string
+       *   }
+       *   Update: {
+       *     id?: string
+       *     email?: string
+       *     name?: string
+       *     status?: 'active' | 'unsubscribed' | 'bounced'
+       *     preferences?: Record<string, unknown>
+       *     created_at?: string
+       *     updated_at?: string
+       *     unsubscribed_at?: string
+       *     last_email_sent_at?: string
+       *     confirmation_token?: string
+       *     confirmed_at?: string
+       *   }
+       * }
+       */
     }
   }
 }
@@ -462,6 +465,9 @@ export type PostTag = Database['public']['Tables']['post_tags']['Row']
 export type PostTagInsert = Database['public']['Tables']['post_tags']['Insert']
 export type PostTagUpdate = Database['public']['Tables']['post_tags']['Update']
 
-export type Subscription = Database['public']['Tables']['subscriptions']['Row']
-export type SubscriptionInsert = Database['public']['Tables']['subscriptions']['Insert']
-export type SubscriptionUpdate = Database['public']['Tables']['subscriptions']['Update']
+/*
+ * 已移除订阅功能，相关类型定义已删除
+ * export type Subscription = Database['public']['Tables']['subscriptions']['Row']
+ * export type SubscriptionInsert = Database['public']['Tables']['subscriptions']['Insert']
+ * export type SubscriptionUpdate = Database['public']['Tables']['subscriptions']['Update']
+ */

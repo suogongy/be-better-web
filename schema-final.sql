@@ -251,24 +251,10 @@ INSERT INTO public.tags (name, slug) VALUES
 ON CONFLICT (slug) DO NOTHING;
 
 -- Newsletter subscriptions table
-CREATE TABLE IF NOT EXISTS public.subscriptions (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  email VARCHAR(255) NOT NULL UNIQUE,
-  name VARCHAR(100),
-  status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'unsubscribed', 'bounced')),
-  preferences JSONB DEFAULT '{"new_posts": true, "weekly_digest": true, "monthly_summary": true}',
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  unsubscribed_at TIMESTAMP WITH TIME ZONE,
-  last_email_sent_at TIMESTAMP WITH TIME ZONE,
-  confirmation_token VARCHAR(255),
-  confirmed_at TIMESTAMP WITH TIME ZONE
-);
+-- 已移除订阅功能，相关表定义已删除
 
 -- Indexes for subscriptions
-CREATE INDEX IF NOT EXISTS idx_subscriptions_email ON public.subscriptions(email);
-CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON public.subscriptions(status);
-CREATE INDEX IF NOT EXISTS idx_subscriptions_created_at ON public.subscriptions(created_at);
+-- 已移除订阅功能，相关索引已删除
 
 -- Row Level Security (RLS) Policies for Be Better Web
 -- This section contains all RLS policies to secure data access
@@ -288,7 +274,6 @@ ALTER TABLE public.habit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mood_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.data_exports ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.productivity_insights ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
 
 -- Users policies (no auth.users dependency)
 CREATE POLICY "Users can view their own profile" ON public.users
@@ -449,17 +434,7 @@ CREATE POLICY "Anyone can delete insights" ON public.productivity_insights
   FOR DELETE USING (true);
 
 -- Subscriptions policies
-CREATE POLICY "Anyone can subscribe" ON public.subscriptions
-  FOR INSERT WITH CHECK (true);
-
-CREATE POLICY "Anyone can view subscriptions" ON public.subscriptions
-  FOR SELECT USING (true);
-
-CREATE POLICY "Anyone can update subscriptions" ON public.subscriptions
-  FOR UPDATE USING (true);
-
-CREATE POLICY "Anyone can delete subscriptions" ON public.subscriptions
-  FOR DELETE USING (true);
+-- 已移除订阅功能，相关策略已删除
 
 -- Simplified RLS policies - no triggers or functions
 -- Database only handles data storage, all logic in application code
