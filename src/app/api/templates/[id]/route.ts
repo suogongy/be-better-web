@@ -12,7 +12,7 @@ const taskTemplateService = new TaskTemplateService(supabase);
 // POST /api/templates/[id]/apply - 应用任务模板
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -24,7 +24,8 @@ export async function POST(
     const body = await request.json();
     const { startDate, offsetDays, adjustTimes, preserveDependencies, customizations } = body;
 
-    const tasks = await taskTemplateService.applyTemplate(user.id, params.id, {
+    const { id } = await params;
+    const tasks = await taskTemplateService.applyTemplate(user.id, id, {
       startDate: startDate ? new Date(startDate) : undefined,
       offsetDays,
       adjustTimes,
@@ -45,7 +46,7 @@ export async function POST(
 // GET /api/templates/[id]/preview - 预览模板应用
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -57,9 +58,10 @@ export async function GET(
     const { searchParams } = new URL(request.url);
     const previewDate = searchParams.get('date') || new Date().toISOString();
 
+    const { id } = await params;
     const previewTasks = await taskTemplateService.previewTemplate(
       user.id,
-      params.id,
+      id,
       new Date(previewDate)
     );
 

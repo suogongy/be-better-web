@@ -14,10 +14,10 @@ import { ReadingTime } from '@/components/ui/reading-time'
 import { calculateReadingTime } from '@/lib/utils/reading-time'
 
 interface BlogPostPageProps {
-  params: {
+  params: Promise<{
     userId: string
     blogId: string
-  }
+  }>
 }
 
 // 生成SEO元数据

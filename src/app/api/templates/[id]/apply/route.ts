@@ -10,7 +10,7 @@ const supabase = createClient(
 // POST /api/templates/[id]/apply - 应用任务模板
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // 验证用户身份
@@ -20,7 +20,8 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const templateId = params.id;
+    const { id } = await params;
+    const templateId = id;
     const body = await request.json();
     const { startDate, preserveDependencies = true, customizations = {} } = body;
 

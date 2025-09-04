@@ -9,8 +9,11 @@ const supabase = createClient(
 
 const recurringTaskService = new RecurringTaskService(supabase);
 
-// POST /api/tasks/recurring/generate - 手动生成重复任务实例
-export async function POST(request: NextRequest) {
+// GET /api/tasks/recurring/instances/[taskId] - 获取任务的重复实例
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ taskId: string }> }
+) {
   try {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
@@ -18,24 +21,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { taskId, endDate, maxInstances } = body;
-
-    if (!taskId) {
-      return NextResponse.json({ error: 'Task ID is required' }, { status: 400 });
-    }
-
-    const instances = await recurringTaskService.generateRecurringInstances(
-      taskId,
-      new Date(endDate || Date.now() + 30 * 24 * 60 * 60 * 1000),
-      maxInstances || 30
-    );
-
+    const { taskId } = await params;
+    const instances = await recurringTaskService.getTaskInstances(taskId);
+    
     return NextResponse.json({ instances });
   } catch (error) {
-    console.error('Error generating recurring instances:', error);
+    console.error('Error fetching task instances:', error);
     return NextResponse.json(
-      { error: 'Failed to generate recurring instances' },
+      { error: 'Failed to fetch task instances' },
       { status: 500 }
     );
   }
