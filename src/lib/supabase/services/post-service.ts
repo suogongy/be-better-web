@@ -290,44 +290,43 @@ export const postService = {
     try {
       const supabase = getClient()
       
-      // 使用 RPC 调用直接增加浏览量，避免竞态条件
-      const { error } = await supabase.rpc('increment_post_view_count', { 
-        post_id: id 
-      })
+      // 先获取当前浏览量
+      const { data: post, error: fetchError } = await supabase
+        .from('posts')
+        .select('view_count')
+        .eq('id', id)
+        .single()
       
-      if (error) {
-        // 如果 RPC 不存在，回退到原始方法
-        console.warn('RPC increment_post_view_count not found, falling back to manual update')
+      if (fetchError) {
+        console.error('Failed to fetch post for view count increment:', {
+          error: fetchError.message || fetchError,
+          postId: id
+        })
+        return
+      }
+      
+      // 计算新的浏览量
+      const currentViewCount = post?.view_count || 0
+      
+      // 更新浏览量
+      const { error: updateError } = await supabase
+        .from('posts')
+        .update({ 
+          view_count:currentViewCount + 1
+        })
+        .eq('id', id)
         
-        // 先获取当前浏览量
-        const { data: post, error: fetchError } = await supabase
-          .from('posts')
-          .select('view_count')
-          .eq('id', id)
-          .single()
-        
-        if (fetchError) {
-          throw new DatabaseError('Failed to fetch post for view count increment', fetchError)
-        }
-        
-        // 更新浏览量，处理 null/undefined 情况
-        const currentViewCount = (post as { view_count?: number | null }).view_count || 0
-        const { error: updateError } = await supabase
-          .from('posts')
-          .update({ 
-            view_count: currentViewCount + 1
-          })
-          .eq('id', id)
-          
-        if (updateError) {
-          throw new DatabaseError('Failed to increment view count', updateError)
-        }
+      if (updateError) {
+        console.error('Failed to increment view count:', {
+          error: updateError.message || updateError,
+          postId: id
+        })
       }
     } catch (error) {
-      if (error instanceof DatabaseError) {
-        throw error
-      }
-      throw new DatabaseError('Failed to increment view count', error as Error)
+      console.error('Error in incrementViewCount:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        postId: id
+      })
     }
   }
 }

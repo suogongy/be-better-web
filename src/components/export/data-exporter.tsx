@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { ExportRetryTest } from './export-retry-test'
 
 import type { DataExport, ExportOptions } from '@/types/advanced'
+import { supabase } from '@/lib/supabase/client'
 
 const exportTypes = [
   { 
@@ -93,22 +94,24 @@ export function DataExporter() {
     
     try {
       setLoading(true)
-      const data = await exportService.getExports(user.id)
-      setExports(data || [])
+      const exports = await exportService.getExports(user.id)
+      // 添加类型断言来修复类型不匹配问题
+      setExports(exports as DataExport[])
       
       // Check if there are any pending or processing exports
-      const hasActiveExports = data?.some(exp => exp.status === 'pending' || exp.status === 'processing')
+      const hasActiveExports = exports?.some(exp => exp.status === 'pending' || exp.status === 'processing')
       
       if (hasActiveExports) {
+        // Start polling for updates
         startPolling()
       } else {
         stopPolling()
       }
     } catch (error) {
-      console.error('加载导出历史失败:', error)
+      console.error('加载导出列表失败:', error)
       addToast({
         title: '错误',
-        description: '加载导出历史失败',
+        description: '加载导出列表失败',
         variant: 'destructive',
       })
     } finally {
@@ -170,16 +173,32 @@ export function DataExporter() {
     try {
       setCreating(true)
       
-      const options: ExportOptions = {
-        type: selectedType,
-        format: selectedFormat,
-        dateRange: {
-          start: startDate,
-          end: endDate
-        }
+      // 获取用户的认证token
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        throw new Error('用户未认证，无法创建导出')
       }
       
-      await exportService.createExport(user.id, options)
+      const response = await fetch('/api/exports/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          exportType: selectedType,
+          format: selectedFormat,
+          dateRangeStart: startDate,
+          dateRangeEnd: endDate
+        }),
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || '创建导出失败')
+      }
+      
+      const result = await response.json()
       
       addToast({
         title: '导出已开始',

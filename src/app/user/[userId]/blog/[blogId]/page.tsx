@@ -89,7 +89,6 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     notFound()
   }
 
-  // 增加浏览量
   try {
     await postService.incrementViewCount(post.id)
   } catch (error) {

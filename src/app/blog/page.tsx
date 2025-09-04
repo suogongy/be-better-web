@@ -69,7 +69,7 @@ export default function BlogPage() {
       setLoading(true)
       // @ts-expect-error
       const postsData = await postService.getPosts({
-        page: currentPagea,
+        page: currentPage,
         limit: POSTS_PER_PAGE,
         search: searchTerm || undefined,
         categoryId: selectedCategory || undefined,
