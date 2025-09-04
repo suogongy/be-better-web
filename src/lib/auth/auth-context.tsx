@@ -103,12 +103,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('🔍 开始认证检查...')
       
-      // 首先尝试从本地存储获取状态
-      const cachedUser = authStorage.getAuthState()
+      // 添加超时保护
+      const loadingTimeout = setTimeout(() => {
+        if (loading) {
+          console.warn('⚠️ 认证检查超时，强制设置 loading 为 false')
+          setLoading(false)
+          authCheckRef.current = false
+        }
+      }, 5000) // 5秒超时
+      
+      // 在客户端才检查本地存储
+      let cachedUser = null
+      if (typeof window !== 'undefined') {
+        cachedUser = authStorage.getAuthState()
+      }
+      
       if (cachedUser && !user) {
         console.log('📱 从缓存恢复用户状态')
         setUser(cachedUser as User)
         setLoading(false)
+        clearTimeout(loadingTimeout)
+        authCheckRef.current = false
         // 异步验证状态
         validateAuthState()
         return
@@ -117,14 +132,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // 使用getUser方法检查认证状态
       const { data: userData, error: userError } = await supabase.auth.getUser()
       
-      if (!mountedRef.current) return
+      if (!mountedRef.current) {
+        clearTimeout(loadingTimeout)
+        return
+      }
       
       if (userError) {
+        clearTimeout(loadingTimeout)
         console.warn('⚠️ 认证检查失败:', getErrorMessage(userError))
         setError(`认证检查失败: ${getErrorMessage(userError)}`)
         setUser(null)
         authStorage.clearAuthState()
       } else if (userData?.user) {
+        clearTimeout(loadingTimeout)
         console.log('✅ 认证检查成功')
         const mappedUser = mapSupabaseUserToUser(userData.user)
         setUser(mappedUser)
@@ -138,19 +158,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.warn('⚠️ 用户资料同步失败:', profileError)
         })
       } else {
+        clearTimeout(loadingTimeout)
         console.log('ℹ️ 用户未登录')
         setUser(null)
         setError(null)
         authStorage.clearAuthState()
       }
     } catch (error: unknown) {
-      if (!mountedRef.current) return
+      if (!mountedRef.current) {
+        clearTimeout(loadingTimeout)
+        return
+      }
       
+      clearTimeout(loadingTimeout)
       console.error('❌ 认证检查异常:', error)
       setError(`认证检查失败: ${getErrorMessage(error) || '未知错误'}`)
       setUser(null)
       authStorage.clearAuthState()
     } finally {
+      clearTimeout(loadingTimeout)
       if (mountedRef.current) {
         setLoading(false)
         console.log('✅ 认证检查完成')
@@ -194,8 +220,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return
     }
 
-    // 执行认证检查
-    checkAuth()
+    // 延迟执行认证检查，避免阻塞页面渲染
+    const authCheckDelay = setTimeout(() => {
+      checkAuth()
+    }, 100)
 
     // 监听认证状态变化
     const {
@@ -203,7 +231,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange(async (event: string, session: Session | null) => {
       console.log('🔄 认证状态变更:', event, session?.user?.id ? `用户: ${session.user.id.substring(0, 8)}...` : '无用户')
       
-      if (!mountedRef.current) return
+      if (!mountedRef.current) {
+        clearTimeout(loadingTimeout)
+        return
+      }
       
       if (session?.user) {
         try {
@@ -230,6 +261,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       mountedRef.current = false
       authCheckRef.current = false
+      clearTimeout(authCheckDelay)
       if (subscription) {
         subscription.unsubscribe()
       }

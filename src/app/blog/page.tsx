@@ -144,6 +144,16 @@ export default function BlogPage() {
   useEffect(() => {
     loadPosts()
     loadCategoriesAndTags()
+    
+    // 添加超时保护，确保 loading 状态不会一直为 true
+    const timeout = setTimeout(() => {
+      if (loading) {
+        console.warn('博客页面加载超时，强制设置 loading 为 false')
+        setLoading(false)
+      }
+    }, 10000) // 10秒超时
+    
+    return () => clearTimeout(timeout)
   }, [currentPage, searchTerm, selectedCategory, selectedTag])
 
   const handleSearch = (e: React.FormEvent) => {
