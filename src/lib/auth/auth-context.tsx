@@ -6,7 +6,6 @@ import { userService } from '@/lib/supabase/services/index'
 import { User } from '@/types/database'
 import { AuthError, Session, User as SupabaseUser } from '@supabase/supabase-js'
 import { getErrorMessage, isNetworkError } from '@/lib/utils/error-handler'
-import { authStorage } from './auth-storage'
 
 interface AuthContextType {
   user: User | null
@@ -34,7 +33,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null)
   const supabase = createClient()
   const mountedRef = useRef(false)
-  const authCheckRef = useRef(false)
 
   // 将Supabase User转换为我们的User类型
   const mapSupabaseUserToUser = (supabaseUser: SupabaseUser): User => {
@@ -95,183 +93,102 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  // 简化的认证检查
-  const checkAuth = async () => {
-    if (authCheckRef.current) return
-    authCheckRef.current = true
+  // 初始化认证状态
+  const initializeAuth = async () => {
+    if (!mountedRef.current) return
     
     try {
-      console.log('🔍 开始认证检查...')
+      // 获取当前会话
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
       
-      // 添加超时保护
-      const loadingTimeout = setTimeout(() => {
-        if (loading) {
-          console.warn('⚠️ 认证检查超时，强制设置 loading 为 false')
-          setLoading(false)
-          authCheckRef.current = false
-        }
-      }, 5000) // 5秒超时
-      
-      // 在客户端才检查本地存储
-      let cachedUser = null
-      if (typeof window !== 'undefined') {
-        cachedUser = authStorage.getAuthState()
-      }
-      
-      if (cachedUser && !user) {
-        console.log('📱 从缓存恢复用户状态')
-        setUser(cachedUser as User)
+      if (sessionError) {
+        console.warn('获取会话失败:', sessionError.message)
         setLoading(false)
-        clearTimeout(loadingTimeout)
-        authCheckRef.current = false
-        // 异步验证状态
-        validateAuthState()
         return
       }
-      
-      // 使用getUser方法检查认证状态
-      const { data: userData, error: userError } = await supabase.auth.getUser()
-      
-      if (!mountedRef.current) {
-        clearTimeout(loadingTimeout)
-        return
+
+      if (session?.user) {
+        try {
+          // 确保用户资料存在
+          await ensureUserProfile(session.user)
+          const mappedUser = mapSupabaseUserToUser(session.user)
+          setUser(mappedUser)
+        } catch (profileError) {
+          console.error('用户资料同步失败:', profileError)
+          // 即使资料同步失败，也设置基本用户信息
+          const mappedUser = mapSupabaseUserToUser(session.user)
+          setUser(mappedUser)
+        }
       }
-      
-      if (userError) {
-        clearTimeout(loadingTimeout)
-        console.warn('⚠️ 认证检查失败:', getErrorMessage(userError))
-        setError(`认证检查失败: ${getErrorMessage(userError)}`)
-        setUser(null)
-        authStorage.clearAuthState()
-      } else if (userData?.user) {
-        clearTimeout(loadingTimeout)
-        console.log('✅ 认证检查成功')
-        const mappedUser = mapSupabaseUserToUser(userData.user)
-        setUser(mappedUser)
-        setError(null)
-        
-        // 保存到本地存储
-        authStorage.saveAuthState(mappedUser)
-        
-        // 异步确保用户资料存在
-        ensureUserProfile(userData.user).catch((profileError) => {
-          console.warn('⚠️ 用户资料同步失败:', profileError)
-        })
-      } else {
-        clearTimeout(loadingTimeout)
-        console.log('ℹ️ 用户未登录')
-        setUser(null)
-        setError(null)
-        authStorage.clearAuthState()
-      }
-    } catch (error: unknown) {
-      if (!mountedRef.current) {
-        clearTimeout(loadingTimeout)
-        return
-      }
-      
-      clearTimeout(loadingTimeout)
-      console.error('❌ 认证检查异常:', error)
-      setError(`认证检查失败: ${getErrorMessage(error) || '未知错误'}`)
-      setUser(null)
-      authStorage.clearAuthState()
+    } catch (error) {
+      console.error('认证初始化异常:', error)
+      // 不设置错误状态，允许用户以访客身份浏览
     } finally {
-      clearTimeout(loadingTimeout)
       if (mountedRef.current) {
         setLoading(false)
-        console.log('✅ 认证检查完成')
       }
-    }
-  }
-
-  // 验证认证状态
-  const validateAuthState = async () => {
-    try {
-      const { data: userData, error: userError } = await supabase.auth.getUser()
-      
-      if (userError || !userData?.user) {
-        console.log('❌ 缓存状态无效，清除缓存')
-        setUser(null)
-        authStorage.clearAuthState()
-        return
-      }
-      
-      console.log('✅ 缓存状态有效')
-    } catch (error) {
-      console.error('验证认证状态失败:', error)
-      setUser(null)
-      authStorage.clearAuthState()
     }
   }
 
   useEffect(() => {
     mountedRef.current = true
 
+    // 在服务端不执行认证检查
     if (typeof window === 'undefined') {
-      console.log('在服务端环境中，跳过认证检查')
       setLoading(false)
       return
     }
 
     if (!supabase) {
-      console.error('❌ Supabase 客户端不可用')
+      console.error('Supabase 客户端不可用')
       setLoading(false)
-      setError('Supabase 客户端初始化失败')
       return
     }
 
-    // 延迟执行认证检查，避免阻塞页面渲染
-    const authCheckDelay = setTimeout(() => {
-      checkAuth()
-    }, 100)
+    // 初始化认证状态
+    initializeAuth()
 
     // 监听认证状态变化
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event: string, session: Session | null) => {
-      console.log('🔄 认证状态变更:', event, session?.user?.id ? `用户: ${session.user.id.substring(0, 8)}...` : '无用户')
-      
-      if (!mountedRef.current) {
-        clearTimeout(loadingTimeout)
-        return
-      }
-      
-      if (session?.user) {
-        try {
-          await ensureUserProfile(session.user)
-          const mappedUser = mapSupabaseUserToUser(session.user)
-          setUser(mappedUser)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (!mountedRef.current) return
+        
+        console.log('认证状态变化:', event)
+        
+        if (event === 'SIGNED_IN' && session?.user) {
+          try {
+            await ensureUserProfile(session.user)
+            const mappedUser = mapSupabaseUserToUser(session.user)
+            setUser(mappedUser)
+            setError(null)
+          } catch (error) {
+            console.error('用户资料同步失败:', error)
+            // 即使资料同步失败，也设置基本用户信息
+            const mappedUser = mapSupabaseUserToUser(session.user)
+            setUser(mappedUser)
+          }
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null)
           setError(null)
-          
-          // 保存到本地存储
-          authStorage.saveAuthState(mappedUser)
-        } catch (error) {
-          console.error('❌ 用户资料同步失败:', error)
-          setError('用户资料同步失败')
+        } else if (event === 'TOKEN_REFRESHED') {
+          if (session?.user) {
+            const mappedUser = mapSupabaseUserToUser(session.user)
+            setUser(mappedUser)
+          }
         }
-      } else {
-        setUser(null)
-        setError(null)
-        authStorage.clearAuthState()
       }
-      
-      setLoading(false)
-    })
+    )
 
     return () => {
       mountedRef.current = false
-      authCheckRef.current = false
-      clearTimeout(authCheckDelay)
-      if (subscription) {
-        subscription.unsubscribe()
-      }
+      subscription?.unsubscribe()
     }
   }, [supabase])
 
   const signIn = async (email: string, password: string) => {
     try {
-      console.log(`🔐 尝试登录用户: ${email}`)
       setError(null)
+      setLoading(true)
 
       const { error } = await supabase.auth.signInWithPassword({
         email,
@@ -279,14 +196,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
 
       if (error) {
-        console.error(`❌ 登录失败: ${getErrorMessage(error)}`)
+        setError(error.message)
         return { error }
       }
 
-      console.log(`✅ 登录请求成功`)
       return { error: null }
     } catch (error: unknown) {
-      console.error('❌ 登录过程出错:', error)
+      console.error('登录过程出错:', error)
 
       if (isNetworkError(error)) {
         const networkError = { message: '无法连接到认证服务，请检查网络连接。' } as AuthError
@@ -297,17 +213,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const authError = (error instanceof Error ? error : new Error('登录过程中发生未知错误')) as AuthError
       setError(authError.message || '登录过程中发生未知错误')
       return { error: authError }
+    } finally {
+      setLoading(false)
     }
   }
 
   const signUp = async (email: string, password: string, metadata?: { name?: string }) => {
-    if (!supabase) {
-      return { error: { message: 'Supabase client is not available.' } as AuthError }
-    }
-    
     try {
-      setLoading(true)
       setError(null)
+      setLoading(true)
+
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -315,60 +230,83 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           data: metadata
         }
       })
-      return { error }
-    } catch (error: unknown) {
-      console.error('SignUp error:', error)
-      if (isNetworkError(error)) {
-        return { error: { message: '无法连接到认证服务，请检查网络连接。' } as AuthError }
+
+      if (error) {
+        setError(error.message)
+        return { error }
       }
-      return { error: error as AuthError }
+
+      return { error: null }
+    } catch (error: unknown) {
+      console.error('注册过程出错:', error)
+
+      const authError = (error instanceof Error ? error : new Error('注册过程中发生未知错误')) as AuthError
+      setError(authError.message || '注册过程中发生未知错误')
+      return { error: authError }
     } finally {
       setLoading(false)
     }
   }
 
   const signOut = async () => {
-    if (!supabase) {
-      return { error: { message: 'Supabase client is not available.' } as AuthError }
-    }
-    
     try {
       setLoading(true)
       setError(null)
+      
       const { error } = await supabase.auth.signOut()
       
-      if (!error) {
-        // 清除本地存储
-        authStorage.clearAuthState()
+      setUser(null)
+      
+      if (error) {
+        setError(error.message)
+        return { error }
+      }
+
+      return { error: null }
+    } catch (error: unknown) {
+      console.error('退出登录出错:', error)
+      setUser(null)
+      
+      if (isNetworkError(error)) {
+        const networkError = { message: '无法连接到认证服务，请检查网络连接。' } as AuthError
+        setError(networkError.message)
+        return { error: networkError }
       }
       
-      return { error }
-    } catch (error: unknown) {
-      console.error('SignOut error:', error)
-      if (isNetworkError(error)) {
-        return { error: { message: '无法连接到认证服务，请检查网络连接。' } as AuthError }
-      }
-      return { error: error as AuthError }
+      const authError = (error instanceof Error ? error : new Error('退出登录过程中发生未知错误')) as AuthError
+      setError(authError.message || '退出登录过程中发生未知错误')
+      return { error: authError }
     } finally {
       setLoading(false)
     }
   }
 
   const resetPassword = async (email: string) => {
-    if (!supabase) {
-      return { error: { message: 'Supabase client is not available.' } as AuthError }
-    }
-    
     try {
       setError(null)
-      const { error } = await supabase.auth.resetPasswordForEmail(email)
-      return { error }
-    } catch (error: unknown) {
-      console.error('Reset password error:', error)
-      if (isNetworkError(error)) {
-        return { error: { message: '无法连接到认证服务，请检查网络连接。' } as AuthError }
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`
+      })
+      
+      if (error) {
+        setError(error.message)
+        return { error }
       }
-      return { error: error as AuthError }
+
+      return { error: null }
+    } catch (error: unknown) {
+      console.error('重置密码出错:', error)
+
+      if (isNetworkError(error)) {
+        const networkError = { message: '无法连接到认证服务，请检查网络连接。' } as AuthError
+        setError(networkError.message)
+        return { error: networkError }
+      }
+
+      const authError = (error instanceof Error ? error : new Error('重置密码过程中发生未知错误')) as AuthError
+      setError(authError.message || '重置密码过程中发生未知错误')
+      return { error: authError }
     }
   }
 

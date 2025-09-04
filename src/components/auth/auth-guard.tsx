@@ -23,16 +23,15 @@ export function AuthGuard({
   fallback,
   redirectTo = '/auth/login' 
 }: AuthGuardProps) {
-  const { user, loading } = useAuth()
+  const { user, loading, error } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
-
-    // 如果加载完成且用户未登录，重定向到登录页面
-    if (!loading && !user) {
+    // 只在没有加载状态且确定用户未登录时重定向
+    if (!loading && !user && !isCriticalError(error)) {
       router.push(redirectTo)
     }
-  }, [user, loading, router, redirectTo])
+  }, [user, loading, error, router, redirectTo])
 
   // 如果正在加载，显示加载状态
   if (loading) {
@@ -41,6 +40,33 @@ export function AuthGuard({
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
           <p className="text-sm text-muted-foreground">正在验证登录状态...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // 如果有关键错误，显示错误信息
+  if (error && isCriticalError(error)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
+        <div className="max-w-md w-full">
+          <Alert variant="destructive">
+            <Shield className="h-4 w-4" />
+            <AlertDescription>
+              <div className="text-center">
+                <h3 className="text-lg font-semibold mb-2">服务错误</h3>
+                <p className="text-sm mb-4">{error}</p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full"
+                  onClick={() => window.location.reload()}
+                >
+                  刷新页面
+                </Button>
+              </div>
+            </AlertDescription>
+          </Alert>
         </div>
       </div>
     )
@@ -81,6 +107,25 @@ export function AuthGuard({
 
   // 用户已登录，显示受保护的内容
   return <>{children}</>
+}
+
+/**
+ * 判断是否为关键错误
+ */
+function isCriticalError(error: string | null): boolean {
+  if (!error) return false
+  
+  const criticalErrors = [
+    'Supabase client is not available',
+    '无法连接到认证服务',
+    '网络错误',
+    '配置错误',
+    '初始化失败'
+  ]
+  
+  return criticalErrors.some(criticalError => 
+    error.toLowerCase().includes(criticalError.toLowerCase())
+  )
 }
 
 /**

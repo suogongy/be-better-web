@@ -3,7 +3,7 @@
 import { useAuth } from '@/lib/auth/auth-context'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { Loader2, AlertTriangle, CheckCircle } from 'lucide-react'
+import { Loader2, AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
 
 interface AuthStatusProps {
@@ -13,25 +13,25 @@ interface AuthStatusProps {
 
 /**
  * 认证状态检查组件
- * 用于在应用启动时显示认证状态和错误信息
+ * 仅在初始化时显示加载状态，不拦截未登录用户
  */
 export function AuthStatus({ children, showLoading = true }: AuthStatusProps) {
   const { loading, error } = useAuth()
 
-  // 如果正在加载且需要显示加载状态
+  // 仅在初始加载时显示加载状态
   if (loading && showLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-sm text-muted-foreground">正在检查认证状态...</p>
+          <p className="text-sm text-muted-foreground">正在初始化...</p>
         </div>
       </div>
     )
   }
 
-  // 如果有错误，显示错误信息
-  if (error && !loading) {
+  // 只在关键错误时显示（如网络错误、配置错误）
+  if (error && !loading && isCriticalError(error)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
         <div className="max-w-md w-full">
@@ -39,14 +39,17 @@ export function AuthStatus({ children, showLoading = true }: AuthStatusProps) {
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
               <div className="text-center">
-                <h3 className="text-lg font-semibold mb-2">认证错误</h3>
+                <h3 className="text-lg font-semibold mb-2">服务错误</h3>
                 <p className="text-sm mb-4">{error}</p>
                 <div className="space-y-2">
-                  <Link href="/auth/login">
-                    <Button variant="outline" size="sm" className="w-full">
-                      重新登录
-                    </Button>
-                  </Link>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full"
+                    onClick={() => window.location.reload()}
+                  >
+                    刷新页面
+                  </Button>
                   <Link href="/debug">
                     <Button variant="ghost" size="sm" className="w-full">
                       查看诊断信息
@@ -63,6 +66,23 @@ export function AuthStatus({ children, showLoading = true }: AuthStatusProps) {
 
   // 正常状态，显示子组件
   return <>{children}</>
+}
+
+/**
+ * 判断是否为关键错误
+ */
+function isCriticalError(error: string): boolean {
+  const criticalErrors = [
+    'Supabase client is not available',
+    '无法连接到认证服务',
+    '网络错误',
+    '配置错误',
+    '初始化失败'
+  ]
+  
+  return criticalErrors.some(criticalError => 
+    error.toLowerCase().includes(criticalError.toLowerCase())
+  )
 }
 
 /**

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth/auth-context'
+import { ProtectedPage } from '@/components/auth/protected-page'
 import { useToast } from '@/components/ui/toast-provider'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -261,26 +262,9 @@ export default function AutomationPage() {
     }
   }
 
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardContent className="text-center py-8">
-            <h1 className="text-2xl font-bold mb-4">请先登录</h1>
-            <p className="text-muted-foreground mb-4">
-              您需要登录才能使用自动化功能。
-            </p>
-            <Button onClick={() => window.location.href = '/auth/login'}>
-              登录
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
   return (
-    <div className="container mx-auto px-4 py-8">
+    <ProtectedPage>
+      <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
@@ -433,7 +417,8 @@ export default function AutomationPage() {
           }}
         />
       )}
-    </div>
+      </div>
+    </ProtectedPage>
   )
 }
 

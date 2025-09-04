@@ -1,7 +1,7 @@
 'use client'
 
 import { useAuth } from '@/lib/auth/auth-context'
-import { AuthGuard } from '@/components/auth/auth-guard'
+import { ProtectedPage } from '@/components/auth/protected-page'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
@@ -11,7 +11,7 @@ export default function DashboardPage() {
   const { user } = useAuth()
 
   return (
-    <AuthGuard>
+    <ProtectedPage>
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
@@ -143,6 +143,6 @@ export default function DashboardPage() {
           </Card>
         </div>
       </div>
-    </AuthGuard>
+    </ProtectedPage>
   )
 }
