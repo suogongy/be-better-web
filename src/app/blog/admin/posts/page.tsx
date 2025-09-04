@@ -97,12 +97,6 @@ export default function PostsAdminPage() {
       <div className="max-w-6xl mx-auto">
         {/* 页面标题和操作 */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-bold">文章管理</h1>
-            <p className="text-muted-foreground mt-1">
-              管理您的所有博客文章
-            </p>
-          </div>
           <Button asChild>
             <Link href="/blog/new">
               <Plus className="h-4 w-4 mr-2" />

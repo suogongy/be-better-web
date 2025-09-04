@@ -34,7 +34,7 @@ interface CommentStats {
   rejected: number
 }
 
-function CommentModeration() {
+export function CommentModeration() {
   const [comments, setComments] = useState<Comment[]>([])
   const [activeTab, setActiveTab] = useState('pending')
   const [loading, setLoading] = useState(true)
@@ -142,7 +142,6 @@ function CommentModeration() {
     <div className="space-y-6">
       {/* 标题 */}
       <div>
-        <h1 className="text-3xl font-bold mb-2">评论管理</h1>
         <p className="text-muted-foreground">
           管理和审核所有博客文章的评论
         </p>
@@ -401,4 +400,3 @@ const CommentModerationItem = ({ comment, onStatusUpdate, onDelete }: CommentMod
   )
 }
 
-export { CommentModeration }
