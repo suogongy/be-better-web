@@ -230,7 +230,7 @@ export default function PostsAdminPage() {
                           </Link>
                         </Button>
                         <Button variant="outline" size="sm" asChild>
-                          <Link href={`/blog/edit/${post.id}`}>
+                          <Link href={`/blog/${post.id}/edit`}>
                             <Edit className="h-4 w-4" />
                           </Link>
                         </Button>

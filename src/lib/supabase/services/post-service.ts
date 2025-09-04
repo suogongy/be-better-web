@@ -315,6 +315,38 @@ export const postService = {
   },
 
   /**
+   * 根据ID获取文章
+   * @param id 文章ID
+   * @returns 文章数据
+   */
+  async getPostById(id: string): Promise<Post | null> {
+    try {
+      const supabase = getClient()
+      
+      const { data: post, error } = await supabase
+        .from('posts')
+        .select('*')
+        .eq('id', id)
+        .single()
+      
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // 文章不存在
+          return null
+        }
+        throw new DatabaseError('Failed to fetch post', error)
+      }
+      
+      return post as Post
+    } catch (error) {
+      if (error instanceof DatabaseError) {
+        throw error
+      }
+      throw new DatabaseError('Failed to fetch post', error as Error)
+    }
+  },
+
+  /**
    * 创建文章
    * @param data 文章数据
    * @param categoryIds 分类ID列表（可选）
