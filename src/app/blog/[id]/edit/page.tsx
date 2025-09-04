@@ -321,7 +321,7 @@ export default function EditBlogPostPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* 顶部导航栏 */}
       <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3">
@@ -351,10 +351,10 @@ export default function EditBlogPostPage() {
         </div>
       </div>
 
-      <form id="edit-form" onSubmit={handleSubmit} className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <form id="edit-form" onSubmit={handleSubmit} className="container mx-auto px-4 py-6 flex-1">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full">
           {/* 主要编辑区域 */}
-          <div className="lg:col-span-3 space-y-6">
+          <div className="lg:col-span-3 space-y-6 flex flex-col">
             {/* 标题和摘要输入 */}
             <Card>
               <CardContent className="p-6">
@@ -387,9 +387,9 @@ export default function EditBlogPostPage() {
             </Card>
 
             {/* 内容编辑器 */}
-            <Card className="flex-1">
-              <CardContent className="p-0">
-                <div className="h-[70vh] min-h-[500px]">
+            <Card className="flex-1 flex flex-col">
+              <CardContent className="p-0 h-full">
+                <div className="h-full">
                   <MarkdownEditor
                     value={formData.content}
                     onChange={(value) => handleInputChange('content', value)}
@@ -397,6 +397,7 @@ export default function EditBlogPostPage() {
                     previewMode="right"
                     showToolbar={true}
                     autoSave={false}
+                    height="650px"
                   />
                 </div>
               </CardContent>

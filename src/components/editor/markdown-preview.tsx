@@ -16,12 +16,14 @@ interface MarkdownPreviewProps {
   content: string
   className?: string
   theme?: 'light' | 'dark'
+  wide?: boolean
 }
 
 export function MarkdownPreview({ 
   content, 
   className,
-  theme = 'light'
+  theme = 'light',
+  wide = false
 }: MarkdownPreviewProps) {
   const components = {
     h1: ({ children, ...props }: any) => (
@@ -228,7 +230,9 @@ export function MarkdownPreview({
 
   return (
     <div className={cn(
-      'prose prose-sm dark:prose-invert max-w-none',
+      wide 
+        ? 'prose prose-lg dark:prose-invert max-w-5xl prose-p:max-w-none prose-headings:max-w-none'
+        : 'prose prose-sm dark:prose-invert max-w-none',
       'prose-headings:scroll-mt-20',
       'prose-pre:bg-gray-100 dark:prose-pre:bg-gray-800',
       'prose-code:before:content-none prose-code:after:content-none',

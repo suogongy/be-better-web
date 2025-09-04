@@ -8,8 +8,10 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Calendar, Clock, Eye, MessageCircle, ArrowLeft, Tag as TagIcon, FolderOpen } from 'lucide-react'
 import { BlogService } from '@/lib/supabase/services/blog-service'
+import { commentService } from '@/lib/supabase/services/index'
 import { createClient } from '@/lib/supabase/client'
 import { MarkdownPreview } from '@/components/editor/markdown-preview'
+import { CommentList } from '@/components/blog/comment-list'
 import { Post } from '@/types/database'
 
 interface Category {
@@ -48,17 +50,21 @@ export default function BlogPostPage() {
         const foundPost = allPostsResult.data.find(p => p.id === postId)
         
         if (foundPost) {
-          // 获取完整的文章内容
+          // 获取完整的文章内容和评论计数
           const supabase = createClient()
-          const { data: fullPost } = await supabase
-            .from('posts')
-            .select('content')
-            .eq('id', postId)
-            .single()
+          const [{ data: fullPost }, commentCount] = await Promise.all([
+            supabase
+              .from('posts')
+              .select('content')
+              .eq('id', postId)
+              .single(),
+            commentService.getCommentCount(postId)
+          ])
           
           setPost({
             ...foundPost,
-            content: fullPost?.content || foundPost.content || ''
+            content: fullPost?.content || foundPost.content || '',
+            comment_count: commentCount
           })
         } else {
           setError('文章不存在')
@@ -122,7 +128,7 @@ export default function BlogPostPage() {
   const readingTime = estimateReadingTime(post.content)
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="container mx-auto px-4 py-8 max-w-6xl">
       {/* 返回按钮 */}
       <div className="mb-6">
         <Button variant="outline" asChild>
@@ -198,9 +204,14 @@ export default function BlogPostPage() {
           )}
           
           {/* 正文 */}
-          <MarkdownPreview content={post.content} />
+          <MarkdownPreview content={post.content} wide={true} />
         </CardContent>
       </Card>
+
+      {/* 评论区域 */}
+      <div className="mt-8">
+        <CommentList postId={postId} />
+      </div>
     </div>
   )
 }

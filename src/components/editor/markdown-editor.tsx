@@ -51,6 +51,7 @@ interface MarkdownEditorProps {
   autoSave?: boolean
   autoSaveDelay?: number
   onSave?: (value: string) => void
+  height?: string
 }
 
 const markdownKeymap = keymap.of([
@@ -129,6 +130,7 @@ export function MarkdownEditor({
   autoSave = false,
   autoSaveDelay = 3000,
   onSave,
+  height = '500px',
 }: MarkdownEditorProps) {
   const [internalValue, setInternalValue] = useState(value)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -402,7 +404,7 @@ export function MarkdownEditor({
           <CodeMirror
             ref={viewRef}
             value={internalValue}
-            height={isFullscreen ? 'calc(100vh - 50px)' : '500px'}
+            height={isFullscreen ? 'calc(100vh - 50px)' : height}
             extensions={[
               markdown(),
               keymap.of(markdownKeymap),
@@ -444,7 +446,7 @@ export function MarkdownEditor({
         
         {/* Preview */}
         {showPreview && (
-          <Card className="p-4 overflow-auto max-h-[500px]">
+          <Card className="p-4 overflow-auto h-full">
             <MarkdownPreview content={internalValue} />
           </Card>
         )}
