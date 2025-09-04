@@ -300,7 +300,7 @@ export function DailySummaryCard({ summary, userId, onEdit, onRegenerateTasks, o
               已根据此总结自动生成一篇博客文章。
             </p>
             <Button variant="outline" size="sm" className="mt-2" asChild>
-              <a href={`/user/${userId}/blog/${summary.generated_post_id}`} target="_blank">
+              <a href={`/blog/${summary.generated_post_id}`} target="_blank">
                 查看文章
                 <ExternalLink className="h-4 w-4 ml-1" />
               </a>

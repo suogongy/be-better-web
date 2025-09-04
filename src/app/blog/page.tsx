@@ -1,12 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { postService, categoryService, tagService, commentService } from '@/lib/supabase/services/index'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Post } from '@/types/database'
 import { Badge } from '@/components/ui/badge'
 import { 
   AlertCircle, 
@@ -19,8 +17,10 @@ import {
   Eye, 
   MessageCircle, 
   ChevronLeft, 
-  ChevronRight 
+  ChevronRight,
+  RefreshCw
 } from 'lucide-react'
+import { Post } from '@/types/database'
 
 interface Category {
   id: string
@@ -49,11 +49,10 @@ const POSTS_PER_PAGE = 6
 
 export default function BlogPage() {
   const [posts, setPosts] = useState<PostWithRelations[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
-  const [tags, setTags] = useState<TagItem[]>([])
-  const [loading, setLoading] = useState(true)
   const [total, setTotal] = useState(0)
   const [currentPage, setCurrentPage] = useState(1)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [loading, setLoading] = useState(true)
   
   // 过滤状态
   const [searchTerm, setSearchTerm] = useState('')
@@ -63,98 +62,64 @@ export default function BlogPage() {
   // 展开状态
   const [showFilters, setShowFilters] = useState(false)
 
-  const loadPosts = async () => {
-    
+  // 分类和标签统计数据
+  const [categoryTagStats, setCategoryTagStats] = useState<{
+    categories?: Category[]
+    tags?: TagItem[]
+  }>({})
+
+  // 加载文章数据 - 使用API接口
+  const loadPosts = useCallback(async () => {
     try {
       setLoading(true)
-      // @ts-expect-error
-      const postsData = await postService.getPosts({
-        page: currentPage,
-        limit: POSTS_PER_PAGE,
-        search: searchTerm || undefined,
-        categoryId: selectedCategory || undefined,
-        tagId: selectedTag || undefined,
+      
+      // 使用API接口获取文章数据
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: POSTS_PER_PAGE.toString(),
         status: 'published'
       })
 
-      // 获取每篇文章的评论数量和关联数据
-      const postsWithCommentsAndRelations: PostWithRelations[] = await Promise.all(
-        (postsData.data || []).map(async (post: Post) => {
-          try {
-            // 获取评论数量
-            const commentCount = await commentService.getCommentCount(post.id);
-            
-            // 获取分类信息
-            const postCategories = await categoryService.getCategories();
-            const postCategoryIds = await postService.getPostCategories(post.id);
-            const categoriesForPost = postCategories.filter(category => 
-              postCategoryIds.includes(category.id)
-            );
-            
-            // 获取标签信息
-            const postTags = await tagService.getTags();
-            const postTagIds = await postService.getPostTags(post.id);
-            const tagsForPost = postTags.filter(tag => 
-              postTagIds.includes(tag.id)
-            );
-            
-            return {
-              ...post,
-              categories: categoriesForPost,
-              tags: tagsForPost,
-              comment_count: commentCount
-            } as PostWithRelations;
-          } catch (error) {
-            console.error('获取文章关联数据失败:', error);
-            return {
-              ...post,
-              categories: [],
-              tags: [],
-              comment_count: 0
-            } as PostWithRelations;
-          }
-        })
-      );
+      if (searchTerm) params.append('search', searchTerm)
+      if (selectedCategory) params.append('categoryId', selectedCategory)
+      if (selectedTag) params.append('tagId', selectedTag)
 
-      setPosts(postsWithCommentsAndRelations)
-      setTotal(postsData.total)
+      const response = await fetch(`/api/blog?${params}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        cache: 'no-store'
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch posts')
+      }
+
+      const result = await response.json()
+
+      setPosts(result.data)
+      setTotal(result.total)
+      if (result.filters) {
+        setCategoryTagStats(result.filters)
+      }
     } catch (error) {
       console.error('加载文章失败:', error)
     } finally {
       setLoading(false)
     }
-  }
+  }, [currentPage, searchTerm, selectedCategory, selectedTag])
 
-  const loadCategoriesAndTags = async () => {
-    
-    try {
-      // @ts-expect-error
-      const [categoriesData, tagsData] = await Promise.all([
-        categoryService.getCategories(),
-        tagService.getTags()
-      ])
-      
-      setCategories(categoriesData || [])
-      setTags(tagsData || [])
-    } catch (error) {
-      console.error('加载分类和标签失败:', error)
-    }
+  // 手动刷新
+  const handleRefresh = async () => {
+    setIsRefreshing(true)
+    await loadPosts()
+    setIsRefreshing(false)
   }
 
   useEffect(() => {
     loadPosts()
-    loadCategoriesAndTags()
-    
-    // 添加超时保护，确保 loading 状态不会一直为 true
-    const timeout = setTimeout(() => {
-      if (loading) {
-        console.warn('博客页面加载超时，强制设置 loading 为 false')
-        setLoading(false)
-      }
-    }, 10000) // 10秒超时
-    
-    return () => clearTimeout(timeout)
-  }, [currentPage, searchTerm, selectedCategory, selectedTag])
+  }, [loadPosts])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -191,7 +156,26 @@ export default function BlogPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">博客</h1>
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-4xl font-bold">博客</h1>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                className="flex items-center gap-2"
+              >
+                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                刷新
+              </Button>
+              <Button asChild size="sm">
+                <Link href="/blog/new">
+                  新建文章
+                </Link>
+              </Button>
+            </div>
+          </div>
           <p className="text-lg text-muted-foreground">
             探索我们的文章、见解和想法
           </p>
@@ -245,7 +229,7 @@ export default function BlogPage() {
                       >
                         全部
                       </Button>
-                      {categories.map(category => (
+                      {categoryTagStats?.categories?.map(category => (
                         <Button
                           key={category.id}
                           variant={selectedCategory === category.id ? 'default' : 'outline'}
@@ -255,7 +239,7 @@ export default function BlogPage() {
                         >
                           {category.name}
                           <Badge variant="secondary" className="ml-1">
-                            {category.post_count}
+                            {category.post_count || 0}
                           </Badge>
                         </Button>
                       ))}
@@ -277,7 +261,7 @@ export default function BlogPage() {
                       >
                         全部
                       </Button>
-                      {tags.slice(0, 10).map(tag => (
+                      {categoryTagStats?.tags?.slice(0, 10).map(tag => (
                         <Button
                           key={tag.id}
                           variant={selectedTag === tag.id ? 'default' : 'outline'}
@@ -287,7 +271,7 @@ export default function BlogPage() {
                         >
                           #{tag.name}
                           <Badge variant="secondary" className="ml-1">
-                            {tag.post_count}
+                            {tag.post_count || 0}
                           </Badge>
                         </Button>
                       ))}
@@ -341,7 +325,7 @@ export default function BlogPage() {
                   <Card key={post.id} className="hover:shadow-md transition-shadow">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-xl">
-                        <Link href={`/user/${post.user_id}/blog/${post.id}`} className="hover:text-primary">
+                        <Link href={`/blog/${post.id}`} className="hover:text-primary">
                           {post.title}
                         </Link>
                       </CardTitle>

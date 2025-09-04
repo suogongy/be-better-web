@@ -19,7 +19,8 @@ import {
   Folder,
   Loader2
 } from 'lucide-react'
-import { BlogEditor } from './blog-editor'
+import { MarkdownEditor } from '@/components/editor/markdown-editor'
+import { categoryService, tagService } from '@/lib/supabase/services/index'
 
 // 表单验证规则（移除 slug）
 const postSchema = z.object({
@@ -110,10 +111,14 @@ export function BlogPostForm({
 
   const loadCategoriesAndTags = async () => {
     try {
-      // 这里应该从 API 加载分类和标签
-      // 暂时使用模拟数据
-      setCategories([])
-      setTags([])
+      // 并行加载分类和标签
+      const [categoriesData, tagsData] = await Promise.all([
+        categoryService.getAllCategories(),
+        tagService.getAllTags()
+      ])
+      
+      setCategories(categoriesData.data || [])
+      setTags(tagsData.data || [])
     } catch (error) {
       console.error('Failed to load categories and tags:', error)
     } finally {
@@ -187,16 +192,18 @@ export function BlogPostForm({
         {/* 编辑器 */}
         <Card>
           <CardContent className="p-6">
-            {showPreview ? (
-              <div className="prose prose-sm max-w-none">
-                <div dangerouslySetInnerHTML={{ __html: watch('content') }} />
-              </div>
-            ) : (
-              <BlogEditor
-                content={watch('content')}
-                onChange={(content) => setValue('content', content, { shouldValidate: true })}
-              />
-            )}
+            <MarkdownEditor
+              value={watch('content')}
+              onChange={(content) => setValue('content', content, { shouldValidate: true })}
+              previewMode={showPreview ? 'right' : 'none'}
+              showToolbar={true}
+              autoSave={true}
+              autoSaveDelay={3000}
+              onSave={async (content) => {
+                // Optional: Implement auto-save functionality
+                console.log('Auto-saved:', content.length, 'characters')
+              }}
+            />
             {errors.content && (
               <p className="mt-1 text-sm text-red-600">{errors.content.message}</p>
             )}
@@ -247,10 +254,10 @@ export function BlogPostForm({
                 type="button"
                 variant="outline"
                 onClick={() => setShowPreview(!showPreview)}
-                className="flex-1"
+                disabled={isSubmitting}
               >
                 <Eye className="h-4 w-4 mr-2" />
-                {showPreview ? '继续编辑' : '预览'}
+                {showPreview ? '隐藏预览' : '显示预览'}
               </Button>
               
               <Button

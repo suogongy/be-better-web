@@ -147,3 +147,160 @@ body {
 .animate-exit {
   animation: exit 150ms ease-in;
 }
+
+/* Markdown Content Styles */
+@layer utilities {
+  /* Prose-like styles for markdown content */
+  .prose {
+    @apply text-gray-700 dark:text-gray-300 max-w-none;
+  }
+  
+  .prose h1 {
+    @apply text-3xl font-bold mt-8 mb-4 pb-2 border-b border-gray-200 dark:border-gray-700;
+  }
+  
+  .prose h2 {
+    @apply text-2xl font-semibold mt-6 mb-3 pt-4;
+  }
+  
+  .prose h3 {
+    @apply text-xl font-medium mt-5 mb-2;
+  }
+  
+  .prose h4 {
+    @apply text-lg font-medium mt-4 mb-2;
+  }
+  
+  .prose h5 {
+    @apply text-base font-medium mt-3 mb-1;
+  }
+  
+  .prose h6 {
+    @apply text-sm font-medium mt-2 mb-1;
+  }
+  
+  .prose p {
+    @apply mb-4 leading-relaxed;
+  }
+  
+  .prose a {
+    @apply text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline;
+  }
+  
+  .prose blockquote {
+    @apply border-l-4 border-gray-300 dark:border-gray-600 pl-4 py-2 my-4 italic bg-gray-50 dark:bg-gray-800 rounded-r-lg;
+  }
+  
+  .prose ul {
+    @apply mb-4 space-y-1 list-disc list-inside;
+  }
+  
+  .prose ol {
+    @apply mb-4 space-y-1 list-decimal list-inside;
+  }
+  
+  .prose li {
+    @apply pl-2;
+  }
+  
+  .prose code {
+    @apply bg-gray-100 dark:bg-gray-800 text-pink-600 dark:text-pink-400 px-1.5 py-0.5 rounded text-sm font-mono;
+  }
+  
+  .prose pre {
+    @apply overflow-x-auto my-4 bg-gray-100 dark:bg-gray-800 p-4 rounded-lg;
+  }
+  
+  .prose pre code {
+    @apply bg-transparent p-0;
+  }
+  
+  .prose table {
+    @apply min-w-full border-collapse border border-gray-300 dark:border-gray-600 my-4;
+  }
+  
+  .prose thead {
+    @apply bg-gray-50 dark:bg-gray-800;
+  }
+  
+  .prose th {
+    @apply border border-gray-300 dark:border-gray-600 px-4 py-2 text-left font-semibold;
+  }
+  
+  .prose td {
+    @apply border border-gray-300 dark:border-gray-600 px-4 py-2;
+  }
+  
+  .prose tr {
+    @apply border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50;
+  }
+  
+  .prose img {
+    @apply max-w-full h-auto rounded-lg my-4 shadow-md;
+  }
+  
+  .prose hr {
+    @apply my-8 border-gray-300 dark:border-gray-600;
+  }
+  
+  .prose strong {
+    @apply font-semibold;
+  }
+  
+  .prose em {
+    @apply italic;
+  }
+  
+  .prose del {
+    @apply line-through;
+  }
+  
+  /* Task list styling */
+  .prose .task-list-item {
+    @apply list-none;
+  }
+  
+  .prose .task-list-item input {
+    @apply mr-2 h-4 w-4 text-blue-600 rounded focus:ring-blue-500;
+  }
+  
+  /* Headings scroll margin for fixed headers */
+  .prose-headings\:scroll-mt-20 h1,
+  .prose-headings\:scroll-mt-20 h2,
+  .prose-headings\:scroll-mt-20 h3,
+  .prose-headings\:scroll-mt-20 h4,
+  .prose-headings\:scroll-mt-20 h5,
+  .prose-headings\:scroll-mt-20 h6 {
+    scroll-margin-top: 5rem;
+  }
+  
+  /* Code block scroll margin */
+  .prose-pre\:bg-gray-100 pre {
+    @apply bg-gray-100 dark:bg-gray-800;
+  }
+  
+  /* Remove pseudo elements from code */
+  .prose-code\:before\:content-none code::before,
+  .prose-code\:after\:content-none code::after {
+    content: none;
+  }
+  
+  /* Image styling */
+  .prose-img\:rounded-lg img {
+    @apply rounded-lg;
+  }
+  
+  .prose-img\:shadow-md img {
+    @apply shadow-md;
+  }
+  
+  /* Blockquote styling */
+  .prose-blockquote\:not-italic blockquote {
+    @apply not-italic;
+  }
+  
+  /* Table overflow */
+  .prose-table\:overflow-x-auto table {
+    @apply overflow-x-auto;
+  }
+}

@@ -4,14 +4,12 @@ export { categoryService } from './category-service'
 export { tagService } from './tag-service'
 export { commentService } from './comment-service'
 export { taskService } from './task-service'
-export { userService } from './user-service'
 export { summaryService } from './summary-service'
 export { exportService } from './export-service'
 export { DatabaseError } from './database-error'
 
 // 导出数据库类型
 export type {
-  User, UserInsert, UserUpdate,
   Post, PostInsert, PostUpdate,
   Category, CategoryInsert, CategoryUpdate,
   Tag, TagInsert, TagUpdate,

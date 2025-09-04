@@ -59,9 +59,6 @@ export default function LoginPage() {
           errorMessage = '邮箱或密码错误，请检查后重试'
           setError('email', { message: '邮箱或密码错误' })
           setError('password', { message: '邮箱或密码错误' })
-        } else if (error.message.includes('Email not confirmed')) {
-          errorMessage = '请先验证您的邮箱地址'
-          setError('email', { message: '请先验证邮箱地址' })
         } else if (error.message.includes('Too many requests')) {
           errorMessage = '请求过于频繁，请稍后再试'
         }
@@ -98,22 +95,16 @@ export default function LoginPage() {
         {/* 页面标题 */}
         <div className="text-center">
           <h2 className="mt-6 text-3xl font-bold text-gray-900 dark:text-white">
-            登录您的账户
+            管理员登录
           </h2>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            或{' '}
-            <Link href="/auth/register" className="font-medium text-primary hover:text-primary/80">
-              创建新账户
-            </Link>
-          </p>
         </div>
 
         {/* 登录表单卡片 */}
         <Card>
           <CardHeader>
-            <CardTitle>欢迎回来</CardTitle>
+            <CardTitle>管理员登录</CardTitle>
             <CardDescription>
-              输入您的凭据以访问您的账户
+              请使用管理员凭据登录系统
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -172,18 +163,7 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {/* 忘记密码链接 */}
-              <div className="flex items-center justify-between">
-                <div className="text-sm">
-                  <Link 
-                    href="/auth/forgot-password" 
-                    className="font-medium text-primary hover:text-primary/80"
-                  >
-                    忘记密码？
-                  </Link>
-                </div>
-              </div>
-
+  
               {/* 提交按钮 */}
               <Button
                 type="submit"
@@ -200,28 +180,6 @@ export default function LoginPage() {
                 )}
               </Button>
             </form>
-
-            {/* 分隔线和注册链接 */}
-            <div className="mt-6">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300" />
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-background text-gray-500">
-                    初次使用 Be Better Web？
-                  </span>
-                </div>
-              </div>
-
-              <div className="mt-6">
-                <Link href="/auth/register">
-                  <Button variant="outline" className="w-full">
-                    创建账户
-                  </Button>
-                </Link>
-              </div>
-            </div>
           </CardContent>
         </Card>
       </div>

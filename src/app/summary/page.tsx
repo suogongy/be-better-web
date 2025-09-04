@@ -262,7 +262,7 @@ export default function SummaryPage() {
       
       setShowBlogForm(false)
       // Redirect to the new blog post
-      window.open(`/user/${user.id}/blog/${result.post.id}`, '_blank')
+      window.open(`/blog/${result.post.id}`, '_blank')
     } catch (error) {
       console.error('生成博客文章失败:', error)
       if (error instanceof DatabaseError) {

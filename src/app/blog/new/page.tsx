@@ -33,7 +33,6 @@ export default function NewBlogPostPage() {
 
   const handleSubmit = async (data: { 
     title: string
-    slug: string
     content: string
     status: 'draft' | 'published'
     excerpt?: string
@@ -52,20 +51,25 @@ export default function NewBlogPostPage() {
     try {
       setIsSubmitting(true)
       const postData = {
-        ...data,
+        title: data.title,
+        content: data.content,
         excerpt: data.excerpt || '',
-        category_id: data.category_ids?.[0],
-        tags: data.tag_ids
+        status: data.status,
+        user_id: user.id
       }
       
-      const result = await postService.createPost(postData)
+      const result = await postService.createPost(
+        postData, 
+        data.category_ids, 
+        data.tag_ids
+      )
       
       addToast({
         title: "成功",
         description: "文章创建成功"
       })
       
-      router.push(`/user/${result.user_id}/blog/${result.id}`)
+      router.push(`/blog/${result.id}`)
     } catch (error) {
       console.error('创建文章失败:', error)
       addToast({

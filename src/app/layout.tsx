@@ -7,6 +7,7 @@ import { ToastProvider } from '@/components/ui/toast-provider'
 import { AuthStatus } from '@/components/auth/auth-status'
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
+import { CacheInitializer } from '@/components/cache-initializer'
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -44,6 +45,7 @@ export default function RootLayout({
           <AuthProvider>
             <ToastProvider>
               <AuthStatus>
+                <CacheInitializer />
                 <div className="min-h-screen flex flex-col">
                   <Header />
                   <main className="flex-1">

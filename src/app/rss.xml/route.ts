@@ -34,8 +34,8 @@ export async function GET() {
     <item>
       <title><![CDATA[${post.title}]]></title>
       <description><![CDATA[${post.excerpt || post.content?.substring(0, 200) + '...'}]]></description>
-      <link>${process.env.NEXT_PUBLIC_SITE_URL || 'https://your-domain.com'}/user/${post.user_id}/blog/${post.id}</link>
-      <guid isPermaLink="true">${process.env.NEXT_PUBLIC_SITE_URL || 'https://your-domain.com'}/user/${post.user_id}/blog/${post.id}</guid>
+      <link>${process.env.NEXT_PUBLIC_SITE_URL || 'https://your-domain.com'}/blog/${post.id}</link>
+      <guid isPermaLink="true">${process.env.NEXT_PUBLIC_SITE_URL || 'https://your-domain.com'}/blog/${post.id}</guid>
       <pubDate>${new Date(post.published_at || post.created_at).toUTCString()}</pubDate>
       ${post.author ? `<author><![CDATA[${post.author.name || post.author.email}]]></author>` : ''}
       ${post.categories?.length ? `<category><![CDATA[${post.categories[0].name}]]></category>` : ''}

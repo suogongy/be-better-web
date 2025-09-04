@@ -15,7 +15,6 @@ const publicNavItems = [
 ]
 
 const authNavItems = [
-  { href: '/dashboard', label: '控制台', icon: Home },
   { href: '/blog', label: '博客', icon: BookOpen },
   { href: '/blog/admin', label: '博客管理', icon: Settings },
   { href: '/schedule', label: '日程安排', icon: Calendar },
@@ -99,12 +98,7 @@ export function Header() {
             ) : (
               <div className="flex items-center space-x-2">
                 <Link href="/auth/login">
-                  <Button variant="ghost" size="sm">
-                    登录
-                  </Button>
-                </Link>
-                <Link href="/auth/register">
-                  <Button size="sm">开始使用</Button>
+                  <Button size="sm">管理员登录</Button>
                 </Link>
               </div>
             )}
@@ -171,13 +165,8 @@ export function Header() {
               ) : (
                 <div className="pt-3 border-t space-y-2">
                   <Link href="/auth/login" onClick={() => setMobileMenuOpen(false)}>
-                    <Button variant="ghost" size="sm" className="w-full justify-start">
-                      登录
-                    </Button>
-                  </Link>
-                  <Link href="/auth/register" onClick={() => setMobileMenuOpen(false)}>
                     <Button size="sm" className="w-full">
-                      开始使用
+                      管理员登录
                     </Button>
                   </Link>
                 </div>

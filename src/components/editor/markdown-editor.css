@@ -1,0 +1,182 @@
+/* Markdown Editor Styles */
+
+/* Editor Container */
+.markdown-editor-container {
+  @apply border rounded-lg overflow-hidden bg-white dark:bg-gray-900;
+}
+
+/* Toolbar Styles */
+.markdown-editor-toolbar {
+  @apply border-b bg-gray-50 dark:bg-gray-800 p-2 flex items-center justify-between flex-wrap gap-2;
+}
+
+.markdown-editor-toolbar-section {
+  @apply flex items-center gap-1;
+}
+
+.markdown-editor-toolbar-divider {
+  @apply w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1;
+}
+
+/* Editor Content */
+.markdown-editor-content {
+  @apply font-mono text-sm leading-relaxed;
+}
+
+.markdown-editor-content .cm-focused {
+  @apply outline-none;
+}
+
+.markdown-editor-content .cm-line {
+  @apply px-2 py-0.5;
+}
+
+.markdown-editor-content .cm-activeLine {
+  @apply bg-gray-100 dark:bg-gray-800;
+}
+
+.markdown-editor-content .cm-selectionBackground {
+  @apply bg-blue-200 dark:bg-blue-800;
+}
+
+.markdown-editor-content .cm-cursor {
+  @apply border-l-2 border-blue-600;
+}
+
+/* Preview Styles */
+.markdown-preview-container {
+  @apply p-4 overflow-auto max-h-[500px] bg-white dark:bg-gray-900;
+}
+
+/* Fullscreen Styles */
+.markdown-editor-fullscreen {
+  @apply fixed inset-0 z-50 bg-white dark:bg-gray-900;
+}
+
+.markdown-editor-fullscreen .markdown-editor-content {
+  height: calc(100vh - 50px);
+}
+
+/* Auto Save Indicator */
+.markdown-editor-autosave {
+  @apply absolute bottom-2 right-2 text-xs text-gray-500 dark:text-gray-400;
+}
+
+/* Toolbar Button Styles */
+.markdown-toolbar-button {
+  @apply h-8 w-8 p-0 relative transition-all duration-200;
+}
+
+.markdown-toolbar-button:hover {
+  @apply bg-gray-200 dark:bg-gray-700;
+}
+
+.markdown-toolbar-button.active {
+  @apply bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400;
+}
+
+.markdown-toolbar-shortcut {
+  @apply absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs bg-gray-800 dark:bg-gray-700 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10;
+}
+
+/* Special Markdown Elements in Editor */
+.markdown-editor-content .cm-header {
+  @apply font-bold;
+}
+
+.markdown-editor-content .cm-header-1 {
+  @apply text-2xl;
+}
+
+.markdown-editor-content .cm-header-2 {
+  @apply text-xl;
+}
+
+.markdown-editor-content .cm-header-3 {
+  @apply text-lg;
+}
+
+.markdown-editor-content .cm-strong {
+  @apply font-semibold;
+}
+
+.markdown-editor-content .cm-em {
+  @apply italic;
+}
+
+.markdown-editor-content .cm-quote {
+  @apply border-l-4 border-gray-300 dark:border-gray-600 pl-4 text-gray-600 dark:text-gray-400;
+}
+
+.markdown-editor-content .cm-link {
+  @apply text-blue-600 dark:text-blue-400 underline;
+}
+
+.markdown-editor-content .cm-hr {
+  @apply border-t border-gray-300 dark:border-gray-600 my-4;
+}
+
+/* Code Block Styles */
+.markdown-editor-content .cm-code {
+  @apply bg-gray-100 dark:bg-gray-800 text-pink-600 dark:text-pink-400 px-1.5 py-0.5 rounded text-sm;
+}
+
+/* List Styles */
+.markdown-editor-content .cm-list-1 {
+  @apply list-disc list-inside;
+}
+
+.markdown-editor-content .cm-list-2 {
+  @apply list-decimal list-inside;
+}
+
+/* Table Styles */
+.markdown-editor-content .cm-table {
+  @apply border-collapse border border-gray-300 dark:border-gray-600 my-2;
+}
+
+.markdown-editor-content .cm-table-row {
+  @apply border-b border-gray-200 dark:border-gray-700;
+}
+
+.markdown-editor-content .cm-table-cell {
+  @apply border border-gray-300 dark:border-gray-600 px-2 py-1;
+}
+
+/* Placeholder */
+.markdown-editor-content .cm-placeholder {
+  @apply text-gray-400 dark:text-gray-500 italic;
+}
+
+/* Scrollbar Styles */
+.markdown-editor-content::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.markdown-editor-content::-webkit-scrollbar-track {
+  @apply bg-gray-100 dark:bg-gray-800;
+}
+
+.markdown-editor-content::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 dark:bg-gray-600 rounded-full;
+}
+
+.markdown-editor-content::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400 dark:bg-gray-500;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .markdown-editor-toolbar {
+    @apply p-1;
+  }
+  
+  .markdown-toolbar-button {
+    @apply h-7 w-7;
+  }
+  
+  .markdown-editor-content {
+    @apply text-xs;
+  }
+}

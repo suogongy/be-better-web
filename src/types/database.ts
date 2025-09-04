@@ -1,44 +1,6 @@
 export interface Database {
   public: {
     Tables: {
-      users: {
-        Row: {
-          id: string
-          email: string
-          name?: string
-          avatar_url?: string
-          bio?: string
-          website?: string
-          social_links?: Record<string, string>
-          preferences?: Record<string, unknown>
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id: string
-          email: string
-          name?: string
-          avatar_url?: string
-          bio?: string
-          website?: string
-          social_links?: Record<string, string>
-          preferences?: Record<string, unknown>
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          email?: string
-          name?: string
-          avatar_url?: string
-          bio?: string
-          website?: string
-          social_links?: Record<string, string>
-          preferences?: Record<string, unknown>
-          created_at?: string
-          updated_at?: string
-        }
-      }
       categories: {
         Row: {
           id: string
@@ -82,9 +44,8 @@ export interface Database {
       posts: {
         Row: {
           id: string
-          user_id: string
           title: string
-          content?: string
+          content: string
           excerpt?: string
           featured_image?: string
           status: 'draft' | 'published' | 'archived'
@@ -95,12 +56,13 @@ export interface Database {
           published_at?: string
           created_at: string
           updated_at: string
+          category_ids?: string[]
+          tag_ids?: string[]
         }
         Insert: {
           id?: string
-          user_id: string
           title: string
-          content?: string
+          content: string
           excerpt?: string
           featured_image?: string
           status?: 'draft' | 'published' | 'archived'
@@ -111,12 +73,13 @@ export interface Database {
           published_at?: string
           created_at?: string
           updated_at?: string
+          category_ids?: string[]
+          tag_ids?: string[]
         }
         Update: {
           id?: string
-          user_id?: string
           title?: string
-          content?: string
+          content: string
           excerpt?: string
           featured_image?: string
           status?: 'draft' | 'published' | 'archived'
@@ -127,6 +90,8 @@ export interface Database {
           published_at?: string
           created_at?: string
           updated_at?: string
+          category_ids?: string[]
+          tag_ids?: string[]
         }
       }
       post_categories: {
@@ -425,10 +390,6 @@ export interface Database {
 }
 
 // Helper types for easier use
-export type User = Database['public']['Tables']['users']['Row']
-export type UserInsert = Database['public']['Tables']['users']['Insert']
-export type UserUpdate = Database['public']['Tables']['users']['Update']
-
 export type Post = Database['public']['Tables']['posts']['Row']
 export type PostInsert = Database['public']['Tables']['posts']['Insert']
 export type PostUpdate = Database['public']['Tables']['posts']['Update']
