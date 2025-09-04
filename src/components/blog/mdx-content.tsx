@@ -51,7 +51,7 @@ export function MDXContent({ content }: MDXContentProps) {
       // 处理普通文本
       else {
         // 处理段落内的文本格式
-        let processedLine = line
+        const processedLine = line
           .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
           .replace(/\*(.*?)\*/g, '<em>$1</em>')
           .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-blue-600 hover:underline">$1</a>')
@@ -67,7 +67,7 @@ export function MDXContent({ content }: MDXContentProps) {
     const finalContent = result.join('\n')
     
     // 处理段落 - 将连续的非空行包装在段落中
-    let processedContent = finalContent
+    const processedContent = finalContent
       .replace(/^(?!<[h|u])/gm, '<p class="my-4">')
       .replace(/<p class="my-4">\s*<\/p>/g, '')
       .replace(/(<\/p>)\s*(?!<[h|u])/g, '$1<p class="my-4">')

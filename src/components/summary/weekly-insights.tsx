@@ -264,7 +264,7 @@ export function WeeklyInsights({ data, loading, onWeekChange }: WeeklyInsightsPr
                       <div>
                         <h4 className="font-medium text-purple-800">Weekend Energy</h4>
                         <p className="text-sm text-purple-700">
-                          You're more productive on weekends ({Math.round(weekendPerformance)}%) than weekdays ({Math.round(weekdayPerformance)}%). 
+                          You&apos;re more productive on weekends ({Math.round(weekendPerformance)}%) than weekdays ({Math.round(weekdayPerformance)})%. 
                           Consider redistributing some weekend tasks to weekdays.
                         </p>
                       </div>
@@ -283,7 +283,7 @@ export function WeeklyInsights({ data, loading, onWeekChange }: WeeklyInsightsPr
                   <div>
                     <h4 className="font-medium text-yellow-800">Room for Improvement</h4>
                     <p className="text-sm text-yellow-700">
-                      This week's completion rate was {Math.round(data.completion_rate)}%. 
+                      This week&apos;s completion rate was {Math.round(data.completion_rate)}%. 
                       Consider setting fewer, more realistic daily goals to build momentum.
                     </p>
                   </div>
