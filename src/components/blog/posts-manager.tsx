@@ -95,25 +95,27 @@ export function PostsManager() {
   return (
     <div className="space-y-6">
       {/* 顶部操作区域 */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* 搜索和过滤 */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-3">
           <Card>
             <CardContent className="pt-6">
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col sm:flex-row gap-4">
                 {/* 搜索框 */}
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="搜索文章标题或内容..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="搜索文章标题或内容..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
                 </div>
                 
                 {/* 过滤器按钮组 */}
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-shrink-0">
                   <Button
                     variant={statusFilter === 'all' ? 'default' : 'outline'}
                     size="sm"
@@ -152,9 +154,9 @@ export function PostsManager() {
         <div className="lg:col-span-1">
           <Card className="h-full">
             <CardContent className="pt-6 h-full flex items-center justify-center">
-              <Button asChild className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200 px-8 py-4 w-full h-full">
-                <Link href="/blog/new" className="flex items-center justify-center gap-3 text-lg">
-                  <Plus className="h-6 w-6" />
+              <Button asChild className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200 px-4 py-3 w-full">
+                <Link href="/blog/new" className="flex items-center justify-center gap-2">
+                  <Plus className="h-4 w-4" />
                   <span>新建文章</span>
                 </Link>
               </Button>

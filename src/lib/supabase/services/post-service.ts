@@ -58,7 +58,6 @@ export const postService = {
     tagId?: string
     search?: string
     status?: 'draft' | 'published' | 'archived'
-    userId?: string
   } = {}) {
     return this.getPostsWithOptimizedQuery(options)
   },
@@ -73,7 +72,6 @@ export const postService = {
     tagId?: string
     search?: string
     status?: 'draft' | 'published' | 'archived'
-    userId?: string
   } = {}) {
     const {
       page = 1,
@@ -81,8 +79,7 @@ export const postService = {
       categoryId,
       tagId,
       search,
-      status,
-      userId
+      status
     } = options
 
     try {
@@ -99,17 +96,10 @@ export const postService = {
         query = query.eq('status', status)
       }
       
-      if (userId) {
-        query = query.eq('user_id', userId)
-      }
-      
       if (search) {
         // 使用 ILIKE 搜索（对中文更友好）
-        query = query.or(`
-          title.ilike.%${search}%,
-          content.ilike.%${search}%,
-          excerpt.ilike.%${search}%
-        `)
+        const searchTerm = search.replace(/%/g, '\\%').replace(/_/g, '\\_')
+        query = query.or(`title.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%,excerpt.ilike.%${searchTerm}%`)
       }
 
       // 排序
@@ -171,7 +161,6 @@ export const postService = {
     tagId?: string
     search?: string
     status?: 'draft' | 'published' | 'archived'
-    userId?: string
   } = {}) {
     const {
       page = 1,
@@ -179,8 +168,7 @@ export const postService = {
       categoryId,
       tagId,
       search,
-      status,
-      userId
+      status
     } = options
 
     try {
@@ -197,12 +185,10 @@ export const postService = {
         query = query.eq('status', status)
       }
       
-      if (userId) {
-        query = query.eq('user_id', userId)
-      }
-      
       if (search) {
-        query = query.or(`title.ilike.%${search}%,content.ilike.%${search}%,excerpt.ilike.%${search}%`)
+        // 使用 ILIKE 搜索（对中文更友好）
+        const searchTerm = search.replace(/%/g, '\\%').replace(/_/g, '\\_')
+        query = query.or(`title.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%,excerpt.ilike.%${searchTerm}%`)
       }
 
       // 排序
