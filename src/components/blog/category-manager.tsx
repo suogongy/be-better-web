@@ -58,8 +58,8 @@ export function CategoryManager() {
   const loadCategories = async () => {
     try {
       setLoading(true)
-      const data = await categoryService.getCategories()
-      setCategories(data)
+      const result = await categoryService.getCategories()
+      setCategories(Array.isArray(result) ? result : [])
     } catch (error) {
       addToast({
         title: '错误',

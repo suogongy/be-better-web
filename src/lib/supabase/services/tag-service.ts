@@ -19,7 +19,8 @@ const getClient = () => {
 // Tag operations
 export const tagService = {
   async getTags(): Promise<Tag[]> {
-    return this.getAllTags()
+    const result = await this.getAllTags()
+    return result.data || []
   },
 
   async getAllTags(): Promise<{ data: Tag[] }> {

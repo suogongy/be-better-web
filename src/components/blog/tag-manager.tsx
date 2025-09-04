@@ -46,8 +46,8 @@ export function TagManager() {
   const loadTags = async () => {
     try {
       setLoading(true)
-      const data = await tagService.getTags()
-      setTags(data)
+      const result = await tagService.getTags()
+      setTags(Array.isArray(result) ? result : result.data || [])
     } catch (error) {
       addToast({
         title: '错误',

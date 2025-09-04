@@ -19,7 +19,8 @@ const getClient = () => {
 // Category operations
 export const categoryService = {
   async getCategories(): Promise<Category[]> {
-    return this.getAllCategories()
+    const result = await this.getAllCategories()
+    return result.data || []
   },
 
   async getAllCategories(): Promise<{ data: Category[] }> {
