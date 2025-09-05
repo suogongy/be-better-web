@@ -36,9 +36,9 @@ export default function CommentModerationPage() {
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-6">
-        <Link href="/blog/admin" className="text-sm text-muted-foreground hover:text-primary flex items-center gap-2">
+        <Link href="/admin/dashboard" className="text-sm text-muted-foreground hover:text-primary flex items-center gap-2">
           <ArrowLeft className="h-4 w-4" />
-          返回博客管理
+          返回系统管理
         </Link>
       </div>
 

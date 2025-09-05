@@ -73,13 +73,13 @@ export default function AboutPage() {
           </div>
 
           <div className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-4">加入我们</h2>
+            <h2 className="text-xl font-semibold mb-4">联系我们</h2>
             <p className="text-gray-600 mb-4">
-              准备好开始您的成长之旅了吗？立即注册账号，体验 Be Better Web 带来的改变。
+              如有任何问题或建议，欢迎与我们联系。我们致力于为您提供最好的服务。
             </p>
             <div className="space-x-4">
-              <Link href="/auth/register">
-                <Button>免费注册</Button>
+              <Link href="/contact">
+                <Button>联系我们</Button>
               </Link>
               <Link href="/features">
                 <Button variant="outline">了解功能</Button>

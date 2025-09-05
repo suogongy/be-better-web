@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
+import { useAuth } from '@/lib/auth/auth-context'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -48,6 +49,7 @@ interface PostWithRelations extends Post {
 const POSTS_PER_PAGE = 6
 
 export default function BlogPage() {
+  const { user } = useAuth()
   const [posts, setPosts] = useState<PostWithRelations[]>([])
   const [total, setTotal] = useState(0)
   const [currentPage, setCurrentPage] = useState(1)
@@ -153,8 +155,8 @@ export default function BlogPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="w-full max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-4xl font-bold">博客</h1>
@@ -169,11 +171,13 @@ export default function BlogPage() {
                 <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                 刷新
               </Button>
-              <Button asChild size="sm">
-                <Link href="/blog/new">
-                  新建文章
-                </Link>
-              </Button>
+              {user && (
+                <Button asChild size="sm">
+                  <Link href="/blog/new">
+                    新建文章
+                  </Link>
+                </Button>
+              )}
             </div>
           </div>
           <p className="text-lg text-muted-foreground">

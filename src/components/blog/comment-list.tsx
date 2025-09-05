@@ -122,7 +122,7 @@ export function CommentList({ postId, showModeration = false }: CommentListProps
           }
         </h3>
         {showModeration && (
-          <Link href="/blog/admin/comments">
+          <Link href="/admin/dashboard">
             <Button variant="outline" size="sm" className="ml-2 flex items-center gap-1">
               <Shield className="h-3 w-3" />
               评论管理
@@ -143,7 +143,7 @@ export function CommentList({ postId, showModeration = false }: CommentListProps
             {!showModeration && (
               <div className="mt-4 text-sm text-muted-foreground">
                 <p>📝 评论需要管理员审核后才会显示</p>
-                <Link href="/blog/admin/comments" className="inline-flex items-center gap-1 text-primary hover:underline mt-1">
+                <Link href="/admin/dashboard" className="inline-flex items-center gap-1 text-primary hover:underline mt-1">
                   <Shield className="h-3 w-3" />
                   管理员可以在这里审核评论
                 </Link>

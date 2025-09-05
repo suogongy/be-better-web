@@ -267,7 +267,7 @@ export default function SchedulePage() {
   return (
     <ProtectedPage>
       <LoadingError loading={authLoading} error={authError}>
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
           <div>

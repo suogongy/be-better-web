@@ -5,7 +5,7 @@ import { AuthProvider } from '@/lib/auth/auth-context'
 import { ThemeProvider } from '@/lib/theme/theme-context'
 import { ToastProvider } from '@/components/ui/toast-provider'
 import { AuthStatus } from '@/components/auth/auth-status'
-import { Header } from '@/components/layout/header'
+import { ConditionalHeader } from '@/components/layout/conditional-header'
 import { Footer } from '@/components/layout/footer'
 import { CacheInitializer } from '@/components/cache-initializer'
 
@@ -47,7 +47,7 @@ export default function RootLayout({
               <AuthStatus>
                 <CacheInitializer />
                 <div className="min-h-screen flex flex-col">
-                  <Header />
+                  <ConditionalHeader />
                   <main className="flex-1">
                     {children}
                   </main>

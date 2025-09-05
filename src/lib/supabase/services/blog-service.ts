@@ -81,11 +81,8 @@ export class BlogService {
       if (status) query = query.eq('status', status)
       // 移除了用户过滤，现在是单用户系统
       if (search) {
-        query = query.or(`
-          title.ilike.%${search}%,
-          content.ilike.%${search}%,
-          excerpt.ilike.%${search}%
-        `)
+        const escapedSearch = search.replace(/%/g, '\\%').replace(/_/g, '\\_')
+        query = query.or(`title.ilike.%${escapedSearch}%,content.ilike.%${escapedSearch}%,excerpt.ilike.%${escapedSearch}%`)
       }
       
       // 如果有过滤条件，应用它们
@@ -116,8 +113,7 @@ export class BlogService {
       // 单次批量获取所有关联数据
       const [
         categoriesData,
-        tagsData,
-        commentCounts
+        tagsData
       ] = await Promise.all([
         // 获取所有文章的分类
         supabase
@@ -129,15 +125,21 @@ export class BlogService {
         supabase
           .from('post_tags')
           .select('post_id, tag_id, tags(id, name)')
-          .in('post_id', postIds),
-        
-        // 获取评论数 - 使用分组查询
-        supabase
-          .from('comments')
-          .select('post_id', { count: 'exact', head: true })
           .in('post_id', postIds)
-          .eq('status', 'approved')
       ])
+      
+      // 单独获取评论数
+      const { data: commentsData } = await supabase
+        .from('comments')
+        .select('post_id')
+        .in('post_id', postIds)
+        .eq('status', 'approved')
+      
+      // 聚合每篇文章的评论数
+      const commentCounts: Record<string, number> = {}
+      commentsData?.forEach(item => {
+        commentCounts[item.post_id] = (commentCounts[item.post_id] || 0) + 1
+      })
 
       // 处理数据
       const postsWithRelations = posts.map(post => {
@@ -153,7 +155,7 @@ export class BlogService {
           ...post,
           categories: postCategories,
           tags: postTags,
-          comment_count: 0 // 暂时设为0，避免额外查询
+          comment_count: commentCounts[post.id] || 0
         }
       })
 
@@ -328,11 +330,8 @@ export class BlogService {
 
       // 应用搜索过滤
       if (search) {
-        query = query.or(`
-          title.ilike.%${search}%,
-          content.ilike.%${search}%,
-          excerpt.ilike.%${search}%
-        `)
+        const escapedSearch = search.replace(/%/g, '\\%').replace(/_/g, '\\_')
+        query = query.or(`title.ilike.%${escapedSearch}%,content.ilike.%${escapedSearch}%,excerpt.ilike.%${escapedSearch}%`)
       }
 
       // 使用新的数组字段进行分类和标签过滤
@@ -362,6 +361,20 @@ export class BlogService {
         }
       }
 
+      // 获取评论数
+      const postIds = posts.map(p => p.id)
+      const { data: commentsData } = await supabase
+        .from('comments')
+        .select('post_id')
+        .in('post_id', postIds)
+        .eq('status', 'approved')
+      
+      // 聚合每篇文章的评论数
+      const commentCounts: Record<string, number> = {}
+      commentsData?.forEach(item => {
+        commentCounts[item.post_id] = (commentCounts[item.post_id] || 0) + 1
+      })
+
       // 使用本地缓存组装分类和标签信息
       const postsWithRelations = posts.map(post => {
         const categories = post.category_ids 
@@ -376,7 +389,7 @@ export class BlogService {
           ...post,
           categories,
           tags,
-          comment_count: 0 // 暂时设为0，避免额外查询
+          comment_count: commentCounts[post.id] || 0
         }
       })
 

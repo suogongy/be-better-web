@@ -75,6 +75,18 @@ body {
   color: hsl(var(--foreground));
 }
 
+/* Ensure sticky positioning works correctly */
+.sticky {
+  position: sticky;
+  position: -webkit-sticky;
+}
+
+/* Fix for backdrop blur in some browsers */
+.backdrop-blur {
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
 /* Base styles */
 @layer base {
   h1 {

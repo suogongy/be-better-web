@@ -113,14 +113,14 @@ export default function FeaturesPage() {
         </div>
 
         <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">准备好开始了吗？</h2>
-          <p className="text-gray-600 mb-6">立即注册，开启您的成长之旅</p>
+          <h2 className="text-2xl font-bold mb-4">了解更多</h2>
+          <p className="text-gray-600 mb-6">探索 Be Better Web 的强大功能</p>
           <div className="space-x-4">
-            <Link href="/auth/register">
-              <Button size="lg">免费开始</Button>
+            <Link href="/blog">
+              <Button size="lg">浏览博客</Button>
             </Link>
-            <Link href="/auth/login">
-              <Button variant="outline" size="lg">立即登录</Button>
+            <Link href="/about">
+              <Button variant="outline" size="lg">关于我们</Button>
             </Link>
           </div>
         </div>

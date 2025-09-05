@@ -281,7 +281,7 @@ export default function EditBlogPostPage() {
       }, formData.category_ids, formData.tag_ids)
       
       // 跳转到文章管理页
-      router.push('/blog/admin/posts')
+      router.push('/admin/dashboard')
     } catch (err) {
       console.error('Failed to update post:', err)
       setError('更新文章失败')
@@ -324,7 +324,7 @@ export default function EditBlogPostPage() {
     <div className="min-h-screen bg-background flex flex-col">
       {/* 顶部导航栏 */}
       <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-3">
+        <div className="container mx-auto px-4 py-3 max-w-7xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Button variant="ghost" size="sm" onClick={handleCancel}>
@@ -351,7 +351,7 @@ export default function EditBlogPostPage() {
         </div>
       </div>
 
-      <form id="edit-form" onSubmit={handleSubmit} className="container mx-auto px-4 py-6 flex-1">
+      <form id="edit-form" onSubmit={handleSubmit} className="container mx-auto px-4 py-6 flex-1 max-w-7xl">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full">
           {/* 主要编辑区域 */}
           <div className="lg:col-span-3 space-y-6 flex flex-col">

@@ -104,20 +104,13 @@ export default function Home() {
             跟踪您的生产力，反思您的进步，并自动
             从您的每日总结中生成博客内容。
           </p>
-          {!user && (
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/auth/register">
-                <Button size="lg" className="w-full sm:w-auto">
-                  开始您的旅程
-                </Button>
-              </Link>
-              <Link href="/blog">
-                <Button variant="outline" size="lg" className="w-full sm:w-auto">
-                  浏览博客
-                </Button>
-              </Link>
-            </div>
-          )}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/blog">
+              <Button size="lg" className="w-full sm:w-auto">
+                浏览博客
+              </Button>
+            </Link>
+          </div>
           {user && (
             <div className="mt-8">
               <Link href="/dashboard">

@@ -16,7 +16,7 @@ const publicNavItems = [
 
 const authNavItems = [
   { href: '/blog', label: '博客', icon: BookOpen },
-  { href: '/blog/admin', label: '博客管理', icon: Settings },
+  { href: '/admin/dashboard', label: '系统管理', icon: Settings },
   { href: '/schedule', label: '日程安排', icon: Calendar },
   { href: '/automation', label: '自动化', icon: Zap },
   { href: '/summary', label: '总结报告', icon: BarChart3 },
@@ -31,7 +31,7 @@ export function Header() {
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
-  const navItems = user ? authNavItems : publicNavItems
+  const navItems = publicNavItems
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/'
@@ -47,76 +47,65 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto px-4">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-8xl">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">BB</span>
-            </div>
-            <span className="font-bold text-xl hidden sm:inline-block">
-              Be Better Web
-            </span>
-          </Link>
+          <div className="flex items-center">
+            <Link href="/" className="flex items-center space-x-3 whitespace-nowrap flex-shrink-0">
+              <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center shadow-sm">
+                <span className="text-primary-foreground font-bold text-lg">BB</span>
+              </div>
+              <span className="font-bold text-2xl hidden sm:block text-foreground">
+                Be Better Web
+              </span>
+            </Link>
+          </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-6">
-            {navItems.map((item) => {
-              const Icon = item.icon
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    'flex items-center space-x-2 text-sm font-medium transition-colors hover:text-primary',
-                    isActive(item.href)
-                      ? 'text-primary'
-                      : 'text-muted-foreground'
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  <span>{item.label}</span>
-                </Link>
-              )
-            })}
-          </nav>
+          <div className="hidden md:flex items-center space-x-8">
+            <nav className="flex items-center space-x-1">
+              {navItems.map((item) => {
+                const Icon = item.icon
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      'flex items-center space-x-2 px-3 py-2 rounded-lg text-base font-medium transition-all duration-200 hover:bg-accent hover:text-accent-foreground whitespace-nowrap',
+                      isActive(item.href)
+                        ? 'bg-accent text-accent-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    <Icon className="h-5 w-5" />
+                    <span>{item.label}</span>
+                  </Link>
+                )
+              })}
+            </nav>
 
-          {/* Desktop Actions */}
-          <div className="hidden md:flex items-center space-x-4">
-            <ThemeToggleButton />
-            {user ? (
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-muted-foreground">
-                  {user.user_metadata?.name || user.email}
-                </span>
-                <Button variant="ghost" size="sm" onClick={handleSignOut}>
-                  <LogOut className="h-4 w-4 mr-2" />
-                  退出登录
-                </Button>
-              </div>
-            ) : (
-              <div className="flex items-center space-x-2">
-                <Link href="/auth/login">
-                  <Button size="sm">管理员登录</Button>
-                </Link>
-              </div>
-            )}
+            {/* Theme Toggle */}
+            <div className="flex items-center pl-3 border-l border-border">
+              <ThemeToggleButton />
+            </div>
           </div>
 
           {/* Mobile Menu Button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="md:hidden"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? (
-              <X className="h-5 w-5" />
-            ) : (
-              <Menu className="h-5 w-5" />
-            )}
-          </Button>
+          <div className="md:hidden flex items-center space-x-2">
+            <ThemeToggleButton />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              {mobileMenuOpen ? (
+                <X className="h-5 w-5" />
+              ) : (
+                <Menu className="h-5 w-5" />
+              )}
+            </Button>
+          </div>
         </div>
 
         {/* Mobile Navigation */}
@@ -150,7 +139,7 @@ export function Header() {
                 </div>
               </div>
 
-              {user ? (
+              {user && (
                 <div className="pt-3 border-t">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">
@@ -161,14 +150,6 @@ export function Header() {
                       退出登录
                     </Button>
                   </div>
-                </div>
-              ) : (
-                <div className="pt-3 border-t space-y-2">
-                  <Link href="/auth/login" onClick={() => setMobileMenuOpen(false)}>
-                    <Button size="sm" className="w-full">
-                      管理员登录
-                    </Button>
-                  </Link>
                 </div>
               )}
             </nav>
