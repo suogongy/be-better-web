@@ -45,8 +45,6 @@ CREATE TABLE IF NOT EXISTS public.posts (
   featured_image TEXT,
   status VARCHAR(20) DEFAULT 'draft' CHECK (status IN ('draft', 'published', 'archived')),
   type VARCHAR(20) DEFAULT 'manual' CHECK (type IN ('manual', 'schedule_generated')),
-  meta_title VARCHAR(255),
-  meta_description TEXT,
   published_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -229,26 +227,26 @@ CREATE INDEX IF NOT EXISTS idx_data_exports_status ON public.data_exports(status
 CREATE INDEX IF NOT EXISTS idx_productivity_insights_user_type ON public.productivity_insights(user_id, insight_type);
 
 -- Insert default categories
-INSERT INTO public.categories (name, slug, description, color) VALUES
-  ('Productivity', 'productivity', 'Tips and insights about productivity and time management', '#3B82F6'),
-  ('Personal', 'personal', 'Personal thoughts, experiences, and reflections', '#10B981'),
-  ('Technology', 'technology', 'Technology-related posts and tutorials', '#8B5CF6'),
-  ('Schedule', 'schedule', 'Posts generated from daily schedules and summaries', '#F59E0B')
-ON CONFLICT (slug) DO NOTHING;
+INSERT INTO public.categories (name, description, color) VALUES
+  ('Productivity', 'Tips and insights about productivity and time management', '#3B82F6'),
+  ('Personal', 'Personal thoughts, experiences, and reflections', '#10B981'),
+  ('Technology', 'Technology-related posts and tutorials', '#8B5CF6'),
+  ('Schedule', 'Posts generated from daily schedules and summaries', '#F59E0B')
+ON CONFLICT (name) DO NOTHING;
 
 -- Insert default tags
-INSERT INTO public.tags (name, slug) VALUES
-  ('productivity', 'productivity'),
-  ('time-management', 'time-management'),
-  ('habits', 'habits'),
-  ('goals', 'goals'),
-  ('reflection', 'reflection'),
-  ('weekly-review', 'weekly-review'),
-  ('daily-summary', 'daily-summary'),
-  ('tips', 'tips'),
-  ('getting-started', 'getting-started'),
-  ('tutorial', 'tutorial')
-ON CONFLICT (slug) DO NOTHING;
+INSERT INTO public.tags (name) VALUES
+  ('productivity'),
+  ('time-management'),
+  ('habits'),
+  ('goals'),
+  ('reflection'),
+  ('weekly-review'),
+  ('daily-summary'),
+  ('tips'),
+  ('getting-started'),
+  ('tutorial')
+ON CONFLICT (name) DO NOTHING;
 
 -- Newsletter subscriptions table
 -- 已移除订阅功能，相关表定义已删除

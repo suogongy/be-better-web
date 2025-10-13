@@ -108,8 +108,6 @@ export class BlogGenerationService {
       type: 'schedule',
       status: options.autoPublish ? 'published' : 'draft',
       published_at: options.autoPublish ? options.publishDate || new Date() : null,
-      meta_title: title,
-      meta_description: excerpt,
       estimated_reading_time: readingTime,
       tags,
     };

@@ -20,15 +20,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Be Better Web - 个人博客与生产力管理",
-  description: "一个现代化的个人网站，结合了博客管理和日常日程规划功能。",
-  keywords: ["博客", "生产力", "日程安排", "规划", "个人网站"],
-  authors: [{ name: "Be Better Web" }],
-  openGraph: {
-    title: "Be Better Web",
-    description: "个人博客和生产力管理平台",
-    type: "website",
-  },
+  title: "Be Better Web",
+  description: "个人博客与生产力管理平台",
 };
 
 export default function RootLayout({

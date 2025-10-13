@@ -1,17 +1,16 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { 
-  Facebook, 
-  Twitter, 
-  Linkedin, 
+import {
+  Facebook,
+  Twitter,
+  Linkedin,
   MessageCircle,
   Send,
   Link as LinkIcon,
   Copy,
   Share2,
-  Bookmark,
-  Rss
+  Bookmark
 } from 'lucide-react'
 import { useToast } from '@/components/ui/toast-provider'
 import { useState } from 'react'
@@ -90,7 +89,7 @@ export function ShareButtons({
 
   // 微博分享
   const shareToWeibo = () => {
-    const weiboUrl = `https://service.weibo.com/share/share.php?title=${encodeURIComponent(title)}&url=${encodeURIComponent(shareUrl)}&pic=${encodeURIComponent(window.location.origin + '/api/og?title=' + encodeURIComponent(title))}`
+    const weiboUrl = `https://service.weibo.com/share/share.php?title=${encodeURIComponent(title)}&url=${encodeURIComponent(shareUrl)}`
     window.open(weiboUrl, '_blank')
   }
 
@@ -112,11 +111,7 @@ export function ShareButtons({
     window.location.href = emailUrl
   }
 
-  // RSS 订阅
-  const subscribeToRSS = () => {
-    window.open('/rss.xml', '_blank')
-  }
-
+  
   const shareToFacebook = () => {
     const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`
     window.open(facebookUrl, '_blank')
@@ -191,10 +186,6 @@ export function ShareButtons({
         邮件
       </Button>
       
-      <Button variant="outline" size="sm" onClick={subscribeToRSS}>
-        <Rss className="h-4 w-4 mr-2" />
-        RSS
-      </Button>
-    </div>
+          </div>
   )
 }
