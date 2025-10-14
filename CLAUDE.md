@@ -571,3 +571,4 @@ const logger = {
 ---
 
 本指南为 Claude AI 助手提供了 Be Better Web 项目的全面概述。代码库遵循现代 React 和 Next.js 最佳实践，重点关注类型安全、性能和用户体验。
+- 不要频繁生成过多文档

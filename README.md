@@ -1,219 +1,219 @@
 # Be Better Web
 
-A modern personal website built with Next.js that combines personal blogging and daily schedule management functionalities. The platform enables users to write and manage blog posts, organize daily tasks, and automatically generate schedule-based blog content from completed plans.
+一个基于 Next.js 构建的现代化个人网站，结合了个人博客和日常日程管理功能。该平台支持用户撰写和管理博客文章、组织日常任务，并能从完成的计划中自动生成基于日程的博客内容。
 
-## 🚀 Features
+## 🚀 功能特性
 
-### ✅ **Phase 1 - Foundation (COMPLETE)**
-- **Personal Blog Management**: Full-featured blogging platform with categories, editing, and commenting
-- **Daily Schedule Management**: Todo-based planning system with progress tracking and daily summaries
-- **Integration**: Automatic blog generation from schedule summaries
-- **Guest Access**: Public viewing without authentication requirement
-- **User Authentication**: Supabase Auth integration for admin features
-- **Responsive Design**: Mobile-first responsive interface with theme system (light/dark mode)
+### ✅ **第一阶段 - 基础功能（已完成）**
+- **个人博客管理**：功能完整的博客平台，支持分类、编辑和评论
+- **日程管理**：基于待办事项的规划系统，包含进度跟踪和每日总结
+- **集成功能**：从日程总结自动生成博客文章
+- **访客访问**：无需认证即可公开浏览
+- **用户认证**：集成 Supabase Auth 的管理员功能
+- **响应式设计**：移动优先的响应式界面，支持主题系统（明暗模式）
 
-### 🔄 **Upcoming Features**
-- Rich text blog editor with TipTap
-- Advanced task management with calendar views
-- Productivity analytics and insights
-- Comment system with moderation
-- SEO optimization and performance enhancements
+### 🔄 **即将推出的功能**
+- 基于 TipTap 的富文本博客编辑器
+- 带日历视图的高级任务管理
+- 生产力分析和洞察
+- 带审核功能的评论系统
+- SEO 优化和性能增强
 
-## 🛠 Technology Stack
+## 🛠 技术栈
 
-- **Framework**: Next.js 15.5.0 with App Router
-- **Frontend**: React 19.1.0, TypeScript 5+, Tailwind CSS v4
-- **Backend**: Supabase (PostgreSQL database, Authentication, Storage)
-- **UI Components**: Custom component library with Radix UI primitives
-- **Form Handling**: React Hook Form with Zod validation
-- **Rich Text**: TipTap editor
-- **Icons**: Lucide React
-- **Build Tool**: Turbopack
+- **框架**：Next.js 15.5.0 with App Router
+- **前端**：React 19.1.0, TypeScript 5+, Tailwind CSS v4
+- **后端**：Supabase (PostgreSQL 数据库、认证、存储)
+- **UI 组件**：基于 Radix UI 基础的自定义组件库
+- **表单处理**：React Hook Form with Zod 验证
+- **富文本**：TipTap 编辑器
+- **图标**：Lucide React
+- **构建工具**：Turbopack
 
-## 📦 Prerequisites
+## 📦 前置条件
 
-Before you begin, ensure you have:
+开始之前，请确保您拥有：
 
-- Node.js 18+ installed
-- A Supabase account and project
-- Git for version control
+- 已安装 Node.js 18+
+- Supabase 账户和项目
+- Git 版本控制工具
 
-## 🚀 Quick Start
+## 🚀 快速开始
 
-### 1. Clone the Repository
+### 1. 克隆仓库
 
 ```bash
 git clone <repository-url>
 cd be-better-web
 ```
 
-### 2. Install Dependencies
+### 2. 安装依赖
 
 ```bash
 npm install
 ```
 
-### 3. Set Up Environment Variables
+### 3. 设置环境变量
 
-1. Copy the environment template:
+1. 复制环境变量模板：
    ```bash
    cp .env.example .env.local
    ```
 
-2. Fill in your Supabase credentials in `.env.local`:
+2. 在 `.env.local` 中填入您的 Supabase 凭据：
    ```env
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
    SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
    ```
 
-   Get these values from your Supabase project dashboard:
+   从您的 Supabase 项目仪表板获取这些值：
    `https://supabase.com/dashboard/project/YOUR_PROJECT_ID/settings/api`
 
-### 4. Set Up the Database
+### 4. 设置数据库
 
-1. **Create Supabase Project**:
-   - Go to [supabase.com](https://supabase.com)
-   - Create a new project
-   - Wait for the project to be ready
+1. **创建 Supabase 项目**：
+   - 访问 [supabase.com](https://supabase.com)
+   - 创建新项目
+   - 等待项目准备就绪
 
-2. **Run Database Schema**:
-   - Open your Supabase project dashboard
-   - Go to the SQL Editor
-   - Copy and paste the contents of `src/lib/supabase/schema.sql`
-   - Execute the script
+2. **运行数据库架构**：
+   - 打开您的 Supabase 项目仪表板
+   - 进入 SQL 编辑器
+   - 复制并粘贴 `src/lib/supabase/schema.sql` 的内容
+   - 执行脚本
 
-3. **Set Up RLS Policies**:
-   - In the same SQL Editor
-   - Copy and paste the contents of `src/lib/supabase/rls-policies.sql`
-   - Execute the script
+3. **设置 RLS 策略**：
+   - 在同一个 SQL 编辑器中
+   - 复制并粘贴 `src/lib/supabase/rls-policies.sql` 的内容
+   - 执行脚本
 
-4. **Verify Setup**:
+4. **验证设置**：
    ```bash
    npm run setup-db
    ```
 
-### 5. Start Development Server
+### 5. 启动开发服务器
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
+在浏览器中打开 [http://localhost:3000](http://localhost:3000) 查看应用程序。
 
-## 🗂 Project Structure
+## 🗂 项目结构
 
 ```
 src/
 ├── app/                          # Next.js App Router
-│   ├── (auth)/                   # Authentication routes
+│   ├── (auth)/                   # 认证路由
 │   │   ├── login/
 │   │   └── register/
-│   ├── blog/                     # Public blog routes
-│   ├── dashboard/                # Protected admin routes
+│   ├── blog/                     # 公开博客路由
+│   ├── dashboard/                # 受保护的管理员路由
 │   ├── globals.css
 │   ├── layout.tsx
 │   └── page.tsx
-├── components/                   # Reusable components
-│   ├── ui/                       # Base UI components
-│   ├── layout/                   # Layout components
-│   └── forms/                    # Form components
-├── lib/                          # Utility libraries
-│   ├── supabase/                 # Supabase configuration
-│   ├── auth/                     # Authentication utilities
-│   ├── theme/                    # Theme management
-│   ├── validation/               # Zod schemas
-│   └── utils.ts                  # General utilities
-├── types/                        # TypeScript type definitions
-└── constants/                    # Application constants
+├── components/                   # 可复用组件
+│   ├── ui/                       # 基础 UI 组件
+│   ├── layout/                   # 布局组件
+│   └── forms/                    # 表单组件
+├── lib/                          # 工具库
+│   ├── supabase/                 # Supabase 配置
+│   ├── auth/                     # 认证工具
+│   ├── theme/                    # 主题管理
+│   ├── validation/               # Zod 模式
+│   └── utils.ts                  # 通用工具
+├── types/                        # TypeScript 类型定义
+└── constants/                    # 应用常量
 ```
 
-## 🔧 Available Scripts
+## 🔧 可用脚本
 
-- `npm run dev` - Start development server with Turbopack
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
-- `npm run setup-db` - Database setup helper script
+- `npm run dev` - 使用 Turbopack 启动开发服务器
+- `npm run build` - 构建生产版本
+- `npm run start` - 启动生产服务器
+- `npm run lint` - 运行 ESLint
+- `npm run setup-db` - 数据库设置辅助脚本
 
-## 🎨 UI Components
+## 🎨 UI 组件
 
-The project includes a comprehensive UI component library:
+项目包含一个全面的 UI 组件库：
 
-- **Form Components**: Button, Input, Textarea, Select, Checkbox
-- **Layout Components**: Card, Modal, Loading, Badge
-- **Navigation**: Header with responsive menu and theme toggle
-- **Feedback**: Toast notifications, Loading states
-- **Theme**: Light/Dark/System theme support
+- **表单组件**：Button、Input、Textarea、Select、Checkbox
+- **布局组件**：Card、Modal、Loading、Badge
+- **导航**：带响应式菜单和主题切换的 Header
+- **反馈**：Toast 通知、加载状态
+- **主题**：明暗/系统主题支持
 
-## 🔐 Authentication
+## 🔐 认证
 
-- **Sign Up/Sign In**: Email and password authentication
-- **Protected Routes**: Dashboard and admin features
-- **Row Level Security**: Database-level security policies
-- **User Profiles**: Automatic profile creation on signup
+- **注册/登录**：邮箱和密码认证
+- **受保护路由**：仪表板和管理员功能
+- **行级安全**：数据库级安全策略
+- **用户资料**：注册时自动创建资料
 
-## 🗄 Database Schema
+## 🗄 数据库架构
 
-The application uses a comprehensive PostgreSQL schema:
+应用程序使用全面的 PostgreSQL 架构：
 
-- **Users**: Extended user profiles with preferences
-- **Posts**: Blog posts with categories and tags
-- **Categories & Tags**: Content organization
-- **Comments**: Nested comment system
-- **Tasks**: Daily task management
-- **Daily Summaries**: Productivity tracking
+- **用户**：带偏好的扩展用户资料
+- **文章**：带分类和标签的博客文章
+- **分类和标签**：内容组织
+- **评论**：嵌套评论系统
+- **任务**：日常任务管理
+- **每日总结**：生产力跟踪
 
-## 🚧 Development Status
+## 🚧 开发状态
 
-### ✅ Completed (Phase 1)
-- [x] Project setup and dependencies
-- [x] Database schema and RLS policies
-- [x] Authentication system
-- [x] UI component library
-- [x] Responsive layout and navigation
-- [x] Theme system (light/dark mode)
-- [x] Basic blog pages with mock data
-- [x] Dashboard structure
+### ✅ 已完成（第一阶段）
+- [x] 项目设置和依赖
+- [x] 数据库架构和 RLS 策略
+- [x] 认证系统
+- [x] UI 组件库
+- [x] 响应式布局和导航
+- [x] 主题系统（明暗模式）
+- [x] 带模拟数据的基础博客页面
+- [x] 仪表板结构
 
-### 🔄 In Progress (Phase 2)
-- [ ] Blog post creation and editing with TipTap
-- [ ] Category and tag management
-- [ ] Public blog pages with SEO
-- [ ] Comment system
+### 🔄 进行中（第二阶段）
+- [ ] 使用 TipTap 的博客文章创建和编辑
+- [ ] 分类和标签管理
+- [ ] 带 SEO 的公开博客页面
+- [ ] 评论系统
 
-### 📋 Planned (Phase 3+)
-- [ ] Task management system
-- [ ] Calendar integration
-- [ ] Daily summary system
-- [ ] Blog generation from schedules
-- [ ] Advanced features and analytics
-- [ ] Performance optimization
-- [ ] Testing and deployment
+### 📋 计划中（第三阶段及以后）
+- [ ] 任务管理系统
+- [ ] 日历集成
+- [ ] 每日总结系统
+- [ ] 从日程生成博客
+- [ ] 高级功能和分析
+- [ ] 性能优化
+- [ ] 测试和部署
 
-## 🤝 Contributing
+## 🤝 贡献
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+1. Fork 仓库
+2. 创建功能分支
+3. 进行更改
+4. 彻底测试
+5. 提交 Pull Request
 
-## 📄 License
+## 📄 许可证
 
-This project is licensed under the MIT License.
+本项目采用 MIT 许可证。
 
-## 🆘 Support
+## 🆘 支持
 
-If you encounter any issues during setup:
+如果在设置过程中遇到任何问题：
 
-1. Check that all environment variables are correctly set
-2. Verify your Supabase project is active and accessible
-3. Ensure the database schema has been applied
-4. Check the console for any error messages
+1. 检查所有环境变量是否正确设置
+2. 验证您的 Supabase 项目是否活跃且可访问
+3. 确保数据库架构已应用
+4. 检查控制台是否有任何错误消息
 
-For additional help, please create an issue in the repository.
+如需额外帮助，请在仓库中创建 issue。
 
 ---
 
-**Happy coding! 🚀**
+**编码愉快！🚀**
