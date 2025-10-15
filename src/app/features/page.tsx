@@ -31,7 +31,7 @@ export default function FeaturesPage() {
     {
       icon: Brain,
       title: 'AI 助手 (待开发)',
-      description: '智能 AI 助手，根据您的需求自动制定计划，解析为可执行的日程任务，让目标管理更加智能高效。',
+      description: '智能 AI 助手，包含 AI 计划定制功能，根据您的目标和时间自动生成详细的执行计划；AI 复盘功能，智能分析完成情况并提供优化建议，让您的目标管理更加科学高效。',
       color: 'text-green-600'
     },
     {
