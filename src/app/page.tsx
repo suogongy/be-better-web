@@ -171,6 +171,13 @@ export default function Home() {
               </CardContent>
             </Card>
           </div>
+          <div className="text-center mt-12">
+            <Link href="/features">
+              <Button size="lg" variant="outline" className="bg-white/80 backdrop-blur-sm hover:bg-blue-50 dark:bg-gray-800/80 dark:hover:bg-blue-900/20 transition-all">
+                了解更多功能
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 
