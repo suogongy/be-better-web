@@ -110,6 +110,13 @@ export default function Home() {
                 浏览博客
               </Button>
             </Link>
+            {!user && (
+              <Link href="/auth/login">
+                <Button size="lg" variant="outline">
+                  登录
+                </Button>
+              </Link>
+            )}
           </div>
           {user && (
             <div className="mt-8">

@@ -6,13 +6,11 @@ import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Calendar, Clock, Eye, MessageCircle, ArrowLeft, Tag as TagIcon, FolderOpen } from 'lucide-react'
+import { Calendar, Clock, ArrowLeft, Tag as TagIcon, FolderOpen } from 'lucide-react'
 import { BlogService } from '@/lib/supabase/services/blog-service'
-import { commentService } from '@/lib/supabase/services/index'
 import { postService } from '@/lib/supabase/services/post-service'
 import { createClient } from '@/lib/supabase/client'
 import { MarkdownPreview } from '@/components/editor/markdown-preview'
-import { CommentList } from '@/components/blog/comment-list'
 import { Post } from '@/types/database'
 
 interface Category {
@@ -31,7 +29,7 @@ export default function BlogPostPage() {
   const router = useRouter()
   const postId = params.id as string
   
-  const [post, setPost] = useState<Post & { categories?: Category[]; tags?: TagItem[]; comment_count?: number } | null>(null)
+  const [post, setPost] = useState<Post & { categories?: Category[]; tags?: TagItem[] } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -39,29 +37,15 @@ export default function BlogPostPage() {
     const fetchPost = async () => {
       try {
         setLoading(true)
-        
-        // 简单的防重复机制 - 使用全局标记
-        const viewKey = `post_viewed_${postId}`
-        if (typeof window !== 'undefined' && !window[viewKey]) {
-          // 标记为已访问
-          window[viewKey] = true
-          
-          // 增加浏览量
-          await postService.incrementViewCount(postId)
-        }
-        
+
         // 获取文章详情
-        const [postDetail, commentCount] = await Promise.all([
-          postService.getPost(postId),
-          commentService.getCommentCount(postId)
-        ])
-        
+        const postDetail = await postService.getPost(postId)
+
         if (postDetail) {
           setPost({
             ...postDetail,
             categories: [],
-            tags: [],
-            comment_count: commentCount
+            tags: []
           })
         } else {
           setError('文章不存在')
@@ -154,17 +138,7 @@ export default function BlogPostPage() {
               <Clock className="h-4 w-4" />
               {readingTime} 分钟阅读
             </div>
-            <div className="flex items-center gap-1">
-              <Eye className="h-4 w-4" />
-              {post.view_count || 0} 次浏览
             </div>
-            {post.comment_count !== undefined && (
-              <div className="flex items-center gap-1">
-                <MessageCircle className="h-4 w-4" />
-                {post.comment_count} 条评论
-              </div>
-            )}
-          </div>
 
           {/* 分类和标签 */}
           {(post.categories?.length || post.tags?.length) && (
@@ -206,10 +180,6 @@ export default function BlogPostPage() {
         </CardContent>
       </Card>
 
-      {/* 评论区域 */}
-      <div className="mt-8">
-        <CommentList postId={postId} />
       </div>
-    </div>
   )
 }
