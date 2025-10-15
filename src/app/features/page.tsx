@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, CheckCircle, Star, Zap, Shield, BarChart3, Calendar } from 'lucide-react'
+import { ArrowLeft, CheckCircle, Star, Zap, Brain, BarChart3, Calendar } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: '功能特性 - Be Better Web',
@@ -29,9 +29,9 @@ export default function FeaturesPage() {
       color: 'text-purple-600'
     },
     {
-      icon: Shield,
-      title: '数据安全',
-      description: '采用银行级加密技术，确保您的个人数据安全可靠，隐私得到充分保护。',
+      icon: Brain,
+      title: 'AI 助手 (待开发)',
+      description: '智能 AI 助手，根据您的需求自动制定计划，解析为可执行的日程任务，让目标管理更加智能高效。',
       color: 'text-green-600'
     },
     {
