@@ -70,7 +70,6 @@ describe('API Integration Smoke Tests', () => {
         content: 'Test content',
         status: 'published',
         type: 'manual',
-        view_count: 0,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }
@@ -79,9 +78,9 @@ describe('API Integration Smoke Tests', () => {
       expect(mockPost.user_id).toBeDefined()
       expect(mockPost.title).toBeDefined()
       expect(mockPost.status).toBeDefined()
-      
+
       // Validate data types
-      expect(typeof mockPost.view_count).toBe('number')
+      expect(typeof mockPost.content).toBe('string')
     })
 
     it('should validate summary data structure', () => {

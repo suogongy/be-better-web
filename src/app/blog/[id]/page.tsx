@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Calendar, Clock, ArrowLeft, Eye } from 'lucide-react'
+import { Calendar, ArrowLeft } from 'lucide-react'
 import { postService } from '@/lib/supabase/services/post-service'
 import { MarkdownPreview } from '@/components/editor/markdown-preview'
 import { CommentList } from '@/components/blog/comment-list'
@@ -60,12 +60,7 @@ export default function BlogPostPage() {
     }
   }, [postId])
 
-  const estimateReadingTime = (content: string): number => {
-    const wordsPerMinute = 200
-    const words = content.split(/\s+/).length
-    return Math.ceil(words / wordsPerMinute)
-  }
-
+  
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString)
     return date.toLocaleDateString('zh-CN', {
@@ -103,8 +98,7 @@ export default function BlogPostPage() {
     )
   }
 
-  const readingTime = estimateReadingTime(post.content)
-
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-900 dark:to-blue-900/20">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 max-w-5xl">
@@ -137,14 +131,6 @@ export default function BlogPostPage() {
                 <time dateTime={post.published_at || post.created_at} className="font-medium">
                   {formatDate(post.published_at || post.created_at)}
                 </time>
-              </div>
-              <div className="flex items-center gap-2">
-                <Clock className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                <span className="font-medium">{readingTime} 分钟阅读</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Eye className="h-5 w-5 text-green-600 dark:text-green-400" />
-                <span className="font-medium">{post.view_count || 0} 次浏览</span>
               </div>
             </div>
           </div>

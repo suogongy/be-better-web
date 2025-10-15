@@ -23,7 +23,6 @@ export interface PostWithRelations {
   type: 'manual' | 'schedule_generated'
   meta_title?: string
   meta_description?: string
-  view_count: number
   published_at?: string
   created_at: string
   updated_at: string

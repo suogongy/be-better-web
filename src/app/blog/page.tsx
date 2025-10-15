@@ -13,8 +13,6 @@ import {
   FolderOpen,
   Tag as TagIcon,
   Calendar,
-  Clock,
-  Eye,
   MessageCircle,
   ChevronLeft,
   ChevronRight,
@@ -126,12 +124,7 @@ export default function BlogPage() {
     setCurrentPage(1)
   }
 
-  const estimateReadingTime = (content: string): number => {
-    const wordsPerMinute = 200
-    const words = content.split(/\s+/).length
-    return Math.ceil(words / wordsPerMinute)
-  }
-
+  
   const totalPages = Math.ceil(total / POSTS_PER_PAGE)
 
   const formatDate = (dateString: string): string => {
@@ -319,90 +312,79 @@ export default function BlogPage() {
           ) : (
             <>
               <div className="grid gap-8 mb-12">
-                {posts.map(post => {
-                  const readingTime = estimateReadingTime(post.content || '')
-                  return (
-                    <article key={post.id} className="group relative">
-                      <div className="bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 p-8 transition-all duration-300 hover:shadow-2xl hover:border-blue-300 dark:hover:border-blue-700 hover:-translate-y-1">
-                        <header className="mb-6">
-                          <h2 className="text-3xl font-bold mb-4 leading-tight">
-                            <Link
-                              href={`/blog/${post.id}`}
-                              className="text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors group-hover:text-blue-600 dark:group-hover:text-blue-400"
-                            >
-                              {post.title}
-                            </Link>
-                          </h2>
+                {posts.map(post => (
+                  <article key={post.id} className="group relative">
+                    <div className="bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 p-8 transition-all duration-300 hover:shadow-2xl hover:border-blue-300 dark:hover:border-blue-700 hover:-translate-y-1">
+                      <header className="mb-6">
+                        <h2 className="text-3xl font-bold mb-4 leading-tight">
+                          <Link
+                            href={`/blog/${post.id}`}
+                            className="text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors group-hover:text-blue-600 dark:group-hover:text-blue-400"
+                          >
+                            {post.title}
+                          </Link>
+                        </h2>
 
-                          {post.excerpt && (
-                            <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed line-clamp-3">
-                              {post.excerpt}
-                            </p>
-                          )}
-                        </header>
+                        {post.excerpt && (
+                          <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed line-clamp-3">
+                            {post.excerpt}
+                          </p>
+                        )}
+                      </header>
 
-                        <div className="flex flex-wrap gap-3 mb-6">
-                          {post.categories?.slice(0, 3).map((category: Category) => (
-                            <Badge
-                              key={category.id}
-                              variant="secondary"
-                              className="px-3 py-1.5 bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-800/50 transition-colors border-0"
-                              onClick={() => {
-                                setSelectedCategory(category.id)
-                                window.scrollTo({ top: 0, behavior: 'smooth' })
-                              }}
-                            >
-                              {category.name}
-                            </Badge>
-                          ))}
-                          {post.tags?.slice(0, 5).map((tag: TagItem) => (
-                            <Badge
-                              key={tag.id}
-                              variant="outline"
-                              className="px-3 py-1.5 bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300 border-purple-300 dark:border-purple-700 cursor-pointer hover:bg-purple-200 dark:hover:bg-purple-800/50 transition-colors flex items-center gap-1.5"
-                              onClick={() => {
-                                setSelectedTag(tag.id)
-                                window.scrollTo({ top: 0, behavior: 'smooth' })
-                              }}
-                            >
-                              <TagIcon className="h-3 w-3" />
-                              #{tag.name}
-                            </Badge>
-                          ))}
-                        </div>
-
-                        <footer className="flex items-center justify-between text-sm">
-                          <div className="flex items-center gap-6 text-gray-600 dark:text-gray-400">
-                            <div className="flex items-center gap-2">
-                              <Calendar className="h-4 w-4" />
-                              <time dateTime={post.published_at || post.created_at}>
-                                {formatDate(post.published_at || post.created_at)}
-                              </time>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Clock className="h-4 w-4" />
-                              <span>{readingTime} 分钟阅读</span>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-6 text-gray-600 dark:text-gray-400">
-                            <div className="flex items-center gap-2">
-                              <Eye className="h-4 w-4" />
-                              <span>{post.view_count || 0} 次浏览</span>
-                            </div>
-                            {post.comment_count !== undefined && (
-                              <div className="flex items-center gap-2">
-                                <MessageCircle className="h-4 w-4" />
-                                <span>{post.comment_count} 条评论</span>
-                              </div>
-                            )}
-                          </div>
-                        </footer>
-
-                        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-purple-600/5 dark:from-blue-400/5 dark:to-purple-400/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                      <div className="flex flex-wrap gap-3 mb-6">
+                        {post.categories?.slice(0, 3).map((category: Category) => (
+                          <Badge
+                            key={category.id}
+                            variant="secondary"
+                            className="px-3 py-1.5 bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-800/50 transition-colors border-0"
+                            onClick={() => {
+                              setSelectedCategory(category.id)
+                              window.scrollTo({ top: 0, behavior: 'smooth' })
+                            }}
+                          >
+                            {category.name}
+                          </Badge>
+                        ))}
+                        {post.tags?.slice(0, 5).map((tag: TagItem) => (
+                          <Badge
+                            key={tag.id}
+                            variant="outline"
+                            className="px-3 py-1.5 bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300 border-purple-300 dark:border-purple-700 cursor-pointer hover:bg-purple-200 dark:hover:bg-purple-800/50 transition-colors flex items-center gap-1.5"
+                            onClick={() => {
+                              setSelectedTag(tag.id)
+                              window.scrollTo({ top: 0, behavior: 'smooth' })
+                            }}
+                          >
+                            <TagIcon className="h-3 w-3" />
+                            #{tag.name}
+                          </Badge>
+                        ))}
                       </div>
-                    </article>
-                  )
-                })}
+
+                      <footer className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-6 text-gray-600 dark:text-gray-400">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4" />
+                            <time dateTime={post.published_at || post.created_at}>
+                              {formatDate(post.published_at || post.created_at)}
+                            </time>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-6 text-gray-600 dark:text-gray-400">
+                          {post.comment_count !== undefined && (
+                            <div className="flex items-center gap-2">
+                              <MessageCircle className="h-4 w-4" />
+                              <span>{post.comment_count} 条评论</span>
+                            </div>
+                          )}
+                        </div>
+                      </footer>
+
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-purple-600/5 dark:from-blue-400/5 dark:to-purple-400/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                    </div>
+                  </article>
+                ))}
               </div>
 
               {totalPages > 1 && (
