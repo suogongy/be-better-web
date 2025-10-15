@@ -6,14 +6,11 @@ import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Calendar, Clock, Eye, MessageCircle, ArrowLeft, Tag as TagIcon, FolderOpen } from 'lucide-react'
+import { Calendar, Clock, ArrowLeft, Tag as TagIcon, FolderOpen, Eye, MessageCircle } from 'lucide-react'
 import { BlogService } from '@/lib/supabase/services/blog-service'
-import { commentService } from '@/lib/supabase/services/index'
 import { postService } from '@/lib/supabase/services/post-service'
 import { createClient } from '@/lib/supabase/client'
 import { MarkdownPreview } from '@/components/editor/markdown-preview'
-import { CommentList } from '@/components/blog/comment-list'
-import { ShareButtons } from '@/components/blog/share-buttons'
 import { Post } from '@/types/database'
 
 interface Category {
@@ -32,7 +29,7 @@ export default function BlogPostPage() {
   const router = useRouter()
   const postId = params.id as string
   
-  const [post, setPost] = useState<Post & { categories?: Category[]; tags?: TagItem[]; comment_count?: number } | null>(null)
+  const [post, setPost] = useState<Post & { categories?: Category[]; tags?: TagItem[] } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -40,29 +37,15 @@ export default function BlogPostPage() {
     const fetchPost = async () => {
       try {
         setLoading(true)
-        
-        // 简单的防重复机制 - 使用全局标记
-        const viewKey = `post_viewed_${postId}`
-        if (typeof window !== 'undefined' && !window[viewKey]) {
-          // 标记为已访问
-          window[viewKey] = true
-          
-          // 增加浏览量
-          await postService.incrementViewCount(postId)
-        }
-        
+
         // 获取文章详情
-        const [postDetail, commentCount] = await Promise.all([
-          postService.getPost(postId),
-          commentService.getCommentCount(postId)
-        ])
-        
+        const postDetail = await postService.getPost(postId)
+
         if (postDetail) {
           setPost({
             ...postDetail,
             categories: [],
-            tags: [],
-            comment_count: commentCount
+            tags: []
           })
         } else {
           setError('文章不存在')
@@ -174,32 +157,11 @@ export default function BlogPostPage() {
                 </div>
               )}
             </div>
-
-            {/* 分类和标签 */}
-            {(post.categories?.length || post.tags?.length) && (
-              <div className="flex flex-wrap gap-3">
-                {post.categories?.map((category) => (
-                  <Badge
-                    key={category.id}
-                    variant="secondary"
-                    className="px-4 py-2 bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 border-0 flex items-center gap-2"
-                  >
-                    <FolderOpen className="h-4 w-4" />
-                    {category.name}
-                  </Badge>
-                ))}
-                {post.tags?.map((tag) => (
-                  <Badge
-                    key={tag.id}
-                    variant="outline"
-                    className="px-4 py-2 bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300 border-purple-300 dark:border-purple-700 flex items-center gap-2"
-                  >
-                    <TagIcon className="h-4 w-4" />
-                    #{tag.name}
-                  </Badge>
-                ))}
-              </div>
-            )}
+            <div className="flex items-center gap-1">
+              <Clock className="h-4 w-4" />
+              {readingTime} 分钟阅读
+            </div>
+            </div>
           </div>
         </header>
 
@@ -226,34 +188,7 @@ export default function BlogPostPage() {
             <div className="bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-500 dark:to-purple-500 h-2"></div>
           </div>
         </main>
-
-        {/* 分享按钮 */}
-        <div className="mb-12">
-          <div className="bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 p-6">
-            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">分享这篇文章</h3>
-            <ShareButtons
-              title={post.title}
-              description={post.excerpt || ''}
-              tags={post.tags?.map(tag => tag.name) || []}
-              className="flex-wrap gap-3"
-            />
-          </div>
-        </div>
-
-        {/* 评论区域 */}
-        <section className="mb-12">
-          <div className="bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 rounded-3xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 p-10">
-            <CommentList postId={postId} />
-          </div>
-        </section>
-
-        {/* 相关文章推荐（可选功能） */}
-        <footer className="text-center py-8">
-          <p className="text-gray-600 dark:text-gray-400">
-            感谢阅读！如果喜欢这篇文章，欢迎分享给更多人。
-          </p>
-        </footer>
       </div>
-    </div>
-  )
+    )
+  }
 }

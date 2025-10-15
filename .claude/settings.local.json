@@ -5,7 +5,9 @@
       "Bash(find:*)",
       "Bash(npm:*)",
       "Bash(npx:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(tasklist:*)",
+      "Bash(findstr:*)"
     ],
     "deny": [],
     "ask": []
