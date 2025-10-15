@@ -116,6 +116,12 @@ export default function AdminLoginPage() {
             <CardDescription>
               此页面仅限管理员访问
             </CardDescription>
+            <CardDescription>
+              测试账号：haiyuan1832@163.com
+            </CardDescription>
+            <CardDescription>
+              测试密码：123456
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">

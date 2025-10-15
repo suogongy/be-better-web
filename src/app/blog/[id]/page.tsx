@@ -1,15 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Calendar, Clock, ArrowLeft, Tag as TagIcon, FolderOpen, Eye, MessageCircle } from 'lucide-react'
-import { BlogService } from '@/lib/supabase/services/blog-service'
+import { Calendar, Clock, ArrowLeft, Eye } from 'lucide-react'
 import { postService } from '@/lib/supabase/services/post-service'
-import { createClient } from '@/lib/supabase/client'
 import { MarkdownPreview } from '@/components/editor/markdown-preview'
 import { Post } from '@/types/database'
 
@@ -26,9 +23,8 @@ interface TagItem {
 
 export default function BlogPostPage() {
   const params = useParams()
-  const router = useRouter()
   const postId = params.id as string
-  
+
   const [post, setPost] = useState<Post & { categories?: Category[]; tags?: TagItem[] } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -62,7 +58,6 @@ export default function BlogPostPage() {
       fetchPost()
     }
   }, [postId])
-
 
   const estimateReadingTime = (content: string): number => {
     const wordsPerMinute = 200
@@ -150,17 +145,6 @@ export default function BlogPostPage() {
                 <Eye className="h-5 w-5 text-green-600 dark:text-green-400" />
                 <span className="font-medium">{post.view_count || 0} 次浏览</span>
               </div>
-              {post.comment_count !== undefined && (
-                <div className="flex items-center gap-2">
-                  <MessageCircle className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-                  <span className="font-medium">{post.comment_count} 条评论</span>
-                </div>
-              )}
-            </div>
-            <div className="flex items-center gap-1">
-              <Clock className="h-4 w-4" />
-              {readingTime} 分钟阅读
-            </div>
             </div>
           </div>
         </header>
@@ -172,7 +156,7 @@ export default function BlogPostPage() {
             {post.excerpt && (
               <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 p-8 border-b border-gray-200/50 dark:border-gray-700/50">
                 <p className="text-lg text-gray-700 dark:text-gray-300 italic leading-relaxed">
-                  "{post.excerpt}"
+                  &ldquo;{post.excerpt}&rdquo;
                 </p>
               </div>
             )}
@@ -189,6 +173,6 @@ export default function BlogPostPage() {
           </div>
         </main>
       </div>
-    )
-  }
+    </div>
+  )
 }
