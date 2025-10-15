@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Calendar, Clock, ArrowLeft, Eye } from 'lucide-react'
 import { postService } from '@/lib/supabase/services/post-service'
 import { MarkdownPreview } from '@/components/editor/markdown-preview'
+import { CommentList } from '@/components/blog/comment-list'
 import { Post } from '@/types/database'
 
 interface Category {
@@ -172,6 +173,13 @@ export default function BlogPostPage() {
             <div className="bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-500 dark:to-purple-500 h-2"></div>
           </div>
         </main>
+
+        {/* 评论区 */}
+        <section className="mb-16">
+          <div className="bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 rounded-3xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 p-10">
+            <CommentList postId={postId} />
+          </div>
+        </section>
       </div>
     </div>
   )

@@ -130,7 +130,7 @@ export class BlogService {
       
       // 单独获取评论数
       const { data: commentsData } = await supabase
-        .from('comments')
+        .from('blog_comments')
         .select('post_id')
         .in('post_id', postIds)
         .eq('status', 'approved')
@@ -364,7 +364,7 @@ export class BlogService {
       // 获取评论数
       const postIds = posts.map(p => p.id)
       const { data: commentsData } = await supabase
-        .from('comments')
+        .from('blog_comments')
         .select('post_id')
         .in('post_id', postIds)
         .eq('status', 'approved')

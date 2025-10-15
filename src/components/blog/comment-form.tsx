@@ -71,8 +71,6 @@ export function CommentForm({
         author_email: data.author_email,
         author_website: data.author_website || undefined,
         content: data.content,
-        user_agent: userAgent,
-        ip_address: ipAddress,
       }
 
       await commentService.createComment(commentData)

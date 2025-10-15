@@ -19,7 +19,7 @@ export const commentService = {
       if (!supabase) throw new DatabaseError('Supabase client is not initialized')
       
       let query = supabase
-        .from('comments')
+        .from('blog_comments')
         .select('*')
         .eq('post_id', postId)
 
@@ -52,9 +52,9 @@ export const commentService = {
 
   async getCommentReplies(parentId: string, status: string = 'approved'): Promise<Comment[]> {
     if (!supabase) throw new DatabaseError('Supabase client is not initialized')
-    
+
     const { data, error } = await supabase
-      .from('comments')
+      .from('blog_comments')
       .select('*')
       .eq('parent_id', parentId)
       .eq('status', status)
@@ -69,14 +69,20 @@ export const commentService = {
 
   async createComment(comment: CommentInsert): Promise<Comment> {
     if (!supabase) throw new DatabaseError('Supabase client is not initialized')
-    
+
     // Basic spam detection
     const isSpam = this.detectSpam(comment)
     const status = isSpam ? 'spam' : 'pending'
 
+    // Add status to the comment data before insertion
+    const commentWithStatus = {
+      ...comment,
+      status
+    }
+
     const { data, error } = await supabase
-      .from('comments')
-      .insert(comment)
+      .from('blog_comments')
+      .insert(commentWithStatus)
       .select()
       .single()
 
@@ -94,7 +100,7 @@ export const commentService = {
     if (!supabase) throw new DatabaseError('Supabase client is not initialized')
     
     const { data, error } = await supabase
-      .from('comments')
+      .from('blog_comments')
       .update({ status })
       .eq('id', id)
       .select()
@@ -111,7 +117,7 @@ export const commentService = {
     if (!supabase) throw new DatabaseError('Supabase client is not initialized')
     
     const { data, error } = await supabase
-      .from('comments')
+      .from('blog_comments')
       .update(updates)
       .eq('id', id)
       .select()
@@ -128,7 +134,7 @@ export const commentService = {
     if (!supabase) throw new DatabaseError('Supabase client is not initialized')
     
     const { error } = await supabase
-      .from('comments')
+      .from('blog_comments')
       .delete()
       .eq('id', id)
 
@@ -145,7 +151,7 @@ export const commentService = {
     if (!supabase) throw new DatabaseError('Supabase client is not initialized')
     
     let query = supabase
-      .from('comments')
+      .from('blog_comments')
       .select('*', { count: 'exact' })
 
     if (options?.status) {
@@ -183,7 +189,7 @@ export const commentService = {
     if (!supabase) throw new DatabaseError('Supabase client is not initialized')
     
     let query = supabase
-      .from('comments')
+      .from('blog_comments')
       .select('status')
 
     if (postId) {
@@ -239,7 +245,7 @@ export const commentService = {
     if (!supabase) throw new DatabaseError('Supabase client is not initialized')
     
     const { count, error } = await supabase
-      .from('comments')
+      .from('blog_comments')
       .select('*', { count: 'exact' })
       .eq('post_id', postId)
       .eq('status', 'approved')

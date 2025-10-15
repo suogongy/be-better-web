@@ -122,7 +122,7 @@ export interface Database {
           tag_id?: string
         }
       }
-      comments: {
+      blog_comments: {
         Row: {
           id: string
           post_id: string
@@ -132,8 +132,6 @@ export interface Database {
           author_website?: string
           content: string
           status: 'pending' | 'approved' | 'spam' | 'rejected'
-          ip_address?: string
-          user_agent?: string
           created_at: string
         }
         Insert: {
@@ -145,8 +143,6 @@ export interface Database {
           author_website?: string
           content: string
           status?: 'pending' | 'approved' | 'spam' | 'rejected'
-          ip_address?: string
-          user_agent?: string
           created_at?: string
         }
         Update: {
@@ -158,8 +154,6 @@ export interface Database {
           author_website?: string
           content?: string
           status?: 'pending' | 'approved' | 'spam' | 'rejected'
-          ip_address?: string
-          user_agent?: string
           created_at?: string
         }
       }
@@ -402,9 +396,9 @@ export type Tag = Database['public']['Tables']['tags']['Row']
 export type TagInsert = Database['public']['Tables']['tags']['Insert']
 export type TagUpdate = Database['public']['Tables']['tags']['Update']
 
-export type Comment = Database['public']['Tables']['comments']['Row']
-export type CommentInsert = Database['public']['Tables']['comments']['Insert']
-export type CommentUpdate = Database['public']['Tables']['comments']['Update']
+export type Comment = Database['public']['Tables']['blog_comments']['Row']
+export type CommentInsert = Database['public']['Tables']['blog_comments']['Insert']
+export type CommentUpdate = Database['public']['Tables']['blog_comments']['Update']
 
 export type Task = Database['public']['Tables']['tasks']['Row']
 export type TaskInsert = Database['public']['Tables']['tasks']['Insert']
